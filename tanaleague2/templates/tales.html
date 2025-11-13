@@ -1,0 +1,81 @@
+{# ============================================================================
+# templates/tales.html
+# ----------------------------------------------------------------------------
+# Tales – storie e curiosità della stagione selezionata.
+# ============================================================================ #}
+{% extends "base.html" %}
+{% block title %}Tales – {{ season.name }}{% endblock %}
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h2>Tales – {{ season.name }} ({{ season.id }})</h2>
+    <p class="text-muted">TCG: {{ season.tcg }} • Ultimo aggiornamento cache: {{ last_update }}</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><strong>Compagni di Viaggio 🤝</strong></div>
+      <div class="card-body">
+        <p class="text-muted small">Le coppie che si incrociano più spesso.</p>
+        <ol class="mb-0">
+          {% for x in companions %}
+            <li><strong>{{ x.a }}</strong> + <strong>{{ x.b }}</strong> → {{ x.count }} volte</li>
+          {% else %}
+            <li class="text-muted">Nessun dato disponibile</li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><strong>Rivali di Podio ⚔️</strong></div>
+      <div class="card-body">
+        <p class="text-muted small">Chi ha condiviso il podio più volte.</p>
+        <ol class="mb-0">
+          {% for x in podium_rivals %}
+            <li><strong>{{ x.a }}</strong> + <strong>{{ x.b }}</strong> → {{ x.count }} volte</li>
+          {% else %}
+            <li class="text-muted">Nessun dato disponibile</li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><strong>Mischia Top8 🔥</strong></div>
+      <div class="card-body">
+        <p class="text-muted small">Quanti avversari diversi hai trovato in Top8.</p>
+        <ol class="mb-0">
+          {% for x in top8_mix %}
+            <li><strong>{{ x.player }}</strong> → {{ x.unique_opponents }} avversari unici in Top8</li>
+          {% else %}
+            <li class="text-muted">Nessun dato disponibile</li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="my-4"/>
+
+<div class="card mb-3">
+  <div class="card-header"><strong>Iscritti per evento</strong></div>
+  <div class="card-body">
+    <div id="chart-counts" data-series='{{ series.participants_per_event|tojson }}'></div>
+  </div>
+</div>
+
+<div class="card mb-5">
+  <div class="card-header"><strong>Punti medi per evento</strong></div>
+  <div class="card-body">
+    <div id="chart-points" data-series='{{ series.avg_points_per_event|tojson }}'></div>
+  </div>
+</div>
+{% endblock %}

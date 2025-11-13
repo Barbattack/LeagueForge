@@ -1,0 +1,92 @@
+{# ============================================================================
+# templates/hall.html
+# ----------------------------------------------------------------------------
+# Hall of Fame – record per TCG (multi-stagione).
+# ============================================================================ #}
+{% extends "base.html" %}
+{% block title %}Hall of Fame – {{ tcg }}{% endblock %}
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h2>Hall of Fame – {{ tcg }}</h2>
+    <p class="text-muted">Ultimo aggiornamento cache: {{ last_update }}</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><strong>Punteggio più alto di sempre</strong></div>
+      <div class="card-body">
+        {% if hof.best_single %}
+          {% set p, mid, name, tid, date, sid = hof.best_single %}
+          <p><strong>{{ name }}</strong> – {{ p }} punti<br/>
+          <span class="text-muted small">Evento {{ tid }} • {{ date }} • Stagione {{ sid }}</span></p>
+        {% else %}
+          <p class="text-muted">n/d</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><strong>Evento più affollato</strong></div>
+      <div class="card-body">
+        {% if hof.crowded %}
+          {% set c, tid, date, sid = hof.crowded %}
+          <p><strong>{{ c }}</strong> partecipanti<br/>
+          <span class="text-muted small">Evento {{ tid }} • {{ date }} • Stagione {{ sid }}</span></p>
+        {% else %}
+          <p class="text-muted">n/d</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><strong>Serata più equilibrata</strong></div>
+      <div class="card-body">
+        {% if hof.balanced %}
+          {% set s, tid, date, sid, n = hof.balanced %}
+          <p>σ = {{ '%.2f'|format(s) }} su {{ n }} giocatori<br/>
+          <span class="text-muted small">Evento {{ tid }} • {{ date }} • Stagione {{ sid }}</span></p>
+        {% else %}
+          <p class="text-muted">n/d</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><strong>Serata più dominata</strong></div>
+      <div class="card-body">
+        {% if hof.dominated %}
+          {% set g, tid, date, sid, n, ref = hof.dominated %}
+          <p>Gap = {{ '%.2f'|format(g) }} (vs {{ ref }}) su {{ n }} giocatori<br/>
+          <span class="text-muted small">Evento {{ tid }} • {{ date }} • Stagione {{ sid }}</span></p>
+        {% else %}
+          <p class="text-muted">n/d</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-12">
+    <div class="card h-100">
+      <div class="card-header"><strong>Crescita più veloce (Fenice)</strong></div>
+      <div class="card-body">
+        {% if hof.fenix %}
+          {% set d, mid, win_dates, tcg = hof.fenix %}
+          <p><strong>{{ mid }}</strong> → Δ media = {{ '%.2f'|format(d) }} punti<br/>
+          <span class="text-muted small">Finestra: {{ win_dates[0] }} → {{ win_dates[1] }} • TCG {{ tcg }}</span></p>
+        {% else %}
+          <p class="text-muted">n/d</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

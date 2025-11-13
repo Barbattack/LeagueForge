@@ -1,0 +1,66 @@
+# SETUP TANALEAGUE SU PYTHONANYWHERE
+# ====================================
+
+## STEP 1: Upload file
+
+1. Zip la cartella tanaleague_clean
+2. Su pythonanywhere: Files → Upload → carica lo zip
+3. Bash console:
+   ```
+   cd ~
+   unzip tanaleague_clean.zip
+   mv tanaleague_clean tanaleague
+   cd tanaleague
+   ```
+
+## STEP 2: Installa dipendenze
+
+```bash
+pip3 install --user Flask gspread google-auth pandas
+```
+
+## STEP 3: Configura WSGI
+
+1. Web tab → Code section → WSGI configuration file
+2. Clicca sul link del file (es: /var/www/latanadellepulci_pythonanywhere_com_wsgi.py)
+3. CANCELLA tutto e incolla:
+
+```python
+import sys
+
+path = '/home/latanadellepulci/tanaleague'
+if path not in sys.path:
+    sys.path.append(path)
+
+from app import app as application
+```
+
+4. Salva (Ctrl+S o pulsante Save)
+
+## STEP 4: Verifica config.py
+
+```bash
+cd ~/tanaleague
+cat config.py
+```
+
+Controlla che SHEET_ID e CREDENTIALS_FILE siano corretti:
+- SHEET_ID = '19Zf35DImgZG8v1GfzkE5JmMUTxLo30uvw_AdrgQPfE'
+- CREDENTIALS_FILE = '/home/latanadellepulci/tanaleague/secrets/service_account.json'
+
+## STEP 5: Test locale
+
+```bash
+cd ~/tanaleague
+python3 app.py
+```
+
+Premi Ctrl+C per fermare. Se vedi errori, mandali a Claude.
+
+## STEP 6: Reload webapp
+
+Su Web tab → pulsante verde "Reload"
+
+Vai su latanadellepulci.pythonanywhere.com
+
+✅ FATTO!

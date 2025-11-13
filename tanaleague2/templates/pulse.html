@@ -1,0 +1,86 @@
+{# ============================================================================
+# templates/pulse.html
+# ----------------------------------------------------------------------------
+# Pulse stagionale – KPI e grafici semplici e chiari.
+# ============================================================================ #}
+{% extends "base.html" %}
+{% block title %}Pulse – {{ season.name }}{% endblock %}
+{% block content %}
+<div class="row mb-3">
+  <div class="col">
+    <h2>Pulse – {{ season.name }} ({{ season.id }})</h2>
+    <p class="text-muted">TCG: {{ season.tcg }} • Ultimo aggiornamento cache: {{ last_update }}</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="h4">{{ kpi.events_total }}</div>
+        <div class="text-muted small">Eventi totali</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="h4">{{ kpi.unique_players }}</div>
+        <div class="text-muted small">Partecipanti unici</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="h4">{{ kpi.total_entries }}</div>
+        <div class="text-muted small">Iscrizioni totali</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="h4">{{ '%.1f'|format(kpi.avg_participants) }}</div>
+        <div class="text-muted small">Media partecipanti</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="h4">{{ '%.1f'|format(kpi.top8_pct) }}%</div>
+        <div class="text-muted small">% piazzamenti Top8</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="card text-center">
+      <div class="card-body">
+        {% if kpi.omw_avg is not none %}
+          <div class="h4">{{ '%.2f'|format(kpi.omw_avg*100) }}%</div>
+        {% else %}
+          <div class="h5 text-muted">n/d</div>
+        {% endif %}
+        <div class="text-muted small">OMW% medio</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="my-4"/>
+
+<div class="card mb-3">
+  <div class="card-header"><strong>Iscritti per evento</strong></div>
+  <div class="card-body">
+    <div id="chart-counts" data-series='{{ series.participants_per_event|tojson }}'></div>
+  </div>
+</div>
+
+<div class="card mb-5">
+  <div class="card-header"><strong>Punti medi per evento</strong></div>
+  <div class="card-body">
+    <div id="chart-points" data-series='{{ series.avg_points_per_event|tojson }}'></div>
+  </div>
+</div>
+{% endblock %}
