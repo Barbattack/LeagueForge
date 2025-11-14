@@ -207,38 +207,100 @@ def import_to_sheet(data, test_mode=False):
             ws_matches.append_rows(data['matches'])
     print(f"✅ Matches: {len(data['matches'])} match")
 
-    # 4. Update Players
+    # 4. Update Players (con aggregazione lifetime stats come One Piece)
     if not test_mode:
         ws_players = sheet.worksheet("Players")
-        existing_players = ws_players.col_values(1)[3:] if len(ws_players.col_values(1)) > 3 else []
-        new_players = []
+        ws_results = sheet.worksheet("Results")
+
+        existing_players = ws_players.get_all_values()
+        existing_dict = {row[0]: i for i, row in enumerate(existing_players[3:], start=4) if row}
+
+        # Calcola statistiche lifetime da TUTTO il foglio Results
+        all_results = ws_results.get_all_values()
+        lifetime_stats = {}
+
+        for row in all_results[3:]:
+            if not row or len(row) < 10:
+                continue
+            membership = row[2]
+            ranking = int(row[3]) if row[3] else 999
+            win_points = float(row[4]) if row[4] else 0
+            points_total = float(row[8]) if row[8] else 0
+
+            if membership not in lifetime_stats:
+                lifetime_stats[membership] = {
+                    'total_tournaments': 0,
+                    'tournament_wins': 0,
+                    'match_wins': 0,
+                    'total_points': 0
+                }
+
+            lifetime_stats[membership]['total_tournaments'] += 1
+            if ranking == 1:
+                lifetime_stats[membership]['tournament_wins'] += 1
+            lifetime_stats[membership]['match_wins'] += int(win_points / 3)
+            lifetime_stats[membership]['total_points'] += points_total
+
+        # Aggiorna o crea giocatori
+        players_to_update = []
+        players_to_add = []
 
         for uid, name in data['players'].items():
             uid_padded = uid.zfill(10)
-            if uid_padded not in existing_players:
-                new_players.append([
+            tournament_date = data['tournament'][2]
+
+            stats = lifetime_stats.get(uid_padded, {
+                'total_tournaments': 0,
+                'tournament_wins': 0,
+                'match_wins': 0,
+                'total_points': 0
+            })
+
+            if uid_padded in existing_dict:
+                # Aggiorna giocatore esistente
+                row_idx = existing_dict[uid_padded]
+                players_to_update.append({
+                    'range': f"D{row_idx}:H{row_idx}",
+                    'values': [[
+                        tournament_date,
+                        stats['total_tournaments'],
+                        stats['tournament_wins'],
+                        stats['match_wins'],
+                        stats['total_points']
+                    ]]
+                })
+            else:
+                # Nuovo giocatore
+                player_row = [
                     uid_padded,
                     name,
-                    data['tournament'][2],  # first_seen
-                    data['tournament'][2],  # last_seen
-                    1,  # tournaments
-                    0,  # wins
-                    0,  # match_wins
-                    0   # total_points
-                ])
+                    tournament_date,
+                    tournament_date,
+                    stats['total_tournaments'],
+                    stats['tournament_wins'],
+                    stats['match_wins'],
+                    stats['total_points']
+                ]
+                players_to_add.append(player_row)
 
-        if new_players:
-            ws_players.append_rows(new_players)
-        print(f"✅ Players: {len(new_players)} nuovi")
+        # BATCH WRITE - update esistenti (1 chiamata!)
+        if players_to_update:
+            ws_players.batch_update(players_to_update, value_input_option='RAW')
+
+        # BATCH WRITE - nuovi giocatori (1 chiamata!)
+        if players_to_add:
+            ws_players.append_rows(players_to_add, value_input_option='RAW')
+
+        print(f"✅ Players: {len(players_to_add)} nuovi, {len(players_to_update)} aggiornati")
     else:
         # Test mode - simulate
-        print(f"✅ Players: {len(data['players'])} totali")
+        print(f"✅ Players: {len(data['players'])} totali (stats non calcolate in test mode)")
 
     if test_mode:
         print("\n⚠️  TEST COMPLETATO - Nessun dato scritto")
     else:
         print("\n🎉 IMPORT COMPLETATO su FOGLIO TEST!")
-    print(f"API calls: {0 if test_mode else 4}")
+    print(f"API calls: {0 if test_mode else '~6-8 (inclusa aggregazione stats)'}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Import Pokemon tournament from TDF file (TEST VERSION)')
