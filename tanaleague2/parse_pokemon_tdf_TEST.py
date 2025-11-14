@@ -142,7 +142,10 @@ def parse_tdf(filepath, season_id):
             round(points_victory, 2),
             round(points_ranking, 2),
             round(points_total, 2),
-            players[uid]
+            players[uid],
+            w,  # Match_W (col 10) - Pokemon specific
+            t,  # Match_T (col 11) - Pokemon specific
+            l   # Match_L (col 12) - Pokemon specific
         ])
 
     # Sort by rank
@@ -227,18 +230,33 @@ def import_to_sheet(data, test_mode=False):
             win_points = float(row[4]) if row[4] else 0
             points_total = float(row[8]) if row[8] else 0
 
+            # Check if row has W/T/L columns (Pokemon specific, cols 10-12)
+            if len(row) >= 13 and row[10] and row[11] and row[12]:
+                match_w = int(row[10])
+                match_t = int(row[11])
+                match_l = int(row[12])
+            else:
+                # Fallback for One Piece (no W/T/L columns)
+                match_w = int(win_points / 3)
+                match_t = 0
+                match_l = 0
+
             if membership not in lifetime_stats:
                 lifetime_stats[membership] = {
                     'total_tournaments': 0,
                     'tournament_wins': 0,
-                    'match_wins': 0,
+                    'match_w': 0,
+                    'match_t': 0,
+                    'match_l': 0,
                     'total_points': 0
                 }
 
             lifetime_stats[membership]['total_tournaments'] += 1
             if ranking == 1:
                 lifetime_stats[membership]['tournament_wins'] += 1
-            lifetime_stats[membership]['match_wins'] += int(win_points / 3)
+            lifetime_stats[membership]['match_w'] += match_w
+            lifetime_stats[membership]['match_t'] += match_t
+            lifetime_stats[membership]['match_l'] += match_l
             lifetime_stats[membership]['total_points'] += points_total
 
         # Aggiorna o crea giocatori
@@ -252,7 +270,9 @@ def import_to_sheet(data, test_mode=False):
             stats = lifetime_stats.get(uid_padded, {
                 'total_tournaments': 0,
                 'tournament_wins': 0,
-                'match_wins': 0,
+                'match_w': 0,
+                'match_t': 0,
+                'match_l': 0,
                 'total_points': 0
             })
 
@@ -260,12 +280,14 @@ def import_to_sheet(data, test_mode=False):
                 # Aggiorna giocatore esistente
                 row_idx = existing_dict[uid_padded]
                 players_to_update.append({
-                    'range': f"D{row_idx}:H{row_idx}",
+                    'range': f"D{row_idx}:J{row_idx}",  # Extended range for W/T/L
                     'values': [[
                         tournament_date,
                         stats['total_tournaments'],
                         stats['tournament_wins'],
-                        stats['match_wins'],
+                        stats['match_w'],
+                        stats['match_t'],
+                        stats['match_l'],
                         stats['total_points']
                     ]]
                 })
@@ -278,7 +300,9 @@ def import_to_sheet(data, test_mode=False):
                     tournament_date,
                     stats['total_tournaments'],
                     stats['tournament_wins'],
-                    stats['match_wins'],
+                    stats['match_w'],
+                    stats['match_t'],
+                    stats['match_l'],
                     stats['total_points']
                 ]
                 players_to_add.append(player_row)
