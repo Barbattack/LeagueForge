@@ -236,9 +236,15 @@ def import_to_sheet(data, test_mode=False):
             membership = row[2]
             tournament_id = row[1]
 
-            # Deriva TCG dal Tournament_ID
+            # Deriva TCG dal Tournament_ID - estrae PREFIX (lettere iniziali fino a digit/simbolo)
             season_id = tournament_id.split('_')[0] if '_' in tournament_id else ''
-            row_tcg = ''.join(ch for ch in season_id if ch.isalpha()).upper()
+            row_tcg = ''
+            for ch in season_id:
+                if ch.isalpha():
+                    row_tcg += ch
+                else:
+                    break  # Stop al primo non-lettera (PKM-TEST01 → PKM)
+            row_tcg = row_tcg.upper()
 
             # Filtra solo risultati del TCG corrente
             if row_tcg != tcg:

@@ -869,9 +869,15 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
         membership = row[2]
         tournament_id = row[1]
 
-        # Deriva TCG dal Tournament_ID (es: OP12_2025-01-15 → OP)
+        # Deriva TCG dal Tournament_ID - estrae PREFIX (lettere iniziali fino a digit/simbolo)
         season_id = tournament_id.split('_')[0] if '_' in tournament_id else ''
-        row_tcg = ''.join(ch for ch in season_id if ch.isalpha()).upper()
+        row_tcg = ''
+        for ch in season_id:
+            if ch.isalpha():
+                row_tcg += ch
+            else:
+                break  # Stop al primo non-lettera (OP-TEST01 → OP)
+        row_tcg = row_tcg.upper()
 
         # Filtra solo risultati del TCG corrente
         if row_tcg != tcg:
