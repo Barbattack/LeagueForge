@@ -140,7 +140,10 @@ def parse_tdf(filepath, season_id):
             round(points_victory, 2),
             round(points_ranking, 2),
             round(points_total, 2),
-            players[uid]
+            players[uid],
+            w,
+            t,
+            l
         ])
 
     # Sort by rank
@@ -208,30 +211,125 @@ def import_to_sheet(data, test_mode=False):
     # 4. Update Players
     if not test_mode:
         ws_players = sheet.worksheet("Players")
-        existing_players = ws_players.col_values(1)[3:]
-        new_players = []
+
+        import time
+        time.sleep(1)
+        ws_results = sheet.worksheet("Results")
+
+        tcg = ''.join(ch for ch in data['tournament'][0].split('_')[0] if ch.isalpha()).upper()
+
+        existing_players = ws_players.get_all_values()
+        existing_dict = {(row[0], row[2]): i for i, row in enumerate(existing_players[3:], start=4) if row and len(row) > 2}
+
+        all_results = ws_results.get_all_values()
+        lifetime_stats = {}
+
+        for row in all_results[3:]:
+            if not row or len(row) < 10:
+                continue
+            membership = row[2]
+            tournament_id = row[1]
+
+            season_id = tournament_id.split('_')[0] if '_' in tournament_id else ''
+            row_tcg = ''
+            for ch in season_id:
+                if ch.isalpha():
+                    row_tcg += ch
+                else:
+                    break
+            row_tcg = row_tcg.upper()
+
+            if row_tcg != tcg:
+                continue
+
+            ranking = int(row[3]) if row[3] else 999
+            win_points = float(row[4]) if row[4] else 0
+            points_total = float(row[8]) if row[8] else 0
+
+            if len(row) >= 13 and row[10] and row[11] and row[12]:
+                match_w = int(row[10])
+                match_t = int(row[11])
+                match_l = int(row[12])
+            else:
+                match_w = int(win_points / 3)
+                match_t = 0
+                match_l = 0
+
+            key = (membership, tcg)
+            if key not in lifetime_stats:
+                lifetime_stats[key] = {
+                    'total_tournaments': 0,
+                    'tournament_wins': 0,
+                    'match_w': 0,
+                    'match_t': 0,
+                    'match_l': 0,
+                    'total_points': 0
+                }
+
+            lifetime_stats[key]['total_tournaments'] += 1
+            if ranking == 1:
+                lifetime_stats[key]['tournament_wins'] += 1
+            lifetime_stats[key]['match_w'] += match_w
+            lifetime_stats[key]['match_t'] += match_t
+            lifetime_stats[key]['match_l'] += match_l
+            lifetime_stats[key]['total_points'] += points_total
+
+        players_to_update = []
+        players_to_add = []
 
         for uid, name in data['players'].items():
             uid_padded = uid.zfill(10)
-            if uid_padded not in existing_players:
-                new_players.append([
+            tournament_date = data['tournament'][2]
+            key = (uid_padded, tcg)
+
+            stats = lifetime_stats.get(key, {
+                'total_tournaments': 0,
+                'tournament_wins': 0,
+                'match_w': 0,
+                'match_t': 0,
+                'match_l': 0,
+                'total_points': 0
+            })
+
+            if key in existing_dict:
+                row_idx = existing_dict[key]
+                players_to_update.append({
+                    'range': f"D{row_idx}:K{row_idx}",
+                    'values': [[
+                        tournament_date,
+                        stats['total_tournaments'],
+                        stats['tournament_wins'],
+                        stats['match_w'],
+                        stats['match_t'],
+                        stats['match_l'],
+                        stats['total_points']
+                    ]]
+                })
+            else:
+                player_row = [
                     uid_padded,
                     name,
-                    data['tournament'][2],  # first_seen
-                    data['tournament'][2],  # last_seen
-                    1,  # tournaments
-                    0,  # wins
-                    0,  # match_wins
-                    0   # total_points
-                ])
+                    tcg,
+                    tournament_date,
+                    tournament_date,
+                    stats['total_tournaments'],
+                    stats['tournament_wins'],
+                    stats['match_w'],
+                    stats['match_t'],
+                    stats['match_l'],
+                    stats['total_points']
+                ]
+                players_to_add.append(player_row)
 
-        if new_players:
-            ws_players.append_rows(new_players)
-        print(f"✅ Players: {len(new_players)} nuovi")
+        if players_to_update:
+            ws_players.batch_update(players_to_update, value_input_option='RAW')
+
+        if players_to_add:
+            ws_players.append_rows(players_to_add, value_input_option='RAW')
+
+        print(f"✅ Players: {len(players_to_add)} nuovi, {len(players_to_update)} aggiornati")
     else:
-        # Test mode - simulate
-        new_count = sum(1 for uid in data['players'].keys() if uid.zfill(10) not in [])
-        print(f"✅ Players: {len(data['players'])} totali")
+        print(f"✅ Players: {len(data['players'])} totali (stats non calcolate in test mode)")
 
     if test_mode:
         print("\n⚠️  TEST COMPLETATO - Nessun dato scritto")

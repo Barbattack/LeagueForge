@@ -417,9 +417,10 @@ def players_list():
                 players.append({
                     'membership': row[0],
                     'name': row[1],
-                    'tournaments': int(row[4]) if len(row) > 4 and row[4] else 0,
-                    'wins': int(row[5]) if len(row) > 5 and row[5] else 0,
-                    'points': float(row[7]) if len(row) > 7 and row[7] else 0
+                    'tcg': row[2] if len(row) > 2 else '',
+                    'tournaments': int(row[5]) if len(row) > 5 and row[5] else 0,
+                    'wins': int(row[6]) if len(row) > 6 and row[6] else 0,
+                    'points': float(row[10]) if len(row) > 10 and row[10] else 0
                 })
         
         # Ordina per punti totali DESC

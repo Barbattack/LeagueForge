@@ -788,17 +788,25 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
     ws_results = sheet.worksheet("Results")
     for idx, row in df.iterrows():
         membership = str(row['Membership Number']).zfill(10)
+        win_points = int(row['Win Points'])
+        match_w = int(win_points / 3)
+        match_t = 0
+        match_l = n_rounds - match_w
+
         result_row = [
             f"{tournament_id}_{membership}",
             tournament_id,
             membership,
             int(row['Ranking']),
-            int(row['Win Points']),
+            win_points,
             row['OMW %'],
             float(row['Points_Victory']),
             float(row['Points_Ranking']),
             float(row['Points_Total']),
-            row['User Name']
+            row['User Name'],
+            match_w,
+            match_t,
+            match_l
         ]
         ws_results.append_row(result_row)
 
@@ -828,36 +836,67 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
     # 7.4 Aggiorna/crea giocatori nel foglio Players
     print(f"   📊 Foglio Players...")
     ws_players = sheet.worksheet("Players")
+
+    import time
+    time.sleep(1)
     ws_results = sheet.worksheet("Results")
-    
+
+    tcg = config['tcg']
     existing_players = ws_players.get_all_values()
-    existing_dict = {row[0]: i for i, row in enumerate(existing_players[3:], start=4) if row}
-    
-    # Calcola statistiche lifetime da Results
+    existing_dict = {(row[0], row[2]): i for i, row in enumerate(existing_players[3:], start=4) if row and len(row) > 2}
+
     all_results = ws_results.get_all_values()
     lifetime_stats = {}
-    
+
     for row in all_results[3:]:
         if not row or len(row) < 10:
             continue
         membership = row[2]
+        tournament_id = row[1]
+
+        season_id = tournament_id.split('_')[0] if '_' in tournament_id else ''
+        row_tcg = ''
+        for ch in season_id:
+            if ch.isalpha():
+                row_tcg += ch
+            else:
+                break
+        row_tcg = row_tcg.upper()
+
+        if row_tcg != tcg:
+            continue
+
         ranking = int(row[3]) if row[3] else 999
         win_points = float(row[4]) if row[4] else 0
         points_total = float(row[8]) if row[8] else 0
-        
-        if membership not in lifetime_stats:
-            lifetime_stats[membership] = {
+
+        if len(row) >= 13 and row[10] and row[11] and row[12]:
+            match_w = int(row[10])
+            match_t = int(row[11])
+            match_l = int(row[12])
+        else:
+            match_w = int(win_points / 3)
+            match_t = 0
+            match_l = 0
+
+        key = (membership, tcg)
+        if key not in lifetime_stats:
+            lifetime_stats[key] = {
                 'total_tournaments': 0,
                 'tournament_wins': 0,
-                'match_wins': 0,
+                'match_w': 0,
+                'match_t': 0,
+                'match_l': 0,
                 'total_points': 0
             }
-        
-        lifetime_stats[membership]['total_tournaments'] += 1
+
+        lifetime_stats[key]['total_tournaments'] += 1
         if ranking == 1:
-            lifetime_stats[membership]['tournament_wins'] += 1
-        lifetime_stats[membership]['match_wins'] += int(win_points / 3)
-        lifetime_stats[membership]['total_points'] += points_total
+            lifetime_stats[key]['tournament_wins'] += 1
+        lifetime_stats[key]['match_w'] += match_w
+        lifetime_stats[key]['match_t'] += match_t
+        lifetime_stats[key]['match_l'] += match_l
+        lifetime_stats[key]['total_points'] += points_total
     
     # Aggiorna o crea giocatori
     players_to_update = []
@@ -866,37 +905,43 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
     for idx, row in df.iterrows():
         membership = str(row['Membership Number']).zfill(10)
         display_name = row['User Name']
-        
-        stats = lifetime_stats.get(membership, {
+        key = (membership, tcg)
+
+        stats = lifetime_stats.get(key, {
             'total_tournaments': 0,
             'tournament_wins': 0,
-            'match_wins': 0,
+            'match_w': 0,
+            'match_t': 0,
+            'match_l': 0,
             'total_points': 0
         })
-        
-        if membership in existing_dict:
-            # Aggiorna giocatore esistente
-            row_idx = existing_dict[membership]
+
+        if key in existing_dict:
+            row_idx = existing_dict[key]
             players_to_update.append({
-                'range': f"D{row_idx}:H{row_idx}",
+                'range': f"D{row_idx}:K{row_idx}",
                 'values': [[
                     tournament_date,
                     stats['total_tournaments'],
                     stats['tournament_wins'],
-                    stats['match_wins'],
+                    stats['match_w'],
+                    stats['match_t'],
+                    stats['match_l'],
                     stats['total_points']
                 ]]
             })
         else:
-            # Nuovo giocatore
             player_row = [
                 membership,
                 display_name,
+                tcg,
                 tournament_date,
                 tournament_date,
                 stats['total_tournaments'],
                 stats['tournament_wins'],
-                stats['match_wins'],
+                stats['match_w'],
+                stats['match_t'],
+                stats['match_l'],
                 stats['total_points']
             ]
             players_to_add.append(player_row)
