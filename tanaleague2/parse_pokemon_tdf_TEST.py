@@ -215,10 +215,14 @@ def import_to_sheet(data, test_mode=False):
         ws_players = sheet.worksheet("Players")
         ws_results = sheet.worksheet("Results")
 
-        existing_players = ws_players.get_all_values()
-        existing_dict = {row[0]: i for i, row in enumerate(existing_players[1:], start=2) if row}
+        # Deriva TCG dal season_id (es: PKM-TEST01 → PKM)
+        tcg = ''.join(ch for ch in data['tournament'][0].split('_')[0] if ch.isalpha()).upper()
 
-        # Calcola statistiche lifetime da TUTTO il foglio Results
+        existing_players = ws_players.get_all_values()
+        # Chiave: (Membership, TCG)
+        existing_dict = {(row[0], row[2]): i for i, row in enumerate(existing_players[1:], start=2) if row and len(row) > 2}
+
+        # Calcola statistiche lifetime da Results (filtrate per TCG)
         all_results = ws_results.get_all_values()
         lifetime_stats = {}
 
@@ -226,23 +230,33 @@ def import_to_sheet(data, test_mode=False):
             if not row or len(row) < 10:
                 continue
             membership = row[2]
+            tournament_id = row[1]
+
+            # Deriva TCG dal Tournament_ID
+            season_id = tournament_id.split('_')[0] if '_' in tournament_id else ''
+            row_tcg = ''.join(ch for ch in season_id if ch.isalpha()).upper()
+
+            # Filtra solo risultati del TCG corrente
+            if row_tcg != tcg:
+                continue
+
             ranking = int(row[3]) if row[3] else 999
             win_points = float(row[4]) if row[4] else 0
             points_total = float(row[8]) if row[8] else 0
 
-            # Check if row has W/T/L columns (Pokemon specific, cols 10-12)
+            # Check W/T/L columns
             if len(row) >= 13 and row[10] and row[11] and row[12]:
                 match_w = int(row[10])
                 match_t = int(row[11])
                 match_l = int(row[12])
             else:
-                # Fallback for One Piece (no W/T/L columns)
                 match_w = int(win_points / 3)
                 match_t = 0
                 match_l = 0
 
-            if membership not in lifetime_stats:
-                lifetime_stats[membership] = {
+            key = (membership, tcg)
+            if key not in lifetime_stats:
+                lifetime_stats[key] = {
                     'total_tournaments': 0,
                     'tournament_wins': 0,
                     'match_w': 0,
@@ -251,13 +265,13 @@ def import_to_sheet(data, test_mode=False):
                     'total_points': 0
                 }
 
-            lifetime_stats[membership]['total_tournaments'] += 1
+            lifetime_stats[key]['total_tournaments'] += 1
             if ranking == 1:
-                lifetime_stats[membership]['tournament_wins'] += 1
-            lifetime_stats[membership]['match_w'] += match_w
-            lifetime_stats[membership]['match_t'] += match_t
-            lifetime_stats[membership]['match_l'] += match_l
-            lifetime_stats[membership]['total_points'] += points_total
+                lifetime_stats[key]['tournament_wins'] += 1
+            lifetime_stats[key]['match_w'] += match_w
+            lifetime_stats[key]['match_t'] += match_t
+            lifetime_stats[key]['match_l'] += match_l
+            lifetime_stats[key]['total_points'] += points_total
 
         # Aggiorna o crea giocatori
         players_to_update = []
@@ -266,8 +280,9 @@ def import_to_sheet(data, test_mode=False):
         for uid, name in data['players'].items():
             uid_padded = uid.zfill(10)
             tournament_date = data['tournament'][2]
+            key = (uid_padded, tcg)
 
-            stats = lifetime_stats.get(uid_padded, {
+            stats = lifetime_stats.get(key, {
                 'total_tournaments': 0,
                 'tournament_wins': 0,
                 'match_w': 0,
@@ -276,11 +291,11 @@ def import_to_sheet(data, test_mode=False):
                 'total_points': 0
             })
 
-            if uid_padded in existing_dict:
+            if key in existing_dict:
                 # Aggiorna giocatore esistente
-                row_idx = existing_dict[uid_padded]
+                row_idx = existing_dict[key]
                 players_to_update.append({
-                    'range': f"D{row_idx}:J{row_idx}",  # Extended range for W/T/L
+                    'range': f"D{row_idx}:K{row_idx}",  # Extended range with TCG + W/T/L
                     'values': [[
                         tournament_date,
                         stats['total_tournaments'],
@@ -296,6 +311,7 @@ def import_to_sheet(data, test_mode=False):
                 player_row = [
                     uid_padded,
                     name,
+                    tcg,  # Colonna TCG
                     tournament_date,
                     tournament_date,
                     stats['total_tournaments'],
