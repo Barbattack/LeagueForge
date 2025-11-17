@@ -67,132 +67,97 @@ def parse_pdf(pdf_path: str, season_id: str, tournament_date: str) -> Dict:
     with pdfplumber.open(pdf_path) as pdf:
         # STRATEGIA 1: Prova estrazione tabelle (più affidabile)
         print("🔍 Strategia 1: Estrazione tabelle...")
+
         for page_num, page in enumerate(pdf.pages, 1):
             tables = page.extract_tables()
             if tables:
                 print(f"  📊 Pagina {page_num}: {len(tables)} tabelle trovate")
+
                 for table_idx, table in enumerate(tables):
                     print(f"    Tabella {table_idx + 1}: {len(table)} righe")
-                    # Debug: mostra prime righe
-                    for i, row in enumerate(table[:3]):
-                        print(f"      Riga {i}: {row}")
 
-        # STRATEGIA 2: Estrazione con layout (mantiene posizioni)
-        print("\n🔍 Strategia 2: Estrazione layout...")
-        all_words = []
-        for page in pdf.pages:
-            words = page.extract_words()
-            all_words.extend(words)
+                    # Processa ogni riga della tabella
+                    for row in table:
+                        if not row or len(row) < 7:
+                            continue
 
-        print(f"  📝 Trovate {len(all_words)} parole")
+                        # Formato: [Rank, Name\n(Nick), Points, W-L-D, OMW%, GW%, OGW%]
+                        try:
+                            rank_str = row[0].strip() if row[0] else ""
+                            name_nick = row[1].strip() if row[1] else ""
+                            points_str = row[2].strip() if row[2] else ""
+                            wld_str = row[3].strip() if row[3] else ""
+                            omw_str = row[4].strip().replace('%', '') if row[4] else ""
+                            gw_str = row[5].strip().replace('%', '') if row[5] else ""
+                            ogw_str = row[6].strip().replace('%', '') if row[6] else ""
 
-        # Raggruppa per riga (stesso y)
-        lines_dict = {}
-        for word in all_words:
-            y = round(word['top'])  # Arrotonda coordinata Y
-            if y not in lines_dict:
-                lines_dict[y] = []
-            lines_dict[y].append(word)
+                            # Valida rank (deve essere numero)
+                            if not rank_str.isdigit():
+                                continue
 
-        # Ordina le righe per Y (dall'alto verso il basso)
-        sorted_lines = sorted(lines_dict.items())
+                            rank = int(rank_str)
 
-        print(f"  📏 Raggr uppate in {len(sorted_lines)} righe")
+                            # Estrai nome e nickname
+                            # Formato: "Cogliati, Pietro\n(2metalupo)"
+                            if '\n' in name_nick and '(' in name_nick:
+                                parts = name_nick.split('\n')
+                                name = parts[0].strip()
+                                # Estrai nickname dalle parentesi
+                                nick_match = re.search(r'\(([^)]+)\)', parts[1])
+                                if not nick_match:
+                                    continue
+                                nickname = nick_match.group(1)
+                            else:
+                                # Fallback: cerca nickname in tutto il testo
+                                nick_match = re.search(r'\(([^)]+)\)', name_nick)
+                                if not nick_match:
+                                    continue
+                                nickname = nick_match.group(1)
+                                name = name_nick[:nick_match.start()].replace('\n', ' ').strip()
 
-        # Processa le righe per trovare i giocatori
-        current_rank = None
-        current_name = None
-        current_nickname = None
+                            # Parse W-L-D
+                            wld_match = re.match(r'(\d+)-(\d+)-(\d+)', wld_str)
+                            if not wld_match:
+                                continue
 
-        for y, words_in_line in sorted_lines:
-            # Ordina parole per X (da sinistra a destra)
-            words_in_line.sort(key=lambda w: w['x0'])
-            line_text = ' '.join([w['text'] for w in words_in_line])
+                            w = int(wld_match.group(1))
+                            l = int(wld_match.group(2))
+                            d = int(wld_match.group(3))
 
-            # Cerca rank (numero da 1 a 99 all'inizio della riga)
-            rank_match = re.match(r'^(\d{1,2})\b', line_text)
-            if rank_match and 1 <= int(rank_match.group(1)) <= 99:
-                # Possibile inizio di un player
-                current_rank = int(rank_match.group(1))
-                # Rimuovi il rank dal testo
-                rest_of_line = line_text[len(rank_match.group(0)):].strip()
+                            points = int(points_str)
+                            omw = float(omw_str) if omw_str else 0.0
+                            gw = float(gw_str) if gw_str else 0.0
+                            ogw = float(ogw_str) if ogw_str else 0.0
 
-                # Cerca nickname nella stessa riga
-                nick_match = re.search(r'\(([^)]+)\)', rest_of_line)
-                if nick_match:
-                    current_nickname = nick_match.group(1)
-                    # Nome è tutto quello prima del nickname
-                    name_part = rest_of_line[:nick_match.start()].strip()
-                    if name_part:
-                        current_name = name_part
-                else:
-                    # Nickname probabilmente sulla riga successiva
-                    # Il nome potrebbe essere sulla stessa riga
-                    if rest_of_line:
-                        current_name = rest_of_line
-                continue
+                            win_points = w * 3 + d * 1
 
-            # Se abbiamo un rank ma non nickname, cerca nickname
-            if current_rank and not current_nickname:
-                nick_match = re.search(r'\(([^)]+)\)', line_text)
-                if nick_match:
-                    current_nickname = nick_match.group(1)
-                    # Se non avevamo nome, prendi quello prima del nickname
-                    name_before = line_text[:nick_match.start()].strip()
-                    if name_before and not current_name:
-                        current_name = name_before
-                    continue
-                # Se non c'è nickname ma c'è testo, potrebbe essere il nome
-                if line_text and not current_name:
-                    current_name = line_text
-                    continue
+                            players[nickname] = name
 
-            # Se abbiamo rank, nome e nickname, cerca stats
-            if current_rank and current_name and current_nickname:
-                # Pattern stats: Points W-L-D OMW% GW% OGW%
-                stats_match = re.search(
-                    r'(\d+)\s+(\d+)-(\d+)-(\d+)\s+([\d.]+)%\s+([\d.]+)%\s+([\d.]+)%',
-                    line_text
-                )
-                if stats_match:
-                    points = int(stats_match.group(1))
-                    w = int(stats_match.group(2))
-                    l = int(stats_match.group(3))
-                    d = int(stats_match.group(4))
-                    omw = float(stats_match.group(5))
-                    gw = float(stats_match.group(6))
-                    ogw = float(stats_match.group(7))
+                            results_data.append({
+                                'rank': rank,
+                                'name': name,
+                                'membership': nickname,
+                                'points': points,
+                                'w': w,
+                                'l': l,
+                                'd': d,
+                                'win_points': win_points,
+                                'omw': omw,
+                                'gw': gw,
+                                'ogw': ogw
+                            })
 
-                    win_points = w * 3 + d * 1
+                            print(f"  ✓ Rank {rank}: {name} ({nickname}) - {w}-{l}-{d}")
 
-                    players[current_nickname] = current_name
+                        except (ValueError, IndexError, AttributeError) as e:
+                            # Skip righe malformate
+                            continue
 
-                    results_data.append({
-                        'rank': current_rank,
-                        'name': current_name,
-                        'membership': current_nickname,
-                        'points': points,
-                        'w': w,
-                        'l': l,
-                        'd': d,
-                        'win_points': win_points,
-                        'omw': omw,
-                        'gw': gw,
-                        'ogw': ogw
-                    })
-
-                    print(f"  ✓ Rank {current_rank}: {current_name} ({current_nickname}) - {w}-{l}-{d}")
-
-                    # Reset per il prossimo player
-                    current_rank = None
-                    current_name = None
-                    current_nickname = None
-
+    # Fine estrazione PDF
     if not results_data:
         raise ValueError("❌ Nessun giocatore trovato nel PDF! Verifica il formato.")
 
     print(f"\n✅ Parsing completato: {len(results_data)} giocatori trovati!")
-
     # Ordina per rank
     results_data.sort(key=lambda x: x['rank'])
 
