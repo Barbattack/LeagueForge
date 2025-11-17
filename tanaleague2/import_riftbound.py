@@ -76,15 +76,6 @@ def parse_pdf(pdf_path: str, season_id: str, tournament_date: str) -> Dict:
                 for table_idx, table in enumerate(tables):
                     print(f"    Tabella {table_idx + 1}: {len(table)} righe")
 
-                    # DEBUG: Stampa TUTTE le righe per capire il formato
-                    print(f"    🐛 DEBUG - Analisi righe:")
-                    for i, row in enumerate(table):
-                        if row and len(row) > 0:
-                            rank_col = row[0] if len(row) > 0 else "N/A"
-                            name_col = row[1][:30] if len(row) > 1 and row[1] else "N/A"
-                            cols_count = len(row)
-                            print(f"      Row {i}: Cols={cols_count}, Rank=[{rank_col}], Name=[{name_col}...]")
-
                     # Processa ogni riga della tabella
                     for row_idx, row in enumerate(table):
                         if not row or len(row) < 7:
@@ -107,22 +98,20 @@ def parse_pdf(pdf_path: str, season_id: str, tournament_date: str) -> Dict:
                             rank = int(rank_str)
 
                             # Estrai nome e nickname
-                            # Formato: "Cogliati, Pietro\n(2metalupo)"
-                            if '\n' in name_nick and '(' in name_nick:
-                                parts = name_nick.split('\n')
-                                name = parts[0].strip()
-                                # Estrai nickname dalle parentesi
-                                nick_match = re.search(r'\(([^)]+)\)', parts[1])
-                                if not nick_match:
-                                    continue
-                                nickname = nick_match.group(1)
-                            else:
-                                # Fallback: cerca nickname in tutto il testo
-                                nick_match = re.search(r'\(([^)]+)\)', name_nick)
-                                if not nick_match:
-                                    continue
-                                nickname = nick_match.group(1)
-                                name = name_nick[:nick_match.start()].replace('\n', ' ').strip()
+                            # Il nickname può essere su una riga o spezzato su due righe
+                            # Esempio 1: "Cogliati, Pietro\n(2metalupo)"
+                            # Esempio 2: "Scarinzi, Matteo (Hotel\nMotel)" ← nickname con spazio spezzato!
+
+                            # Cerca nickname nell'INTERO testo (gestisce entrambi i casi)
+                            nick_match = re.search(r'\(([^)]+)\)', name_nick)
+                            if not nick_match:
+                                # Nessun nickname trovato - skippa
+                                continue
+
+                            nickname = nick_match.group(1).replace('\n', ' ').strip()
+
+                            # Nome è tutto quello prima del nickname
+                            name = name_nick[:nick_match.start()].replace('\n', ' ').strip()
 
                             # Parse W-L-D
                             wld_match = re.match(r'(\d+)-(\d+)-(\d+)', wld_str)
@@ -159,9 +148,7 @@ def parse_pdf(pdf_path: str, season_id: str, tournament_date: str) -> Dict:
                             print(f"  ✓ Rank {rank}: {name} ({nickname}) - {w}-{l}-{d}")
 
                         except (ValueError, IndexError, AttributeError) as e:
-                            # Debug: stampa righe che vengono skippate
-                            if row and len(row) >= 4 and row[0] and row[0].strip().isdigit():
-                                print(f"  ⚠️  SKIPPED Row {row_idx}: Rank={row[0]}, Col1=[{row[1][:50] if row[1] else ''}], Error={type(e).__name__}")
+                            # Skip righe malformate
                             continue
 
     # Fine estrazione PDF
