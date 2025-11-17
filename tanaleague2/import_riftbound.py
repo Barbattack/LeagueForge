@@ -77,7 +77,7 @@ def parse_pdf(pdf_path: str, season_id: str, tournament_date: str) -> Dict:
                     print(f"    Tabella {table_idx + 1}: {len(table)} righe")
 
                     # Processa ogni riga della tabella
-                    for row in table:
+                    for row_idx, row in enumerate(table):
                         if not row or len(row) < 7:
                             continue
 
@@ -150,7 +150,9 @@ def parse_pdf(pdf_path: str, season_id: str, tournament_date: str) -> Dict:
                             print(f"  ✓ Rank {rank}: {name} ({nickname}) - {w}-{l}-{d}")
 
                         except (ValueError, IndexError, AttributeError) as e:
-                            # Skip righe malformate
+                            # Debug: stampa righe che vengono skippate
+                            if row and len(row) >= 4 and row[0] and row[0].strip().isdigit():
+                                print(f"  ⚠️  SKIPPED Row {row_idx}: Rank={row[0]}, Col1=[{row[1][:50] if row[1] else ''}], Error={type(e).__name__}")
                             continue
 
     # Fine estrazione PDF
