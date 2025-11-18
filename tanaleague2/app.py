@@ -614,13 +614,16 @@ def stats(scope):
     # only "real seasons" for the dropdown (exclude ARCHIVED)
     real_seasons = [s for s in seasons if _is_valid_season_id(s.get('id')) and s.get('status','').upper() != 'ARCHIVED']
 
-    # default season for the "Classifica" button
-    active = [s for s in real_seasons if s.get('status','').upper() == 'ACTIVE']
-    default_season = (active[0]['id'] if active else (real_seasons[0]['id'] if real_seasons else 'OP12'))
+    # default season for the "Classifica" button - dynamic based on current scope TCG
+    current_tcg = _tcg_code(scope) if not scope.startswith('ALL-') else scope.split('-')[1]
+    active_same_tcg = [s for s in real_seasons if s.get('status','').upper() == 'ACTIVE' and s.get('id','').startswith(current_tcg)]
+    default_season = (active_same_tcg[0]['id'] if active_same_tcg else
+                     (real_seasons[0]['id'] if real_seasons else 'OP12'))
 
     # Build ordered dropdown:
     season_ids = [s['id'] for s in real_seasons]
-    active_id = active[0]['id'] if active else None
+    all_active = [s for s in real_seasons if s.get('status','').upper() == 'ACTIVE']
+    active_id = all_active[0]['id'] if all_active else None
     others = [sid for sid in season_ids if sid != active_id]
     others_sorted = sorted(others, key=_season_key_desc)  # already DESC by numeric
 

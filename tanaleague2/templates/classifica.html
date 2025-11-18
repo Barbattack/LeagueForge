@@ -24,12 +24,12 @@
             </button>
             <ul class="dropdown-menu">
                 {% for s in all_seasons %}
-                {% if s.status != 'ARCHIVED' %}
+                {% if s.status|upper != 'ARCHIVED' %}
                 <li>
                     <a class="dropdown-item {% if s.id == season.id %}active{% endif %}"
                        href="{{ url_for('classifica', season_id=s.id) }}">
                         {{ s.name }}
-                        {% if s.status == 'ACTIVE' %}<span class="badge bg-success">Attiva</span>{% endif %}
+                        {% if s.status|upper == 'ACTIVE' %}<span class="badge bg-success">Attiva</span>{% endif %}
                     </a>
                 </li>
                 {% endif %}
