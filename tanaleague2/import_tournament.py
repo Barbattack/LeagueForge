@@ -29,6 +29,7 @@ from datetime import datetime
 import re
 from typing import Dict, List, Tuple
 import argparse
+from achievements import check_and_unlock_achievements
 
 
 # ============================================
@@ -922,6 +923,33 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
             current_count = int(row[5]) if row[5] else 0
             ws_config.update_cell(i, 6, current_count + 1)
             break
+
+    # 7.7 Check e sblocca achievement
+    print(f"   🎮 Check achievement...")
+    try:
+        # Prepara dati nel formato richiesto da check_and_unlock_achievements
+        players_dict = {}
+        for idx, row in df.iterrows():
+            membership = str(row['Membership Number']).zfill(10)
+            players_dict[membership] = row['User Name']
+
+        data = {
+            'tournament': [
+                tournament_id,
+                season_id,
+                tournament_date,
+                n_participants,
+                n_rounds,
+                csv_filename,
+                datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                df.iloc[0]['User Name']
+            ],
+            'players': players_dict
+        }
+
+        check_and_unlock_achievements(sheet, data)
+    except Exception as e:
+        print(f"   ⚠️  Errore achievement check (non bloccante): {e}")
 
     print(f"\n✅ IMPORT COMPLETATO!")
     print(f"\n📊 RIASSUNTO:")
