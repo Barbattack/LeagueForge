@@ -227,32 +227,47 @@ def index():
     data, err, meta = cache.get_data()
     if not data:
         return render_template('error.html', error=err or 'Cache non disponibile'), 500
-    
+
     seasons = data.get('seasons', [])
     standings_by_season = data.get('standings_by_season', {})
-    
-    # Filter only OP seasons
-    op_seasons = [s for s in seasons if s.get('id','').startswith('OP') and _is_valid_season_id(s.get('id'))]
-    
+
+    # Filter OP, PKM, RFB seasons (exclude ARCHIVED)
+    op_seasons = [s for s in seasons if s.get('id','').startswith('OP') and _is_valid_season_id(s.get('id')) and s.get('status','').upper() != 'ARCHIVED']
+    pkm_seasons = [s for s in seasons if s.get('id','').startswith('PKM') and _is_valid_season_id(s.get('id')) and s.get('status','').upper() != 'ARCHIVED']
+    rfb_seasons = [s for s in seasons if s.get('id','').startswith('RFB') and _is_valid_season_id(s.get('id')) and s.get('status','').upper() != 'ARCHIVED']
+
     # Sort by season number DESC (OP12 > OP11)
     def season_num(s):
         sid = s.get('id', '')
         num = ''.join(ch for ch in sid if ch.isdigit())
         return int(num) if num else 0
-    
+
     op_seasons_sorted = sorted(op_seasons, key=season_num, reverse=True)
-    
+    pkm_seasons_sorted = sorted(pkm_seasons, key=season_num, reverse=True)
+    rfb_seasons_sorted = sorted(rfb_seasons, key=season_num, reverse=True)
+
     # Podio: ultima CLOSED
     closed_seasons = [s for s in op_seasons_sorted if s.get('status','').upper() == 'CLOSED']
     podio_season_id = closed_seasons[0]['id'] if closed_seasons else (op_seasons_sorted[0]['id'] if op_seasons_sorted else 'OP12')
-    
+
     # Stats/Highlights: ultima ACTIVE, oppure ultima CLOSED
     active_seasons = [s for s in op_seasons_sorted if s.get('status','').upper() == 'ACTIVE']
     stats_season_id = active_seasons[0]['id'] if active_seasons else podio_season_id
-    
+
+    # Active seasons for each TCG (for homepage buttons)
+    pkm_active_season_id = None
+    if pkm_seasons_sorted:
+        pkm_active = [s for s in pkm_seasons_sorted if s.get('status','').upper() == 'ACTIVE']
+        pkm_active_season_id = pkm_active[0]['id'] if pkm_active else pkm_seasons_sorted[0]['id']
+
+    rfb_active_season_id = None
+    if rfb_seasons_sorted:
+        rfb_active = [s for s in rfb_seasons_sorted if s.get('status','').upper() == 'ACTIVE']
+        rfb_active_season_id = rfb_active[0]['id'] if rfb_active else rfb_seasons_sorted[0]['id']
+
     # Top 3 standings (from podio season)
     standings = standings_by_season.get(podio_season_id, [])[:3]
-    
+
     # Stats highlights (from stats season)
     from stats_cache import get_cached
     stats_obj = get_cached(stats_season_id, 900)
@@ -262,26 +277,59 @@ def index():
             stats_obj = stats_map.get(stats_season_id, {})
         except:
             stats_obj = {}
-    
+
     # Next tournament (from stats season)
     next_tournament = None
     stats_season_meta = next((s for s in seasons if s.get('id') == stats_season_id), None)
     if stats_season_meta:
         next_tournament = stats_season_meta.get('next_tournament')
-    
+
     # Season names for display
     podio_season_name = next((s.get('name','') for s in seasons if s.get('id') == podio_season_id), podio_season_id)
     stats_season_name = next((s.get('name','') for s in seasons if s.get('id') == stats_season_id), stats_season_id)
     
     return render_template(
-        'landing.html', 
-        standings=standings, 
-        stats=stats_obj, 
+        'landing.html',
+        standings=standings,
+        stats=stats_obj,
         next_tournament=next_tournament,
         podio_season_id=podio_season_id,
         stats_season_id=stats_season_id,
         podio_season_name=podio_season_name,
-        stats_season_name=stats_season_name
+        stats_season_name=stats_season_name,
+        pkm_active_season_id=pkm_active_season_id,
+        rfb_active_season_id=rfb_active_season_id
+    )
+
+@app.route('/classifiche')
+def classifiche_page():
+    """Pagina dedicata alle classifiche - lista tutte le stagioni disponibili per TCG"""
+    data, err, meta = cache.get_data()
+    if not data:
+        return render_template('error.html', error=err or 'Cache non disponibile'), 500
+
+    seasons = data.get('seasons', [])
+
+    # Filtra stagioni per TCG (escludi ARCHIVED)
+    op_seasons = [s for s in seasons if s.get('id','').startswith('OP') and _is_valid_season_id(s.get('id')) and s.get('status','').upper() != 'ARCHIVED']
+    pkm_seasons = [s for s in seasons if s.get('id','').startswith('PKM') and _is_valid_season_id(s.get('id')) and s.get('status','').upper() != 'ARCHIVED']
+    rfb_seasons = [s for s in seasons if s.get('id','').startswith('RFB') and _is_valid_season_id(s.get('id')) and s.get('status','').upper() != 'ARCHIVED']
+
+    # Sort by season number DESC
+    def season_num(s):
+        sid = s.get('id', '')
+        num = ''.join(ch for ch in sid if ch.isdigit())
+        return int(num) if num else 0
+
+    op_seasons_sorted = sorted(op_seasons, key=season_num, reverse=True)
+    pkm_seasons_sorted = sorted(pkm_seasons, key=season_num, reverse=True)
+    rfb_seasons_sorted = sorted(rfb_seasons, key=season_num, reverse=True)
+
+    return render_template(
+        'classifiche_page.html',
+        op_seasons=op_seasons_sorted,
+        pkm_seasons=pkm_seasons_sorted,
+        rfb_seasons=rfb_seasons_sorted
     )
 
 # Support BOTH /classifica and /classifica/<season_id>
