@@ -18,7 +18,7 @@ Guida completa per importare tornei da CSV, PDF e TDF nei 3 TCG supportati.
 
 ### Formato File
 
-**Sorgente**: Export da [Limitlesstcg](https://play.limitlesstcg.com/)
+**Sorgente**: Export CSV dal portale Bandai ufficiale per il gioco organizzato One Piece TCG
 
 **Formato**: CSV con le seguenti colonne (ordine importante):
 ```

@@ -20,6 +20,21 @@ def inject_defaults():
     return {"default_stats_scope": "OP12"}
 app.config['SECRET_KEY'] = SECRET_KEY
 
+# Helper functions per conversione sicura
+def safe_int(value, default=0):
+    """Converte valore in int, ritorna default se fallisce"""
+    try:
+        return int(value) if value and str(value).strip() else default
+    except (ValueError, TypeError):
+        return default
+
+def safe_float(value, default=0.0):
+    """Converte valore in float, ritorna default se fallisce"""
+    try:
+        return float(value) if value and str(value).strip() else default
+    except (ValueError, TypeError):
+        return default
+
 # Jinja2 filter per formattare nomi in base al TCG
 @app.template_filter('format_player_name')
 def format_player_name(name, tcg, membership=''):
@@ -510,9 +525,9 @@ def players_list():
                     'membership': row[0],
                     'name': row[1],
                     'tcg': row[2] if len(row) > 2 else 'OP',
-                    'tournaments': int(row[4]) if len(row) > 4 and row[4] else 0,
-                    'wins': int(row[5]) if len(row) > 5 and row[5] else 0,
-                    'points': float(row[7]) if len(row) > 7 and row[7] else 0
+                    'tournaments': safe_int(row[4] if len(row) > 4 else None, 0),
+                    'wins': safe_int(row[5] if len(row) > 5 else None, 0),
+                    'points': safe_float(row[7] if len(row) > 7 else None, 0.0)
                 })
         
         # Ordina per punti totali DESC
