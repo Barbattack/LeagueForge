@@ -29,10 +29,11 @@ Note:
 # ============================================================================
 # IMPORTS
 # ============================================================================
-from flask import Flask, render_template, redirect, url_for, jsonify, request
+from flask import Flask, render_template, redirect, url_for, jsonify, request, flash, session
 from cache import cache
-from config import SECRET_KEY, DEBUG
+from config import SECRET_KEY, DEBUG, SESSION_TIMEOUT
 from stats_builder import build_stats
+from datetime import timedelta
 
 
 # ============================================================================
@@ -40,6 +41,8 @@ from stats_builder import build_stats
 # ============================================================================
 app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=SESSION_TIMEOUT)
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB max upload
 
 @app.context_processor
 def inject_defaults():
@@ -991,6 +994,294 @@ def achievements():
 
     except Exception as e:
         return render_template('error.html', error=f'Errore caricamento achievement: {str(e)}'), 500
+
+
+# ============================================================================
+# ROUTES - ADMIN PANEL (Protected)
+# ============================================================================
+
+from auth import admin_required, login_user, logout_user, is_admin_logged_in, get_session_info
+import os
+from werkzeug.utils import secure_filename
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    """
+    Pagina login admin.
+
+    GET: Mostra form login
+    POST: Verifica credenziali e crea sessione
+    """
+    # Se già loggato, redirect a dashboard
+    if is_admin_logged_in():
+        return redirect(url_for('admin_dashboard'))
+
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+
+        if login_user(username, password):
+            flash('Login effettuato con successo!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Credenziali non valide. Riprova.', 'danger')
+
+    return render_template('admin/login.html')
+
+
+@app.route('/admin/logout')
+def admin_logout():
+    """Logout admin e redirect a login page."""
+    logout_user()
+    flash('Logout effettuato.', 'info')
+    return redirect(url_for('admin_login'))
+
+
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    """
+    Dashboard admin principale.
+
+    Mostra:
+    - Form upload per 3 TCG (One Piece, Pokemon, Riftbound)
+    - Dropdown stagioni disponibili
+    - Checkbox test mode
+    - Session info (tempo rimanente)
+    """
+    from cache import cache
+
+    # Carica stagioni disponibili per dropdown
+    data, err, meta = cache.get_data()
+    if not data:
+        seasons_by_tcg = {'OP': [], 'PKM': [], 'RFB': []}
+    else:
+        seasons = data.get('seasons', [])
+
+        # Filtra solo stagioni ACTIVE e CLOSED (no ARCHIVED)
+        active_seasons = [s for s in seasons if s.get('status', '').upper() in ['ACTIVE', 'CLOSED']]
+
+        # Raggruppa per TCG
+        seasons_by_tcg = {
+            'OP': [s for s in active_seasons if s.get('id', '').startswith('OP')],
+            'PKM': [s for s in active_seasons if s.get('id', '').startswith('PKM')],
+            'RFB': [s for s in active_seasons if s.get('id', '').startswith('RFB')]
+        }
+
+        # Sort per numero stagione DESC
+        for tcg in seasons_by_tcg:
+            seasons_by_tcg[tcg].sort(
+                key=lambda s: int(''.join(c for c in s.get('id', '') if c.isdigit()) or '0'),
+                reverse=True
+            )
+
+    # Info sessione
+    session_info = get_session_info()
+
+    return render_template('admin/dashboard.html',
+                          seasons_by_tcg=seasons_by_tcg,
+                          session_info=session_info)
+
+
+@app.route('/admin/import/onepiece', methods=['POST'])
+@admin_required
+def admin_import_onepiece():
+    """
+    Gestisce import One Piece da CSV.
+
+    Form data:
+    - file: CSV file
+    - season: Season ID (es. OP12)
+    - test_mode: checkbox (optional)
+    """
+    import subprocess
+    import tempfile
+
+    try:
+        # Validazione input
+        if 'file' not in request.files:
+            flash('Nessun file caricato', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        file = request.files['file']
+        season_id = request.form.get('season', '').strip()
+        test_mode = request.form.get('test_mode') == 'on'
+
+        if not file or file.filename == '':
+            flash('Nessun file selezionato', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        if not season_id:
+            flash('Seleziona una stagione', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        # Verifica estensione
+        if not file.filename.endswith('.csv'):
+            flash('File deve essere CSV', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        # Salva file temporaneo
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.csv', delete=False) as tmp:
+            file.save(tmp.name)
+            tmp_path = tmp.name
+
+        # Esegui import script
+        cmd = ['python3', 'import_tournament.py', '--csv', tmp_path, '--season', season_id]
+        if test_mode:
+            cmd.append('--test')
+
+        result = subprocess.run(cmd, cwd='/home/user/TanaLeague/tanaleague2',
+                               capture_output=True, text=True, timeout=120)
+
+        # Cleanup
+        os.unlink(tmp_path)
+
+        # Mostra output
+        output = result.stdout + result.stderr
+
+        if result.returncode == 0:
+            flash(f'✅ Import One Piece completato{"(TEST MODE)" if test_mode else ""}!', 'success')
+        else:
+            flash(f'❌ Errore durante import', 'danger')
+
+        return render_template('admin/import_result.html',
+                             tcg='One Piece',
+                             season=season_id,
+                             test_mode=test_mode,
+                             success=(result.returncode == 0),
+                             output=output)
+
+    except Exception as e:
+        flash(f'Errore: {str(e)}', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/import/pokemon', methods=['POST'])
+@admin_required
+def admin_import_pokemon():
+    """Gestisce import Pokemon da TDF/XML."""
+    import subprocess
+    import tempfile
+
+    try:
+        if 'file' not in request.files:
+            flash('Nessun file caricato', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        file = request.files['file']
+        season_id = request.form.get('season', '').strip()
+        test_mode = request.form.get('test_mode') == 'on'
+
+        if not file or file.filename == '':
+            flash('Nessun file selezionato', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        if not season_id:
+            flash('Seleziona una stagione', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        # Verifica estensione
+        if not (file.filename.endswith('.tdf') or file.filename.endswith('.xml')):
+            flash('File deve essere TDF o XML', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        # Salva file temporaneo
+        suffix = '.tdf' if file.filename.endswith('.tdf') else '.xml'
+        with tempfile.NamedTemporaryFile(mode='wb', suffix=suffix, delete=False) as tmp:
+            file.save(tmp.name)
+            tmp_path = tmp.name
+
+        # Esegui import script
+        cmd = ['python3', 'parse_pokemon_tdf.py', '--tdf', tmp_path, '--season', season_id]
+        if test_mode:
+            cmd.append('--test')
+
+        result = subprocess.run(cmd, cwd='/home/user/TanaLeague/tanaleague2',
+                               capture_output=True, text=True, timeout=120)
+
+        os.unlink(tmp_path)
+
+        output = result.stdout + result.stderr
+
+        if result.returncode == 0:
+            flash(f'✅ Import Pokemon completato{"(TEST MODE)" if test_mode else ""}!', 'success')
+        else:
+            flash(f'❌ Errore durante import', 'danger')
+
+        return render_template('admin/import_result.html',
+                             tcg='Pokemon',
+                             season=season_id,
+                             test_mode=test_mode,
+                             success=(result.returncode == 0),
+                             output=output)
+
+    except Exception as e:
+        flash(f'Errore: {str(e)}', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/admin/import/riftbound', methods=['POST'])
+@admin_required
+def admin_import_riftbound():
+    """Gestisce import Riftbound da PDF."""
+    import subprocess
+    import tempfile
+
+    try:
+        if 'file' not in request.files:
+            flash('Nessun file caricato', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        file = request.files['file']
+        season_id = request.form.get('season', '').strip()
+        test_mode = request.form.get('test_mode') == 'on'
+
+        if not file or file.filename == '':
+            flash('Nessun file selezionato', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        if not season_id:
+            flash('Seleziona una stagione', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        # Verifica estensione
+        if not file.filename.endswith('.pdf'):
+            flash('File deve essere PDF', 'danger')
+            return redirect(url_for('admin_dashboard'))
+
+        # Salva file temporaneo
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.pdf', delete=False) as tmp:
+            file.save(tmp.name)
+            tmp_path = tmp.name
+
+        # Esegui import script
+        cmd = ['python3', 'import_riftbound.py', '--pdf', tmp_path, '--season', season_id]
+        if test_mode:
+            cmd.append('--test')
+
+        result = subprocess.run(cmd, cwd='/home/user/TanaLeague/tanaleague2',
+                               capture_output=True, text=True, timeout=120)
+
+        os.unlink(tmp_path)
+
+        output = result.stdout + result.stderr
+
+        if result.returncode == 0:
+            flash(f'✅ Import Riftbound completato{"(TEST MODE)" if test_mode else ""}!', 'success')
+        else:
+            flash(f'❌ Errore durante import', 'danger')
+
+        return render_template('admin/import_result.html',
+                             tcg='Riftbound',
+                             season=season_id,
+                             test_mode=test_mode,
+                             success=(result.returncode == 0),
+                             output=output)
+
+    except Exception as e:
+        flash(f'Errore: {str(e)}', 'danger')
+        return redirect(url_for('admin_dashboard'))
+
 
 # ---------- Errors ----------
 @app.errorhandler(404)
