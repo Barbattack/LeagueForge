@@ -546,7 +546,45 @@ def player(membership):
         # Chart data (ultimi 10)
         chart_labels = [h['date'] for h in history[::-1]]
         chart_data = [h['points'] for h in history[::-1]]
-        
+
+        # Achievement data
+        achievements_unlocked = []
+        achievement_points = 0
+        try:
+            ws_achievements = sheet.worksheet("Achievement_Definitions")
+            achievement_defs = {}
+            for row in ws_achievements.get_all_values()[4:]:
+                if row and row[0]:
+                    achievement_defs[row[0]] = {
+                        'name': row[1],
+                        'description': row[2],
+                        'category': row[3],
+                        'rarity': row[4],
+                        'emoji': row[5],
+                        'points': int(row[6]) if row[6] else 0
+                    }
+
+            ws_player_ach = sheet.worksheet("Player_Achievements")
+            for row in ws_player_ach.get_all_values()[4:]:
+                if row and row[0] == membership:
+                    ach_id = row[1]
+                    if ach_id in achievement_defs:
+                        ach_info = achievement_defs[ach_id]
+                        achievements_unlocked.append({
+                            'id': ach_id,
+                            'name': ach_info['name'],
+                            'description': ach_info['description'],
+                            'category': ach_info['category'],
+                            'rarity': ach_info['rarity'],
+                            'emoji': ach_info['emoji'],
+                            'points': ach_info['points'],
+                            'unlocked_date': row[2] if len(row) > 2 else ''
+                        })
+                        achievement_points += ach_info['points']
+        except Exception as e:
+            print(f"Achievement load error: {e}")
+            # Se achievement non esistono ancora, continua senza
+
         player_data = {
             'membership': membership,
             'name': player_name,
@@ -562,13 +600,93 @@ def player(membership):
             'trend': round(trend, 1),
             'history': history,
             'chart_labels': chart_labels,
-            'chart_data': chart_data
+            'chart_data': chart_data,
+            'achievements': achievements_unlocked,
+            'achievement_points': achievement_points
         }
         
         return render_template('player.html', player=player_data)
         
     except Exception as e:
         return render_template('error.html', error=f'Errore caricamento dati: {str(e)}'), 500
+
+@app.route('/achievements')
+def achievements():
+    """Pagina achievement - mostra tutti gli achievement disponibili e statistiche unlock"""
+    from cache import cache
+    try:
+        sheet = cache.connect_sheet()
+
+        # Carica achievement definitions
+        ws_achievements = sheet.worksheet("Achievement_Definitions")
+        achievement_rows = ws_achievements.get_all_values()[4:]
+
+        achievements_by_category = {}
+        total_achievements = 0
+        total_points = 0
+
+        for row in achievement_rows:
+            if not row or not row[0]:
+                continue
+
+            category = row[3] if len(row) > 3 else 'Other'
+            if category not in achievements_by_category:
+                achievements_by_category[category] = []
+
+            ach = {
+                'id': row[0],
+                'name': row[1],
+                'description': row[2],
+                'category': category,
+                'rarity': row[4] if len(row) > 4 else 'Common',
+                'emoji': row[5] if len(row) > 5 else '🏆',
+                'points': int(row[6]) if len(row) > 6 and row[6] else 0
+            }
+
+            achievements_by_category[category].append(ach)
+            total_achievements += 1
+            total_points += ach['points']
+
+        # Calcola % di unlock per ogni achievement
+        ws_player_ach = sheet.worksheet("Player_Achievements")
+        player_ach_rows = ws_player_ach.get_all_values()[4:]
+
+        unlock_counts = {}
+        for row in player_ach_rows:
+            if row and row[1]:
+                ach_id = row[1]
+                unlock_counts[ach_id] = unlock_counts.get(ach_id, 0) + 1
+
+        # Conta giocatori totali
+        ws_players = sheet.worksheet("Players")
+        total_players = len([r for r in ws_players.get_all_values()[3:] if r and r[0]])
+
+        # Aggiungi % unlock agli achievement
+        for category in achievements_by_category:
+            for ach in achievements_by_category[category]:
+                unlocks = unlock_counts.get(ach['id'], 0)
+                ach['unlock_count'] = unlocks
+                ach['unlock_percentage'] = (unlocks / total_players * 100) if total_players > 0 else 0
+
+        # Ordina categorie per priorità
+        category_order = ['Glory', 'Giant Slayer', 'Consistency', 'Legacy', 'Wildcards', 'Seasonal', 'Heartbreak']
+        ordered_categories = []
+        for cat in category_order:
+            if cat in achievements_by_category:
+                ordered_categories.append((cat, achievements_by_category[cat]))
+        # Aggiungi eventuali categorie rimanenti
+        for cat, achs in achievements_by_category.items():
+            if cat not in category_order:
+                ordered_categories.append((cat, achs))
+
+        return render_template('achievements.html',
+                               achievements_by_category=ordered_categories,
+                               total_achievements=total_achievements,
+                               total_points=total_points,
+                               total_players=total_players)
+
+    except Exception as e:
+        return render_template('error.html', error=f'Errore caricamento achievement: {str(e)}'), 500
 
 # ---------- Errors ----------
 @app.errorhandler(404)

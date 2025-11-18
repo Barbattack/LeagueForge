@@ -9,6 +9,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import sys
 import argparse
+from achievements import check_and_unlock_achievements
 
 # CONFIG
 SHEET_ID = "19ZF35DTmgZG8v1GfzKE5JmMUTXLo300vuw_AdrgQPFE"  # MODIFICA!
@@ -403,6 +404,9 @@ def import_to_sheet(data, test_mode=False):
         tournament_date = data['tournament'][2]
         update_seasonal_standings(sheet, season_id, tournament_date)
         print(f"✅ Seasonal Standings aggiornate per {season_id}")
+
+        # 6. Check e sblocca achievement
+        check_and_unlock_achievements(sheet, data)
 
     if test_mode:
         print("\n⚠️  TEST COMPLETATO - Nessun dato scritto")

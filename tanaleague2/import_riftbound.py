@@ -24,6 +24,7 @@ from datetime import datetime
 import argparse
 import pdfplumber
 from typing import Dict, List
+from achievements import check_and_unlock_achievements
 
 # CONFIG
 SHEET_ID = "19ZF35DTmgZG8v1GfzKE5JmMUTXLo300vuw_AdrgQPFE"
@@ -581,6 +582,9 @@ def import_to_sheet(data: Dict, test_mode: bool = False):
         season_id = data['tournament'][1]
         tournament_date = data['tournament'][2]
         update_seasonal_standings(sheet, season_id, tournament_date)
+
+        # 5. Check e sblocca achievement
+        check_and_unlock_achievements(sheet, data)
     else:
         print(f"✅ Players: {len(data['players'])} totali (stats non calcolate in test mode)")
 
