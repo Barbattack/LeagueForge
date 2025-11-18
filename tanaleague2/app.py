@@ -608,8 +608,8 @@ def stats(scope):
 
     seasons = data.get('seasons', [])
 
-    # only "real seasons" for the dropdown
-    real_seasons = [s for s in seasons if _is_valid_season_id(s.get('id'))]
+    # only "real seasons" for the dropdown (exclude ARCHIVED)
+    real_seasons = [s for s in seasons if _is_valid_season_id(s.get('id')) and s.get('status','').upper() != 'ARCHIVED']
 
     # default season for the "Classifica" button
     active = [s for s in real_seasons if s.get('status','').upper() == 'ACTIVE']
@@ -797,11 +797,19 @@ def player(membership):
         first_seen = min(dates) if dates else 'N/A'
         
         # Storico tornei (ultimi 10)
+        # Carica seasons per ottenere status (ARCHIVED check)
+        seasons = data.get('seasons', [])
+        season_status_map = {s.get('id'): s.get('status', '') for s in seasons}
+
         history = []
         for r in player_results[-10:]:
+            season_id = r[1].split('_')[0] if '_' in r[1] else ''
+            season_status = season_status_map.get(season_id, '')
+
             history.append({
                 'date': r[1].split('_')[1] if '_' in r[1] else '',
-                'season': r[1].split('_')[0] if '_' in r[1] else '',
+                'season': season_id,
+                'season_status': season_status,
                 'rank': int(r[3]) if r[3] else 999,
                 'points': float(r[8]) if r[8] else 0,
                 'record': f"{int(float(r[4])/3) if r[4] else 0}-{int(float(r[3] or 0))}" if r[3] and r[4] else 'N/A'

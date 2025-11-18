@@ -219,7 +219,11 @@
                     {% for t in player.history %}
                     <tr {% if t.rank <= 3 %}class="table-warning"{% elif t.rank <= 8 %}class="table-info"{% endif %}>
                         <td>{{ t.date }}</td>
-                        <td><span class="badge bg-secondary">{{ t.season }}</span></td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                {% if t.season_status|upper == 'ARCHIVED' %}Archivio{% else %}{{ t.season }}{% endif %}
+                            </span>
+                        </td>
                         <td class="text-center">
                             {% if t.rank == 1 %}<i class="fas fa-crown text-warning"></i>
                             {% elif t.rank == 2 %}<i class="fas fa-medal text-secondary"></i>
