@@ -213,7 +213,7 @@ def calculate_tournament_points(df: pd.DataFrame) -> pd.DataFrame:
     Calcola i punti per ogni giocatore in un torneo.
 
     Formula:
-    - Punti Vittoria = Win Points / 3
+    - Punti Vittoria = Win Points (già calcolato come W*3)
     - Punti Ranking = N_partecipanti - (Ranking - 1)
     - Punti Totali = Punti Vittoria + Punti Ranking
 
@@ -226,8 +226,8 @@ def calculate_tournament_points(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     n_participants = len(df)
 
-    # Calcolo punti vittoria
-    df['Points_Victory'] = df['Win Points'] / 3
+    # Calcolo punti vittoria - win_points è già corretto (W*3)
+    df['Points_Victory'] = df['Win Points']
 
     # Calcolo punti ranking
     df['Points_Ranking'] = n_participants - (df['Ranking'] - 1)
@@ -247,12 +247,13 @@ def identify_record_categories(df: pd.DataFrame, n_rounds: int) -> pd.DataFrame:
         n_rounds: Numero di round del torneo
 
     Returns:
-        DataFrame con colonna 'Category' aggiunta
+        DataFrame con colonne 'Category', 'Wins', 'Losses' aggiunte
     """
     df = df.copy()
 
-    # Calcolo losses
-    df['Losses'] = n_rounds - (df['Win Points'] / 3)
+    # Calcolo wins e losses (Win Points = W*3, quindi W = Win Points / 3)
+    df['Wins'] = (df['Win Points'] / 3).astype(int)
+    df['Losses'] = n_rounds - df['Wins']
 
     # Categoria
     df['Category'] = df['Losses'].apply(lambda x:
@@ -261,7 +262,7 @@ def identify_record_categories(df: pd.DataFrame, n_rounds: int) -> pd.DataFrame:
 
     # Record (es. "4-0", "3-1")
     df['Record'] = df.apply(
-        lambda row: f"{int(row['Win Points']/3)}-{int(row['Losses'])}",
+        lambda row: f"{int(row['Wins'])}-{int(row['Losses'])}",
         axis=1
     )
 
@@ -507,11 +508,15 @@ def update_seasonal_standings(sheet, season_id: str, df: pd.DataFrame, tournamen
                 'best_rank': 999
             }
 
+        # Leggi Match_W se disponibile (colonna 10)
+        match_w = int(row[10]) if len(row) > 10 and row[10] else 0
+
         player_data[membership]['tournaments'].append({
             'date': result_tournament_id.split('_')[1] if '_' in result_tournament_id else '',
             'points': points,
             'rank': ranking,
-            'win_points': float(row[4]) if len(row) > 4 and row[4] else 0
+            'win_points': float(row[4]) if len(row) > 4 and row[4] else 0,
+            'match_w': match_w
         })
         player_data[membership]['best_rank'] = min(player_data[membership]['best_rank'], ranking)
 
@@ -539,11 +544,11 @@ def update_seasonal_standings(sheet, season_id: str, df: pd.DataFrame, tournamen
 
         total_points = sum(t['points'] for t in best_tournaments)
         
-        # NUOVO: Tournament_Wins = quanti 1° posti
+        # Tournament_Wins = quanti 1° posti
         tournament_wins = sum(1 for t in tournaments_played if t['rank'] == 1)
-        
-        # NUOVO: Match_Wins = quante partite vinte (da tutti i tornei giocati)
-        match_wins = sum(int(t['win_points'] / 3) for t in tournaments_played)
+
+        # Match_Wins = quante partite vinte (leggi da Match_W se disponibile)
+        match_wins = sum(t.get('match_w', int(t['win_points'] / 3)) for t in tournaments_played)
 
         # Conta top 8
         top8_count = sum(1 for t in tournaments_played if t['rank'] <= 8)
@@ -839,10 +844,13 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
             int(row['Ranking']),
             int(row['Win Points']),
             row['OMW %'],
-            float(row['Points_Victory']),
-            float(row['Points_Ranking']),
-            float(row['Points_Total']),
-            row['User Name']
+            int(row['Points_Victory']),      # No decimals - già intero
+            int(row['Points_Ranking']),      # No decimals - già intero
+            int(row['Points_Total']),        # No decimals - già intero
+            row['User Name'],
+            int(row['Wins']),                # Match_W
+            0,                                # Match_T (One Piece non ha pareggi)
+            int(row['Losses'])                # Match_L
         ]
         ws_results.append_row(result_row, value_input_option='RAW')
 
@@ -888,7 +896,13 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
         ranking = int(row[3]) if row[3] else 999
         win_points = float(row[4]) if row[4] else 0
         points_total = float(row[8]) if row[8] else 0
-        
+
+        # Leggi Match_W dalla colonna 10 se disponibile
+        if len(row) > 10 and row[10]:
+            match_w = int(row[10])
+        else:
+            match_w = int(win_points / 3)  # Fallback per dati vecchi
+
         if membership not in lifetime_stats:
             lifetime_stats[membership] = {
                 'total_tournaments': 0,
@@ -896,11 +910,11 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
                 'match_wins': 0,
                 'total_points': 0
             }
-        
+
         lifetime_stats[membership]['total_tournaments'] += 1
         if ranking == 1:
             lifetime_stats[membership]['tournament_wins'] += 1
-        lifetime_stats[membership]['match_wins'] += int(win_points / 3)
+        lifetime_stats[membership]['match_wins'] += match_w
         lifetime_stats[membership]['total_points'] += points_total
     
     # Aggiorna o crea giocatori
