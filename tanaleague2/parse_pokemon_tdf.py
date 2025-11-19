@@ -444,14 +444,14 @@ def import_to_sheet(data, test_mode=False):
     if not test_mode:
         ws_results = sheet.worksheet("Results")
         if data['results']:
-            ws_results.append_rows(data['results'])
+            ws_results.append_rows(data['results'], value_input_option='RAW')
     print(f"✅ Results: {len(data['results'])} giocatori")
 
     # 3. Matches (batch)
     if not test_mode:
         ws_matches = sheet.worksheet("Pokemon_Matches")
         if data['matches']:
-            ws_matches.append_rows(data['matches'])
+            ws_matches.append_rows(data['matches'], value_input_option='RAW')
     print(f"✅ Matches: {len(data['matches'])} match")
 
     # 4. Update Players
@@ -475,7 +475,7 @@ def import_to_sheet(data, test_mode=False):
                 ])
 
         if new_players:
-            ws_players.append_rows(new_players)
+            ws_players.append_rows(new_players, value_input_option='RAW')
         print(f"✅ Players: {len(new_players)} nuovi")
     else:
         # Test mode - simulate

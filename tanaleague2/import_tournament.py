@@ -825,7 +825,7 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
         datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         df.iloc[0]['User Name']
     ]
-    ws_tournaments.append_row(tournament_row)
+    ws_tournaments.append_row(tournament_row, value_input_option='RAW')
 
     # 7.2 Scrivi nel foglio Results
     print(f"   📊 Foglio Results...")
@@ -844,7 +844,7 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
             float(row['Points_Total']),
             row['User Name']
         ]
-        ws_results.append_row(result_row)
+        ws_results.append_row(result_row, value_input_option='RAW')
 
     # 7.3 Scrivi nel foglio Vouchers
     print(f"   📊 Foglio Vouchers...")
@@ -864,7 +864,7 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
             'DRAFT',
             ''
         ]
-        ws_vouchers.append_row(voucher_row)
+        ws_vouchers.append_row(voucher_row, value_input_option='RAW')
 
     # Aggiungi validazione menu a tendina Status (colonna J, dalla riga 4)
         pass  # Ignora se la libreria non è disponibile

@@ -542,14 +542,14 @@ def import_to_sheet(data: Dict, test_mode: bool = False):
     if not test_mode:
         ws_results = sheet.worksheet("Results")
         if data['results']:
-            ws_results.append_rows(data['results'])
+            ws_results.append_rows(data['results'], value_input_option='RAW')
     print(f"✅ Results: {len(data['results'])} giocatori")
 
     # 3. Riftbound_Matches (NEW!)
     if not test_mode and 'matches' in data and data['matches']:
         try:
             ws_matches = sheet.worksheet("Riftbound_Matches")
-            ws_matches.append_rows(data['matches'])
+            ws_matches.append_rows(data['matches'], value_input_option='RAW')
             print(f"✅ Riftbound_Matches: {len(data['matches'])} match salvati")
         except Exception as e:
             print(f"⚠️  Warning: Impossibile scrivere Riftbound_Matches: {e}")
