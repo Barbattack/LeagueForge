@@ -1,6 +1,63 @@
 # -*- coding: utf-8 -*-
 """
-parse_pokemon_tdf.py - Pokemon Tournament Import from TDF
+=================================================================================
+TanaLeague v2.0 - Pokémon TCG Tournament Import
+=================================================================================
+
+Script import tornei Pokémon da file TDF/XML esportato da Play! Pokémon Tournament software.
+
+FUNZIONALITÀ COMPLETE:
+1. Parsing TDF/XML (formato ufficiale Play! Pokémon):
+   - Tournament meta (nome, ID, date, n_rounds)
+   - Player list con membership numbers
+   - Standings finali (rank, points, W-D-L record, OMW%)
+   - Match H2H (head-to-head per future features)
+2. Calcolo punti TanaLeague:
+   - Punti: Wins * 3 + Draws * 1
+   - Ranking points: (n_partecipanti - rank + 1)
+   - Punti totali: Win points + Ranking points
+3. Scrittura Google Sheets:
+   - Tournaments: Meta torneo
+   - Results: Risultati individuali giocatori
+   - Players: Anagrafica giocatori (update)
+   - Pokemon_Matches: Match H2H (opzionale)
+4. Aggiornamento Seasonal_Standings_PROV (live rankings con drop logic)
+5. Achievement unlock automatico per tutti i partecipanti
+
+UTILIZZO:
+    # Import normale
+    python parse_pokemon_tdf.py --tdf tournament.tdf --season PKM-FS25
+
+    # Test mode (dry run, no write)
+    python parse_pokemon_tdf.py --tdf tournament.tdf --season PKM-FS25 --test
+
+FORMATO TDF (XML Play! Pokémon):
+    <?xml version="1.0"?>
+    <tournament>
+      <name>Fall League 2025</name>
+      <players>
+        <player id="12345" name="Mario Rossi" />
+      </players>
+      <standings>
+        <standing rank="1" player="12345" points="12" record="4-0-0" />
+      </standings>
+    </tournament>
+
+REQUIREMENTS:
+    pip install gspread google-auth
+
+OUTPUT CONSOLE:
+    🚀 IMPORT TORNEO POKEMON: tournament.tdf
+    📊 Stagione: PKM-FS25
+    📂 Parsing TDF... ✅
+    👥 Partecipanti: 12
+    🎮 Round: 4
+    🏆 Vincitore: Mario Rossi
+    💾 Scrittura dati... ✅
+    📈 Aggiornamento standings... ✅
+    🎮 Check achievement... ✅
+    ✅ IMPORT COMPLETATO!
+=================================================================================
 """
 
 import xml.etree.ElementTree as ET
@@ -9,6 +66,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import sys
 import argparse
+from achievements import check_and_unlock_achievements
 
 # CONFIG
 SHEET_ID = "19ZF35DTmgZG8v1GfzKE5JmMUTXLo300vuw_AdrgQPFE"  # MODIFICA!
@@ -19,6 +77,33 @@ def connect_sheet():
     creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
     client = gspread.authorize(creds)
     return client.open_by_key(SHEET_ID)
+
+def to_float(value):
+    """
+    Converte un valore in float gestendo formato italiano (virgola) e internazionale (punto).
+
+    Args:
+        value: Valore da convertire (str, int, float)
+
+    Returns:
+        float: Valore convertito
+
+    Examples:
+        to_float("14,33") -> 14.33
+        to_float("14.33") -> 14.33
+        to_float(14) -> 14.0
+    """
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        # Rimuovi spazi bianchi
+        value = value.strip()
+        if not value:
+            return 0.0
+        # Sostituisci virgola con punto
+        value = value.replace(',', '.')
+        return float(value)
+    return 0.0
 
 def parse_tdf(filepath, season_id):
     tree = ET.parse(filepath)
@@ -164,6 +249,170 @@ def parse_tdf(filepath, season_id):
         'players': players
     }
 
+def update_seasonal_standings(sheet, season_id: str, tournament_date: str):
+    """
+    Aggiorna la classifica stagionale con i nuovi risultati.
+
+    Applica lo scarto dinamico:
+    - Se stagione < 8 tornei: conta tutto
+    - Se stagione >= 8 tornei: conta (totale - 2) migliori
+
+    Args:
+        sheet: Oggetto Spreadsheet
+        season_id: ID stagione
+        tournament_date: Data torneo
+    """
+    ws_standings = sheet.worksheet("Seasonal_Standings_PROV")
+    ws_results = sheet.worksheet("Results")
+    ws_tournaments = sheet.worksheet("Tournaments")
+
+    # Conta quanti tornei ci sono in questa stagione
+    all_tournaments = ws_tournaments.get_all_values()
+    season_tournaments = [row for row in all_tournaments[3:] if row and row[1] == season_id]
+    total_tournaments = len(season_tournaments)
+
+    print(f"\n   🔄 Aggiornamento classifica stagionale {season_id}...")
+    print(f"      Tornei stagione: {total_tournaments}")
+
+    # Calcola quanti tornei contare
+    if total_tournaments < 8:
+        max_to_count = total_tournaments
+        print(f"      Scarto: NESSUNO (stagione < 8 tornei)")
+    else:
+        max_to_count = total_tournaments - 2
+        print(f"      Scarto: Le peggiori 2 giornate (conta max {max_to_count})")
+
+    # Leggi tutti i risultati della stagione
+    all_results = ws_results.get_all_values()
+
+    # Raggruppa per giocatore
+    player_data = {}
+    for row in all_results[3:]:  # Skip header
+        if not row or len(row) < 9:
+            continue
+
+        result_tournament_id = row[1]
+        # Verifica che sia della stagione corretta
+        if not result_tournament_id.startswith(season_id):
+            continue
+
+        membership = row[2]
+        points = to_float(row[8]) if row[8] else 0
+        ranking = int(row[3]) if row[3] else 999
+
+        if membership not in player_data:
+            player_data[membership] = {
+                'tournaments': [],
+                'best_rank': 999
+            }
+
+        player_data[membership]['tournaments'].append({
+            'date': result_tournament_id.split('_')[1] if '_' in result_tournament_id else '',
+            'points': points,
+            'rank': ranking,
+            'win_points': to_float(row[4]) if len(row) > 4 and row[4] else 0
+        })
+        player_data[membership]['best_rank'] = min(player_data[membership]['best_rank'], ranking)
+
+    # Calcola classifica finale con scarto
+    final_standings = []
+
+    # Crea mapping membership -> nome dai Results
+    name_map = {}
+    for row in all_results[3:]:
+        if row and len(row) >= 10:
+            membership = row[2]
+            name = row[9] if len(row) > 9 and row[9] else membership
+            name_map[membership] = name
+
+    for membership, data in player_data.items():
+        tournaments_played = data['tournaments']
+        n_played = len(tournaments_played)
+
+        # Ordina per punti
+        sorted_tournaments = sorted(tournaments_played, key=lambda x: x['points'], reverse=True)
+
+        # Prendi i migliori
+        to_count = min(n_played, max_to_count)
+        best_tournaments = sorted_tournaments[:to_count]
+
+        total_points = sum(t['points'] for t in best_tournaments)
+
+        # Tournament_Wins = quanti 1° posti
+        tournament_wins = sum(1 for t in tournaments_played if t['rank'] == 1)
+
+        # Match_Wins = quante partite vinte (da tutti i tornei giocati)
+        match_wins = sum(int(t['win_points'] / 3) for t in tournaments_played)
+
+        # Conta top 8
+        top8_count = sum(1 for t in tournaments_played if t['rank'] <= 8)
+
+        # Nome dal mapping
+        player_name = name_map.get(membership, membership)
+
+        final_standings.append({
+            'membership': membership,
+            'name': player_name,
+            'total_points': total_points,
+            'tournaments_played': n_played,
+            'tournaments_counted': to_count,
+            'tournament_wins': tournament_wins,
+            'match_wins': match_wins,
+            'best_rank': data['best_rank'],
+            'top8_count': top8_count
+        })
+
+    # Ordina per punti
+    final_standings.sort(key=lambda x: x['total_points'], reverse=True)
+
+    # Pulisci il foglio Seasonal_Standings per questa stagione
+    existing_standings = ws_standings.get_all_values()
+    rows_to_delete = []
+    for i, row in enumerate(existing_standings[3:], start=4):
+        if row and row[0] == season_id:
+            rows_to_delete.append(i)
+
+    # Prepara tutte le righe da scrivere
+    rows_to_add = []
+    for i, player in enumerate(final_standings, 1):
+        standing_row = [
+            season_id,
+            player['membership'],
+            player['name'],
+            float(player['total_points']),
+            int(player['tournaments_played']),
+            int(player['tournaments_counted']),
+            int(player['tournament_wins']),
+            int(player['match_wins']),
+            int(player['best_rank']),
+            int(player['top8_count']),
+            i  # Position
+        ]
+        rows_to_add.append(standing_row)
+
+    # Trova dove iniziare a scrivere (dopo altre stagioni)
+    write_start_row = 4
+    for i, row in enumerate(existing_standings[3:], start=4):
+        if not row or not row[0]:
+            break
+        if row[0] != season_id:
+            write_start_row = i + 1
+
+    # Se c'erano dati vecchi di questa stagione, scrivi da lì
+    if rows_to_delete:
+        write_start_row = min(rows_to_delete)
+
+    # BATCH WRITE - scrivi da riga fissa
+    if rows_to_add:
+        end_row = write_start_row + len(rows_to_add) - 1
+        ws_standings.update(values=rows_to_add, range_name=f"A{write_start_row}:K{end_row}", value_input_option='RAW')
+
+        # Pulisci righe vecchie sotto (se ce ne sono)
+        if rows_to_delete and max(rows_to_delete) > end_row:
+            ws_standings.batch_clear([f"A{end_row+1}:K{max(rows_to_delete)}"])
+
+    print(f"      ✅ Classifica aggiornata: {len(final_standings)} giocatori")
+
 def import_to_sheet(data, test_mode=False):
     sheet = connect_sheet()
 
@@ -232,6 +481,16 @@ def import_to_sheet(data, test_mode=False):
         # Test mode - simulate
         new_count = sum(1 for uid in data['players'].keys() if uid.zfill(10) not in [])
         print(f"✅ Players: {len(data['players'])} totali")
+
+    # 5. Aggiorna Seasonal_Standings
+    if not test_mode:
+        season_id = data['tournament'][1]
+        tournament_date = data['tournament'][2]
+        update_seasonal_standings(sheet, season_id, tournament_date)
+        print(f"✅ Seasonal Standings aggiornate per {season_id}")
+
+        # 6. Check e sblocca achievement
+        check_and_unlock_achievements(sheet, data)
 
     if test_mode:
         print("\n⚠️  TEST COMPLETATO - Nessun dato scritto")
