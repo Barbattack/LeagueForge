@@ -78,6 +78,33 @@ def connect_sheet():
     client = gspread.authorize(creds)
     return client.open_by_key(SHEET_ID)
 
+def to_float(value):
+    """
+    Converte un valore in float gestendo formato italiano (virgola) e internazionale (punto).
+
+    Args:
+        value: Valore da convertire (str, int, float)
+
+    Returns:
+        float: Valore convertito
+
+    Examples:
+        to_float("14,33") -> 14.33
+        to_float("14.33") -> 14.33
+        to_float(14) -> 14.0
+    """
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        # Rimuovi spazi bianchi
+        value = value.strip()
+        if not value:
+            return 0.0
+        # Sostituisci virgola con punto
+        value = value.replace(',', '.')
+        return float(value)
+    return 0.0
+
 def parse_tdf(filepath, season_id):
     tree = ET.parse(filepath)
     root = tree.getroot()
@@ -270,7 +297,7 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str):
             continue
 
         membership = row[2]
-        points = float(row[8]) if row[8] else 0
+        points = to_float(row[8]) if row[8] else 0
         ranking = int(row[3]) if row[3] else 999
 
         if membership not in player_data:
@@ -283,7 +310,7 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str):
             'date': result_tournament_id.split('_')[1] if '_' in result_tournament_id else '',
             'points': points,
             'rank': ranking,
-            'win_points': float(row[4]) if len(row) > 4 and row[4] else 0
+            'win_points': to_float(row[4]) if len(row) > 4 and row[4] else 0
         })
         player_data[membership]['best_rank'] = min(player_data[membership]['best_rank'], ranking)
 
