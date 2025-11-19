@@ -210,7 +210,7 @@ def parse_tdf(filepath, season_id):
 
         # Points formula
         n_participants = len(standings)
-        points_victory = win_points / 3
+        points_victory = win_points  # win_points è già corretto (W*3 + T*1)
         points_ranking = n_participants - (rank - 1)
         points_total = points_victory + points_ranking
 
@@ -222,10 +222,13 @@ def parse_tdf(filepath, season_id):
             rank,
             win_points,
             round(omw_pct[uid], 2),
-            round(points_victory, 2),
-            round(points_ranking, 2),
-            round(points_total, 2),
-            players[uid]
+            points_victory,      # No decimals - già intero
+            points_ranking,      # No decimals - già intero
+            points_total,        # No decimals - già intero
+            players[uid],
+            w,  # Match_W
+            t,  # Match_T
+            l   # Match_L
         ])
 
     # Sort by rank
@@ -306,11 +309,15 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str):
                 'best_rank': 999
             }
 
+        # Leggi Match_W se disponibile (colonna 10)
+        match_w = int(row[10]) if len(row) > 10 and row[10] else 0
+
         player_data[membership]['tournaments'].append({
             'date': result_tournament_id.split('_')[1] if '_' in result_tournament_id else '',
             'points': points,
             'rank': ranking,
-            'win_points': to_float(row[4]) if len(row) > 4 and row[4] else 0
+            'win_points': to_float(row[4]) if len(row) > 4 and row[4] else 0,
+            'match_w': match_w
         })
         player_data[membership]['best_rank'] = min(player_data[membership]['best_rank'], ranking)
 
@@ -341,8 +348,8 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str):
         # Tournament_Wins = quanti 1° posti
         tournament_wins = sum(1 for t in tournaments_played if t['rank'] == 1)
 
-        # Match_Wins = quante partite vinte (da tutti i tornei giocati)
-        match_wins = sum(int(t['win_points'] / 3) for t in tournaments_played)
+        # Match_Wins = quante partite vinte (leggi da Match_W se disponibile)
+        match_wins = sum(t.get('match_w', int(t['win_points'] / 3)) for t in tournaments_played)
 
         # Conta top 8
         top8_count = sum(1 for t in tournaments_played if t['rank'] <= 8)
