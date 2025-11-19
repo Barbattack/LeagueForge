@@ -210,7 +210,7 @@ def parse_tdf(filepath, season_id):
 
         # Points formula
         n_participants = len(standings)
-        points_victory = win_points  # win_points è già corretto (W*3 + T*1)
+        points_victory = w  # Numero di vittorie (NON win_points!)
         points_ranking = n_participants - (rank - 1)
         points_total = points_victory + points_ranking
 
@@ -475,7 +475,7 @@ def import_to_sheet(data, test_mode=False):
 
         # RICALCOLA tutte le statistiche lifetime da TUTTI i Results Pokemon
         season_id = data['tournament'][1]
-        tcg = season_id.split('-')[0]  # Estrae "PKM" da "PKM-FS25"
+        tcg = season_id.split('-')[0] if '-' in season_id else season_id.split('_')[0]  # Estrae "PKM" da "PKM-FS25" o "PKM99"
 
         all_results = ws_results.get_all_values()
         lifetime_stats = {}
@@ -555,18 +555,30 @@ def import_to_sheet(data, test_mode=False):
                 old_data = existing['data']
 
                 # Preserva first_seen originale
-                first_seen = old_data[2] if len(old_data) > 2 and old_data[2] else stats['first_seen']
+                # Verifica se i vecchi dati hanno TCG (colonna 2) o no
+                # Se colonna 2 sembra una data (YYYY-MM-DD), è vecchio formato senza TCG
+                if len(old_data) > 2 and old_data[2] and '-' in old_data[2] and old_data[2][0].isdigit():
+                    # Vecchio formato SENZA TCG
+                    first_seen = old_data[2]
+                elif len(old_data) > 3:
+                    # Nuovo formato CON TCG
+                    first_seen = old_data[3]
+                else:
+                    first_seen = stats['first_seen']
 
                 rows_to_update.append({
-                    'range': f"A{existing['index']}:H{existing['index']}",
+                    'range': f"A{existing['index']}:K{existing['index']}",
                     'values': [[
                         uid_padded,
                         name,
+                        tcg,  # TCG (es. "PKM")
                         first_seen,
                         stats['last_seen'],
                         stats['total_tournaments'],
                         stats['tournament_wins'],
                         stats['match_w'],
+                        stats['match_t'],
+                        stats['match_l'],
                         stats['total_points']
                     ]]
                 })
@@ -575,11 +587,14 @@ def import_to_sheet(data, test_mode=False):
                 new_players.append([
                     uid_padded,
                     name,
+                    tcg,  # TCG (es. "PKM")
                     stats['first_seen'],
                     stats['last_seen'],
                     stats['total_tournaments'],
                     stats['tournament_wins'],
                     stats['match_w'],
+                    stats['match_t'],
+                    stats['match_l'],
                     stats['total_points']
                 ])
 
