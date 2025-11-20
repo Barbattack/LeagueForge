@@ -4,59 +4,60 @@
 TanaLeague v2.0 - Pokémon TCG Tournament Import
 =================================================================================
 
-Script import tornei Pokémon da file TDF/XML esportato da Play! Pokémon Tournament software.
+Import tornei Pokémon da file TDF/XML esportato da Play! Pokémon Tournament software.
 
-FUNZIONALITÀ COMPLETE:
-1. Parsing TDF/XML (formato ufficiale Play! Pokémon):
-   - Tournament meta (nome, ID, date, n_rounds)
-   - Player list con membership numbers
-   - Standings finali (rank, points, W-D-L record, OMW%)
-   - Match H2H (head-to-head per future features)
-2. Calcolo punti TanaLeague:
-   - Punti: Wins * 3 + Draws * 1
-   - Ranking points: (n_partecipanti - rank + 1)
-   - Punti totali: Win points + Ranking points
-3. Scrittura Google Sheets:
-   - Tournaments: Meta torneo
-   - Results: Risultati individuali giocatori
-   - Players: Anagrafica giocatori (update)
-   - Pokemon_Matches: Match H2H (opzionale)
-4. Aggiornamento Seasonal_Standings_PROV (live rankings con drop logic)
-5. Achievement unlock automatico per tutti i partecipanti
+COME FUNZIONA IL PARSING:
+-------------------------
+1. ESTRAZIONE DATI DAL TDF:
+   - Players: userid (membership), nome completo
+   - Match round-by-round: outcome (1=P1 win, 2=P2 win, 3=tie, 5=BYE)
+   - Standings ufficiali: rank finale dal TDF (già ordinato per win_points + OMW%)
+
+2. CALCOLO W-T-L (Wins-Ties-Losses):
+   - Conta match per ogni player analizzando outcome
+   - BYE conta come WIN automatica (3 punti)
+   - win_points = W*3 + T*1
+
+3. RANKING E PUNTI TANALEAGUE:
+   - USA il ranking ufficiale Pokemon dal TDF (già corretto!)
+   - Il TDF ordina per: win_points DESC, poi OMW% DESC (tiebreak)
+   - Points_Victory = W (numero di vittorie, NON win_points)
+   - Points_Ranking = N_partecipanti - (rank - 1)
+   - Points_Total = Points_Victory + Points_Ranking
+
+4. SCRITTURA GOOGLE SHEETS:
+   - Results: 13 colonne (include Match_W, Match_T, Match_L)
+   - Players: 11 colonne (include TCG, Match_W/T/L, Total_Points)
+   - Pokemon_Matches: match H2H con vincitori
+   - Tournaments: metadati torneo
+
+FORMULA PUNTI - SPIEGAZIONE:
+----------------------------
+Points_Victory = W (numero vittorie)
+  → Esempio: 3 vittorie = 3 punti (NON 9, NON 3.33)
+  → win_points (W*3+T*1) serve solo per il ranking ufficiale Pokemon
+
+Points_Ranking = N_partecipanti - (rank - 1)
+  → Usa il rank dal TDF che è già ordinato per win_points
+  → Se due player hanno stesso win_points, il TDF usa OMW% per il rank
+  → Questo è esattamente quello che TanaLeague vuole
+
+BYE = VITTORIA AUTOMATICA:
+  → Nel Pokemon TCG, un BYE vale 3 punti (vittoria automatica)
+  → Il codice conta i BYE come wins nel record W-T-L
 
 UTILIZZO:
+---------
     # Import normale
-    python parse_pokemon_tdf.py --tdf tournament.tdf --season PKM-FS25
+    python parse_pokemon_tdf.py --tdf tournament.tdf --season PKM99
 
     # Test mode (dry run, no write)
-    python parse_pokemon_tdf.py --tdf tournament.tdf --season PKM-FS25 --test
-
-FORMATO TDF (XML Play! Pokémon):
-    <?xml version="1.0"?>
-    <tournament>
-      <name>Fall League 2025</name>
-      <players>
-        <player id="12345" name="Mario Rossi" />
-      </players>
-      <standings>
-        <standing rank="1" player="12345" points="12" record="4-0-0" />
-      </standings>
-    </tournament>
+    python parse_pokemon_tdf.py --tdf tournament.tdf --season PKM99 --test
 
 REQUIREMENTS:
+-------------
     pip install gspread google-auth
 
-OUTPUT CONSOLE:
-    🚀 IMPORT TORNEO POKEMON: tournament.tdf
-    📊 Stagione: PKM-FS25
-    📂 Parsing TDF... ✅
-    👥 Partecipanti: 12
-    🎮 Round: 4
-    🏆 Vincitore: Mario Rossi
-    💾 Scrittura dati... ✅
-    📈 Aggiornamento standings... ✅
-    🎮 Check achievement... ✅
-    ✅ IMPORT COMPLETATO!
 =================================================================================
 """
 
