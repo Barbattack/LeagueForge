@@ -450,8 +450,20 @@ RFB02  |  RFB  |  Riftbound Season 2  |  2  |  ACTIVE  |  0  |  0  |  best_n_min
 ### Status Stagioni
 
 - **ACTIVE**: Stagione corrente, classifiche in Seasonal_Standings_PROV
+  - Applica regole competitive (scarto 2 tornei peggiori se >= 8 tornei)
+  - Sblocca achievement per i giocatori
+  - Visibile in UI (dropdown, liste, classifiche)
+
 - **CLOSED**: Stagione finita, classifiche finali in Seasonal_Standings_FINAL
-- **ARCHIVED**: Stagione vecchia, nascosta da UI (dropdown, liste)
+  - Applica regole competitive (scarto 2 tornei peggiori se >= 8 tornei)
+  - Sblocca achievement per i giocatori
+  - Visibile in UI (dropdown, liste, classifiche)
+
+- **ARCHIVED**: Stagione vecchia, solo archivio dati
+  - **NON** applica scarto tornei peggiori (conta TUTTI i tornei)
+  - **NON** sblocca achievement
+  - **NASCOSTA** da UI (dropdown, liste)
+  - Serve solo per popolare stats aggregate nella webapp
 
 ### Chiudere Stagione
 

@@ -14,6 +14,31 @@ Guida completa per importare tornei da CSV, PDF e TDF nei 3 TCG supportati.
 
 ---
 
+## ⚠️ Note Importanti
+
+### Gestione Season ARCHIVED
+
+Le stagioni con status **ARCHIVED** hanno comportamento speciale durante l'import:
+
+**ARCHIVED seasons:**
+- ✅ Importano tutti i dati normalmente (Results, Players, Matches)
+- ✅ Aggiornano Seasonal_Standings_PROV con **TUTTI** i tornei (no scarto)
+- ❌ **NON** sbloccano achievement
+- ❌ **NON** applicano regola "scarta 2 tornei peggiori se >= 8"
+- ℹ️ Servono solo come archivio dati per stats aggregate webapp
+
+**ACTIVE/CLOSED seasons:**
+- ✅ Sbloccano achievement
+- ✅ Applicano regole competitive (scarto 2 peggiori se >= 8 tornei)
+- ✅ Visibili in UI (dropdown, liste, classifiche)
+
+**Quando usare ARCHIVED:**
+- Stagioni vecchie di anni precedenti
+- Dati storici per popolare stats "All Time"
+- Tornei che non devono contare per achievement o classifiche competitive
+
+---
+
 ## 🏴‍☠️ One Piece TCG (CSV)
 
 ### Formato File
