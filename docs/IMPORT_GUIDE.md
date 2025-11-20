@@ -73,7 +73,7 @@ Il nome del file **deve** contenere la data in uno dei seguenti formati:
 
 ```bash
 cd tanaleague2
-python import_tournament.py --csv path/to/file.csv --season OP12
+python import_onepiece.py --csv path/to/file.csv --season OP12
 ```
 
 ### Parametri
@@ -151,7 +151,7 @@ python import_tournament.py --csv path/to/file.csv --season OP12
 
 ```bash
 cd tanaleague2
-python parse_pokemon_tdf.py --tdf path/to/tournament.tdf --season PKM-FS25
+python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 ```
 
 ### Parametri
@@ -356,13 +356,13 @@ python import_riftbound.py --csv RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB
 ### One Piece
 
 ```bash
-python import_tournament.py --csv file.csv --season OP12 --test
+python import_onepiece.py --csv file.csv --season OP12 --test
 ```
 
 ### Pokémon
 
 ```bash
-python parse_pokemon_tdf.py --tdf file.tdf --season PKM-FS25 --test
+python import_pokemon.py --tdf file.tdf --season PKM-FS25 --test
 ```
 
 ### Riftbound
@@ -464,7 +464,7 @@ Questo crea i fogli necessari.
    ```bash
    cd tanaleague2
    # Verifica che il file abbia questi fix:
-   grep "points_victory = w" parse_pokemon_tdf.py
+   grep "points_victory = w" import_pokemon.py
    # Deve mostrare: points_victory = w  # Numero di vittorie
    ```
 
@@ -479,7 +479,7 @@ Questo crea i fogli necessari.
 
 4. Re-import torneo:
    ```bash
-   python parse_pokemon_tdf.py --tdf file.tdf --season PKM-FS25
+   python import_pokemon.py --tdf file.tdf --season PKM-FS25
    ```
 
 **Verifica Fix**:

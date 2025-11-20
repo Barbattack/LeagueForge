@@ -224,7 +224,7 @@ SHEET_ID = "1abc123def456ghi789"  # ← Sostituisci con il tuo SHEET_ID
 Oppure modifica direttamente negli import scripts se non hai `config.py`:
 
 ```python
-# In import_tournament.py, parse_pokemon_tdf.py, import_riftbound.py
+# In import_onepiece.py, import_pokemon.py, import_riftbound.py
 SHEET_ID = "1abc123def456ghi789"  # ← Inserisci il tuo
 ```
 
@@ -509,13 +509,13 @@ Prova import di test per verificare tutto funzioni:
 
 ```bash
 cd tanaleague2
-python import_tournament.py --csv test_tournament.csv --season OP12 --test
+python import_onepiece.py --csv test_tournament.csv --season OP12 --test
 ```
 
 **Pokémon (TDF)**:
 
 ```bash
-python parse_pokemon_tdf.py --tdf test_tournament.tdf --season PKM-FS25 --test
+python import_pokemon.py --tdf test_tournament.tdf --season PKM-FS25 --test
 ```
 
 **Riftbound (PDF)**:

@@ -32,10 +32,10 @@ FUNZIONALITÀ COMPLETE:
 
 UTILIZZO:
     # Import normale
-    python import_tournament.py --csv 2025_11_18_OP12.csv --season OP12
+    python import_onepiece.py --csv 2025_11_18_OP12.csv --season OP12
 
     # Test mode (dry run, no write)
-    python import_tournament.py --csv tournament.csv --season OP12 --test
+    python import_onepiece.py --csv tournament.csv --season OP12 --test
 
 FORMATO CSV (portale Bandai):
     Ranking,User Name,Membership Number,Win Points,OMW %,Record

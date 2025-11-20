@@ -179,7 +179,7 @@ Webapp disponibile su `http://localhost:5000`
 
 ```bash
 cd tanaleague2
-python import_tournament.py --csv path/to/tournament.csv --season OP12
+python import_onepiece.py --csv path/to/tournament.csv --season OP12
 ```
 
 **Formato CSV richiesto**: Export da Limitlesstcg
@@ -189,7 +189,7 @@ python import_tournament.py --csv path/to/tournament.csv --season OP12
 
 ```bash
 cd tanaleague2
-python parse_pokemon_tdf.py --tdf path/to/tournament.tdf --season PKM-FS25
+python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 ```
 
 **Formato TDF richiesto**: Export da Play! Pokémon Tournament software
@@ -217,8 +217,8 @@ python import_riftbound.py --csv RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB
 Tutti gli import supportano `--test` per verificare senza scrivere:
 
 ```bash
-python import_tournament.py --csv file.csv --season OP12 --test
-python parse_pokemon_tdf.py --tdf file.tdf --season PKM-FS25 --test
+python import_onepiece.py --csv file.csv --season OP12 --test
+python import_pokemon.py --tdf file.tdf --season PKM-FS25 --test
 python import_riftbound.py --csv file.csv --season RFB01 --test
 # Multi-round test
 python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01 --test
@@ -256,7 +256,7 @@ Questo crea e popola:
 Gli achievement si sbloccano **automaticamente** quando importi tornei:
 
 ```bash
-python import_tournament.py --csv file.csv --season OP12
+python import_onepiece.py --csv file.csv --season OP12
 # Output:
 # ...
 # 🎮 Check achievement...
@@ -345,9 +345,9 @@ TanaLeague/
 │   ├── achievements.py             # Sistema achievement (NEW!)
 │   ├── setup_achievements.py       # Script setup sheets (NEW!)
 │   │
-│   ├── import_tournament.py        # Import One Piece (CSV)
+│   ├── import_onepiece.py        # Import One Piece (CSV)
 │   ├── import_riftbound.py         # Import Riftbound (CSV Multi-Round) (UPDATED!)
-│   ├── parse_pokemon_tdf.py        # Import Pokémon (TDF)
+│   ├── import_pokemon.py        # Import Pokémon (TDF)
 │   │
 │   ├── stats_builder.py            # Builder statistiche
 │   ├── stats_cache.py              # Cache file stats

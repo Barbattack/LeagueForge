@@ -183,10 +183,10 @@ FileNotFoundError: [Errno 2] No such file or directory: 'path/to/file.csv'
 2. Usa path assoluto se relativo non funziona:
    ```bash
    # Relativo (potrebbe fallire)
-   python import_tournament.py --csv ../files/tournament.csv --season OP12
+   python import_onepiece.py --csv ../files/tournament.csv --season OP12
 
    # Assoluto (più sicuro)
-   python import_tournament.py --csv /home/user/files/tournament.csv --season OP12
+   python import_onepiece.py --csv /home/user/files/tournament.csv --season OP12
    ```
 
 3. Controlla current working directory:
@@ -317,7 +317,7 @@ Sovrascrivere dati esistenti? (y/n):
 
 4. Usa `--test` mode per debug:
    ```bash
-   python parse_pokemon_tdf.py --tdf tournament.tdf --season PKM-FS25 --test
+   python import_pokemon.py --tdf tournament.tdf --season PKM-FS25 --test
    ```
 
 ---
@@ -670,7 +670,7 @@ Per modifiche a **template HTML** o **CSS**, Reload non sempre necessario (solo 
 
 1. **Usa `--test` mode** per verificare parsing prima:
    ```bash
-   python import_tournament.py --csv huge_tournament.csv --season OP12 --test
+   python import_onepiece.py --csv huge_tournament.csv --season OP12 --test
    ```
 
 2. **Batch write più piccoli**: Modifica script import per appendere righe in batch da 50 invece di tutte insieme

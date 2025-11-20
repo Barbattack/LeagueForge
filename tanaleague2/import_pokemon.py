@@ -49,10 +49,10 @@ BYE = VITTORIA AUTOMATICA:
 UTILIZZO:
 ---------
     # Import normale
-    python parse_pokemon_tdf.py --tdf tournament.tdf --season PKM99
+    python import_pokemon.py --tdf tournament.tdf --season PKM99
 
     # Test mode (dry run, no write)
-    python parse_pokemon_tdf.py --tdf tournament.tdf --season PKM99 --test
+    python import_pokemon.py --tdf tournament.tdf --season PKM99 --test
 
 REQUIREMENTS:
 -------------

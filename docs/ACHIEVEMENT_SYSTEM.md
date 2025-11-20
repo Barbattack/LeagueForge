@@ -85,8 +85,8 @@ membership | achievement_id | unlocked_date | tournament_id | progress
 tanaleague2/
 ├── setup_achievements.py      # Script setup iniziale (run once)
 ├── achievements.py             # Core logic + unlock functions
-├── import_tournament.py        # One Piece import (con achievement unlock)
-├── parse_pokemon_tdf.py        # Pokemon import (con achievement unlock)
+├── import_onepiece.py        # One Piece import (con achievement unlock)
+├── import_pokemon.py        # Pokemon import (con achievement unlock)
 ├── import_riftbound.py         # Riftbound import (con achievement unlock)
 ├── app.py                      # Flask routes (profili, pagina achievement)
 └── templates/
@@ -423,7 +423,7 @@ Esegui import di test:
 
 ```bash
 cd tanaleague2
-python import_tournament.py --csv test.csv --season OP12 --test
+python import_onepiece.py --csv test.csv --season OP12 --test
 ```
 
 Verifica output:

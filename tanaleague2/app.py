@@ -1129,7 +1129,7 @@ def admin_import_onepiece():
             tmp_path = tmp.name
 
         # Esegui import script
-        cmd = ['python3', 'import_tournament.py', '--csv', tmp_path, '--season', season_id]
+        cmd = ['python3', 'import_onepiece.py', '--csv', tmp_path, '--season', season_id]
         if test_mode:
             cmd.append('--test')
 
@@ -1195,7 +1195,7 @@ def admin_import_pokemon():
             tmp_path = tmp.name
 
         # Esegui import script
-        cmd = ['python3', 'parse_pokemon_tdf.py', '--tdf', tmp_path, '--season', season_id]
+        cmd = ['python3', 'import_pokemon.py', '--tdf', tmp_path, '--season', season_id]
         if test_mode:
             cmd.append('--test')
 
