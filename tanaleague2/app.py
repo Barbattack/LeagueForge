@@ -818,13 +818,31 @@ def player(membership):
             season_id = r[1].split('_')[0] if '_' in r[1] else ''
             season_status = season_status_map.get(season_id, '')
 
+            # Costruisci record W-T-L o W-L in base al TCG
+            # Colonne Results: 10=Match_W, 11=Match_T, 12=Match_L
+            if len(r) >= 13 and r[10] and r[11] and r[12]:
+                match_w = int(r[10])
+                match_t = int(r[11])
+                match_l = int(r[12])
+
+                # Pokemon e Riftbound hanno ties, One Piece no
+                if match_t > 0:
+                    record = f"{match_w}-{match_t}-{match_l}"  # W-T-L
+                else:
+                    record = f"{match_w}-{match_l}"  # W-L
+            else:
+                # Fallback per dati vecchi senza Match_W/T/L
+                # Approssima da Win_Points (W*3 + T*1)
+                wins = int(float(r[4])/3) if r[4] else 0
+                record = f"{wins}-?"
+
             history.append({
                 'date': r[1].split('_')[1] if '_' in r[1] else '',
                 'season': season_id,
                 'season_status': season_status,
                 'rank': int(r[3]) if r[3] else 999,
                 'points': float(r[8]) if r[8] else 0,
-                'record': f"{int(float(r[4])/3) if r[4] else 0}-{int(float(r[3] or 0))}" if r[3] and r[4] else 'N/A'
+                'record': record
             })
         history.reverse()
         
