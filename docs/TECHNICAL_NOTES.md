@@ -97,184 +97,170 @@ A differenza di Pokemon (calcolato da match), One Piece legge OMW% direttamente 
 
 ## 🎮 Riftbound TCG
 
-### Formato Input: PDF
+### Formato Input: CSV Multi-Round
 
-#### Problema: extract_text() non funziona
+Riftbound usa **file CSV multipli**, uno per ogni round del torneo, esportati dal software di gestione tornei.
 
-I PDF Riftbound hanno font/layout che rendono `extract_text()` inaffidabile:
-```python
-text = page.extract_text()
-# Ritorna solo ~1000 caratteri invece del contenuto completo
-# Non contiene i rank (righe con solo numero)
+**Naming convention:**
+```
+RFB_2025_11_17_R1.csv   ← Round 1
+RFB_2025_11_17_R2.csv   ← Round 2
+RFB_2025_11_17_R3.csv   ← Round 3
 ```
 
-#### Soluzione: Strategia ibrida
+**Utilizzo:**
+```bash
+# Import multi-round (RACCOMANDATO)
+python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01
 
-**STRATEGIA 1: Estrazione tabelle (tentativo)**
-```python
-tables = page.extract_tables()
-# PRO: Molto affidabile quando funziona
-# CONTRO: Non sempre riconosce tabelle in questi PDF
+# Test mode
+python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01 --test
 ```
 
-**STRATEGIA 2: Analisi coordinate (MAIN)**
+### Struttura CSV
 
-Usa coordinate fisiche delle parole nel PDF:
-
-```python
-# 1. Estrai parole con coordinate
-words = page.extract_words()
-# Ogni word: {text, x0, x1, top, bottom, ...}
-
-# 2. Raggruppa per Y (stessa riga orizzontale)
-lines_dict = {}
-for word in words:
-    y = round(word['top'])  # Arrotonda per lievi differenze
-    if y not in lines_dict:
-        lines_dict[y] = []
-    lines_dict[y].append(word)
-
-# 3. Ordina righe dall'alto in basso
-sorted_lines = sorted(lines_dict.items())
-
-# 4. Ordina parole in ogni riga da sinistra a destra
-for y, words_in_line in sorted_lines:
-    words_in_line.sort(key=lambda w: w['x0'])
-    line_text = ' '.join([w['text'] for w in words_in_line])
+**Colonne chiave:**
+```
+Col 0:  Table Number
+Col 4:  Player 1 User ID        ← Membership Number
+Col 5:  Player 1 First Name
+Col 6:  Player 1 Last Name
+Col 8:  Player 2 User ID        ← Membership Number
+Col 9:  Player 2 First Name
+Col 10: Player 2 Last Name
+Col 13: Match Result            ← Formato: "Nome Cognome: 2-0-0"
+Col 16: Player 1 Event Record   ← W-L-D totale torneo
+Col 17: Player 2 Event Record   ← W-L-D totale torneo
 ```
 
-**Vantaggi:**
-- ✅ Non dipende da `extract_text()`
-- ✅ Usa posizioni fisiche
-- ✅ Robusto contro layout variabili
-- ✅ Funziona con font problematici
+**IMPORTANTE:** L'User ID (colonne 4 e 8) è usato come Membership Number nel sistema TanaLeague.
 
-### State Machine per Parsing Multilinea
+### Multi-Round Aggregation
 
-Il formato PDF ha rank/nome/nickname/stats su righe separate:
-
-```
-1                          ← Rank
-Cogliati, Pietro           ← Nome
-(2metalupo)                ← Nickname = Membership
-12 4-0-0 62.5% 100% 62.5% ← Stats
-```
-
-**Stati:**
-```python
-current_rank = None      # int 1-99
-current_name = None      # str
-current_nickname = None  # str (membership number)
-```
-
-**Transizioni:**
+Lo script legge tutti i CSV in sequenza. **L'ultimo round contiene l'Event Record finale** di ogni giocatore:
 
 ```python
-# IDLE → RANK_FOUND
-if line matches r'^(\d{1,2})\b':
-    current_rank = matched_number
-    # Controlla se nickname sulla stessa riga
-    if '(nickname)' in rest_of_line:
-        extract_both()
-    else:
-        current_name = rest_of_line (se presente)
+def parse_csv_rounds(csv_files, season_id, tournament_date):
+    players_data = {}  # user_id -> {name, event_record, rounds_played}
 
-# RANK_FOUND → NICKNAME_FOUND
-if current_rank and not current_nickname:
-    if '(nickname)' in line:
-        current_nickname = extract_nickname()
-    elif line and not current_name:
-        current_name = line
+    for csv_idx, csv_path in enumerate(csv_files, 1):
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            header = next(reader)  # Skip header
 
-# COMPLETE → STATS_FOUND → SAVE
-if all(current_rank, current_name, current_nickname):
-    if line matches STATS_PATTERN:
-        save_player()
-        reset_state()
+            for row in reader:
+                p1_id = row[4].strip()
+                p1_event_record = row[16].strip()  # W-L-D finale
+
+                # Sovrascrive con ogni round - ultimo avrà record finale
+                players_data[p1_id] = {
+                    'name': f"{row[5]} {row[6]}".strip(),
+                    'event_record': p1_event_record,
+                    'rounds_played': csv_idx
+                }
 ```
 
-### Regex Patterns
+### Match Extraction (Riftbound_Matches)
+
+Oltre ai risultati, estrae i singoli match H2H con vincitore:
 
 ```python
-# Rank (1-99)
-RANK_PATTERN = r'^(\d{1,2})\b'
+# Parse vincitore dal Match Result (formato: "Nome Cognome: 2-0-0")
+winner_membership = ""
+if match_result and ":" in match_result:
+    winner_name = match_result.split(":")[0].strip()
+    # Match con Player 1 o Player 2
+    if winner_name.lower() == p1_name.lower():
+        winner_membership = p1_id
+    elif winner_name.lower() == p2_name.lower():
+        winner_membership = p2_id
 
-# Nickname tra parentesi (= Membership)
-NICKNAME_PATTERN = r'\(([^)]+)\)'
-
-# Stats completi
-STATS_PATTERN = r'(\d+)\s+(\d+)-(\d+)-(\d+)\s+([\d.]+)%\s+([\d.]+)%\s+([\d.]+)%'
-#                  ^pts    ^W    ^L    ^D     ^OMW      ^GW       ^OGW
+matches_data.append([
+    tournament_id, p1_id, p1_name, p2_id, p2_name,
+    winner_membership, round_num, table_number, match_result
+])
 ```
 
-**ATTENZIONE:** Nel PDF il formato è W-L-D (non W-D-L):
+**Output:** Salva nel foglio `Riftbound_Matches` per statistiche H2H future.
+
+### Event Record Parsing
+
 ```python
-stats_match = re.search(STATS_PATTERN, line)
-w = int(stats_match.group(2))  # Vittorie
-l = int(stats_match.group(3))  # Sconfitte
-d = int(stats_match.group(4))  # Pareggi (Draws/Ties)
+def parse_wld_record(record_str: str) -> tuple:
+    """
+    Parse W-L-D record string.
+    Input: "2-1-0" or "3-0-1"
+    Output: (wins, losses, draws)
+    """
+    match = re.match(r'(\d+)-(\d+)-(\d+)', record_str.strip())
+    if match:
+        return int(match.group(1)), int(match.group(2)), int(match.group(3))
+    return 0, 0, 0
 ```
 
-### Sistema Punti (come Pokemon)
+**ATTENZIONE:** Il formato è W-L-D (Wins-Losses-Draws), non W-D-L!
+
+### Sistema Punti
 
 ```python
-# Match points
+# Match points (Swiss system)
 win_points = w * 3 + d * 1 + l * 0
 
 # TanaLeague points
-points_victory = win_points / 3
+points_victory = win_points  # INTERO, non diviso 3!
 points_ranking = n_participants - (rank - 1)
 points_total = points_victory + points_ranking
+```
+
+**IMPORTANTE:** A differenza di Pokemon, `points_victory` per Riftbound è il win_points intero (W*3 + D*1), NON diviso per 3.
+
+### Ranking Calculation
+
+Il ranking finale è calcolato ordinando per punti Swiss:
+
+```python
+# Ordina per punti (poi per wins se pari punti)
+results_data.sort(key=lambda x: (x['points'], x['w']), reverse=True)
+
+# Assegna rank
+for rank, player in enumerate(results_data, 1):
+    player['rank'] = rank
+```
+
+### OMW (Opponent Match Win%)
+
+**NOTA:** I CSV Riftbound NON contengono OMW. La colonna OMW in Results è impostata a 0:
+```python
+formatted_results.append([
+    ...
+    0,  # OMW (non disponibile nei CSV, lasciamo 0)
+    ...
+])
 ```
 
 ### Colonne Results Sheet
 
 ```
-Col 11: W (vittorie match)
-Col 12: T (pareggi/ties - nel PDF sono "D" draws)
-Col 13: L (sconfitte match)
+Col 11 (row[10]): W (vittorie match)
+Col 12 (row[11]): T (pareggi/ties - nel CSV sono "D" draws)
+Col 13 (row[12]): L (sconfitte match)
 ```
 
 ### Troubleshooting Specifico
 
-#### "Could get FontBBox from font descriptor"
-- **Tipo:** Warning (non blocca)
-- **Causa:** Font PDF con metadati incompleti
-- **Soluzione:** Ignora
+#### "Nessun giocatore trovato nei CSV"
+- **Causa:** Formato CSV non corretto o file vuoto
+- **Check:** Verifica che il CSV abbia almeno 18 colonne
+- **Check:** Verifica che le colonne 4 e 8 contengano User ID
 
-#### "Trovati 0 ranks"
-- **Causa:** `extract_text()` fallisce
-- **Debug:** Verifica che strategia 2 sia attiva
-- **Check:** Quante parole trova `extract_words()`? (dovrebbe essere 200+)
+#### File CSV con encoding errato
+- **Sintomo:** Caratteri strani nei nomi
+- **Soluzione:** Lo script usa `encoding='utf-8'`. Se necessario, converti il CSV
 
-#### "Nessun giocatore trovato"
-- **Debug checklist:**
-  1. Stampa `len(all_words)` - dovrebbe essere 200+
-  2. Stampa `len(sorted_lines)` - dovrebbe essere 50+
-  3. Stampa prime 20 righe ricostruite - vedi i rank?
-  4. Testa regex patterns su testo di esempio
-
-**Esempio debug da aggiungere:**
-```python
-print(f"📝 Trovate {len(all_words)} parole")
-print(f"📏 Raggruppate in {len(sorted_lines)} righe")
-print("\n🐛 Prime 20 righe:")
-for i, (y, words) in enumerate(sorted_lines[:20]):
-    words.sort(key=lambda w: w['x0'])
-    text = ' '.join([w['text'] for w in words])
-    print(f"  {i:2d} (y={y}): [{text}]")
-```
-
-#### Y-coordinate grouping tolerance
-
-Se righe non vengono raggruppate correttamente, aumenta tolleranza:
-```python
-# Invece di:
-y = round(word['top'])
-
-# Usa:
-y = round(word['top'] / 2) * 2  # Raggruppa ogni 2 pixel
-```
+#### Match Result non parsato
+- **Sintomo:** `winner_membership` vuoto
+- **Causa:** Nome vincitore nel Match Result non corrisponde esattamente ai nomi giocatori
+- **Soluzione:** Lo script ha fallback che cerca parti del nome (cognome/nome)
 
 ---
 
@@ -546,14 +532,15 @@ else:
 
 ## 📚 Riferimenti Codice
 
-### parse_pdf() completo - Riftbound
+### parse_csv_rounds() - Riftbound
 
 File: `tanaleague2/import_riftbound.py`
 
 Funzione chiave da consultare per:
-- Estrazione coordinate PDF
-- State machine multilinea
-- Gestione edge cases (nome su più righe, nickname mancante, etc.)
+- Parsing CSV multi-round
+- Aggregazione Event Record
+- Estrazione match H2H con vincitori
+- Calcolo ranking da punti Swiss
 
 ### update_players_stats() - Tutti i TCG
 
