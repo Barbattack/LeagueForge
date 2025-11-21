@@ -8,9 +8,29 @@ Questo documento contiene dettagli tecnici implementativi per la manutenzione e 
 
 ## 📋 Indice
 
-1. [Pokemon TCG](#pokemon-tcg)
-2. [One Piece TCG](#one-piece-tcg)
-3. [Riftbound TCG](#riftbound-tcg)
+### Import TCG
+1. [Pokemon TCG](#-pokemon-tcg)
+2. [One Piece TCG](#️-one-piece-tcg)
+3. [Riftbound TCG](#-riftbound-tcg)
+
+### Backend
+4. [Google Sheets - Dettagli Implementativi](#️-google-sheets---dettagli-implementativi)
+5. [Sistema Cache (cache.py)](#️-sistema-cache-cachepy)
+6. [Stats Builder (stats_builder.py)](#-stats-builder-stats_builderpy)
+7. [Admin Panel (auth.py)](#-admin-panel-authpy)
+8. [Configurazione (config.py)](#-configurazione-configpy)
+
+### Frontend
+9. [Seasonal Standings - Worst-N Drop Logic](#-seasonal-standings---worst-n-drop-logic)
+10. [Frontend - Chart.js Implementation](#-frontend---chartjs-implementation)
+
+### Schema e Flusso
+11. [Google Sheets - Schema Completo](#-google-sheets---schema-completo)
+12. [Webapp - Flusso Dati](#-webapp---flusso-dati)
+
+### Appendici
+13. [Debugging Tips](#-debugging-tips)
+14. [Riferimenti Codice](#-riferimenti-codice)
 
 ---
 
@@ -203,16 +223,16 @@ def parse_wld_record(record_str: str) -> tuple:
 ### Sistema Punti
 
 ```python
-# Match points (Swiss system)
+# Match points (Swiss system) - usato per ranking
 win_points = w * 3 + d * 1 + l * 0
 
-# TanaLeague points
-points_victory = win_points  # INTERO, non diviso 3!
+# TanaLeague points (UGUALE a Pokemon e One Piece!)
+points_victory = w  # Numero di vittorie (NON win_points!)
 points_ranking = n_participants - (rank - 1)
 points_total = points_victory + points_ranking
 ```
 
-**IMPORTANTE:** A differenza di Pokemon, `points_victory` per Riftbound è il win_points intero (W*3 + D*1), NON diviso per 3.
+**IMPORTANTE:** `points_victory` per TUTTI i TCG è il numero di vittorie (W), NON win_points. Il sistema punti TanaLeague è uniforme tra Pokemon, One Piece e Riftbound.
 
 ### Ranking Calculation
 
@@ -556,6 +576,377 @@ for result in all_results:
 ```
 
 Questo evita inconsistenze da import parziali o errori.
+
+---
+
+## ⚙️ Sistema Cache (cache.py)
+
+### Architettura
+
+Il sistema cache usa un pattern **file-based + in-memory**:
+
+```
+Google Sheets API → cache.py → cache_data.json → Flask app
+                      ↓
+                 In-memory cache
+```
+
+### Classe SheetCache
+
+```python
+class SheetCache:
+    def __init__(self):
+        self.cache_data = None      # Dati in memoria
+        self.last_update = None     # Timestamp ultimo refresh
+        self.load_from_file()       # Carica da file all'avvio
+```
+
+### TTL (Time To Live)
+
+```python
+CACHE_REFRESH_MINUTES = 5  # Da config.py
+
+def needs_refresh(self):
+    if not self.cache_data or not self.last_update:
+        return True
+    age = datetime.now() - self.last_update
+    return age > timedelta(minutes=CACHE_REFRESH_MINUTES)
+```
+
+### Dati Cachati
+
+La cache contiene:
+```python
+cache_data = {
+    'schema_version': 2,
+    'seasons': [...],                    # Da Config sheet
+    'standings_by_season': {...},        # Da Seasonal_Standings_PROV/FINAL
+    'tournaments_by_season': {...},      # Da Tournaments sheet
+    # Legacy aliases
+    'standings': {...},
+    'tournaments': {...}
+}
+```
+
+### Logica PROV vs FINAL
+
+```python
+# Stagioni ACTIVE → legge da Seasonal_Standings_PROV
+# Stagioni CLOSED → legge da Seasonal_Standings_FINAL
+# Fallback: se sheet vuoto, prova l'altro
+```
+
+### Refresh Manuale
+
+```python
+# Da webapp
+GET /api/refresh  # Forza refresh cache classifiche
+```
+
+---
+
+## 📊 Stats Builder (stats_builder.py)
+
+### Overview
+
+Calcola statistiche avanzate per la pagina `/stats/<scope>`. Supporta:
+- **Scope singolo**: `OP12`, `PKM01`, `RFB01`
+- **All-time TCG**: `ALL-OP`, `ALL-PKM`, `ALL-RFB`
+
+### Struttura Output
+
+```python
+build_stats(['OP12']) → {
+    'OP12': {
+        'spotlights': {...},      # Record individuali
+        'spot_narrative': [...],  # Cards narrative
+        'pulse': {...},           # KPI e serie temporali
+        'tales': {...},           # Pattern sociali
+        'hof': {...}              # Hall of Fame
+    }
+}
+```
+
+### Spotlights (Record Individuali)
+
+| Spotlight | Metrica | Requisito |
+|-----------|---------|-----------|
+| **Dominatore** | MVP score (media × partecipazione) | min 3 eventi |
+| **Cecchino** | Media punti per torneo | min 3 eventi |
+| **Costante/Imprevedibile** | Deviazione standard punti | min 3 eventi |
+| **Fenice** | Trend miglioramento recente | min 3 eventi |
+| **Big Match Player** | Media punti in eventi Q3 (grandi) | min 3 eventi |
+| **Finalista** | % punti da Top 8 | min 3 eventi |
+
+### Spot Narrative (Cards)
+
+8 narrative cards calcolate automaticamente:
+1. **Rising Star** - Giocatore in crescita
+2. **Rookie to Watch** - Nuovo promettente (≤3 eventi)
+3. **Ironman** - Più presenze
+4. **Climber** - Maggior rimonta
+5. **Closer** - Capitalizza in Top 8
+6. **Big Stage** - Rende nei grandi eventi
+7. **New Faces** - Nuovi giocatori (30g)
+8. **Attendance Pulse** - Trend presenze
+
+### Pulse (KPI)
+
+```python
+kpi = {
+    'events_total': 15,           # Tornei totali
+    'unique_players': 45,         # Giocatori unici
+    'entries_total': 230,         # Partecipazioni totali
+    'avg_participants': 15.3,     # Media partecipanti
+    'top8_rate': 34.8,            # % in Top 8
+    'avg_omw': 52.3,              # Media OMW%
+    'compleanno_lega': {...},     # Giorni di attività
+    'record_presenze': {...}      # Torneo più affollato
+}
+```
+
+### Tales (Pattern Sociali)
+
+```python
+tales = {
+    'companions': [...],      # Coppie che giocano insieme
+    'podium_rivals': [...],   # Coppie in podio insieme
+    'top8_mixture': [...],    # Diversità avversari in Top 8
+    'sfortuna_nera': {...},   # Chi finisce 9° più spesso
+    'torneo_competitivo': {...},
+    'ultimo_arrivato': {...}
+}
+```
+
+### Hall of Fame
+
+```python
+hof = {
+    'highest_single_score': {...},  # Punteggio singolo più alto
+    'biggest_crowd': {...},         # Torneo più partecipato
+    'most_balanced': {...},         # Torneo più equilibrato (stdev)
+    'most_dominated': {...},        # Torneo più dominato (gap)
+    'fastest_riser': {...},         # Maggior crescita
+    'underdog_hero': {...},         # Vittorie da underdog
+    'scalata_epica': {...},         # Scalata ranking
+    'piu_vittorie': {...},          # Record vittorie
+    'piu_punti': {...}              # Record punti lifetime
+}
+```
+
+### Cache Stats
+
+```python
+# File: stats_cache.py
+MAX_AGE = 900  # 15 minuti
+
+GET /api/stats/refresh/<scope>  # Forza refresh stats
+```
+
+---
+
+## 🔐 Admin Panel (auth.py)
+
+### Autenticazione
+
+Sistema session-based con Flask:
+
+```python
+# Login
+session['admin_logged_in'] = True
+session['admin_username'] = username
+session['login_time'] = datetime.now().isoformat()
+session.permanent = True  # Usa PERMANENT_SESSION_LIFETIME
+```
+
+### Password Hash
+
+**NON** salvare password in chiaro! Usa werkzeug:
+
+```python
+from werkzeug.security import generate_password_hash, check_password_hash
+
+# Generare hash (una volta)
+hash = generate_password_hash("mia_password_sicura")
+# Output: "pbkdf2:sha256:600000$..."
+
+# Verificare (al login)
+check_password_hash(ADMIN_PASSWORD_HASH, password_inserita)
+```
+
+### Decorator @admin_required
+
+```python
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    # Solo se loggato
+    return render_template('admin/dashboard.html')
+```
+
+### Session Timeout
+
+```python
+SESSION_TIMEOUT = 30  # minuti (da config.py)
+
+# Verifica automatica ad ogni richiesta
+if datetime.now() - login_time > timedelta(minutes=SESSION_TIMEOUT):
+    logout_user()
+    return False
+```
+
+### Routes Admin
+
+| Route | Metodo | Descrizione |
+|-------|--------|-------------|
+| `/admin/login` | GET/POST | Form login |
+| `/admin/logout` | GET | Logout |
+| `/admin` | GET | Dashboard (protetta) |
+| `/admin/import/onepiece` | POST | Import One Piece |
+| `/admin/import/pokemon` | POST | Import Pokemon |
+| `/admin/import/riftbound` | POST | Import Riftbound |
+
+---
+
+## 🔧 Configurazione (config.py)
+
+### Variabili Richieste
+
+```python
+# Google Sheets
+SHEET_ID = "abc123..."              # ID del Google Sheet
+CREDENTIALS_FILE = "service_account_credentials.json"
+
+# Cache
+CACHE_REFRESH_MINUTES = 5           # TTL cache in minuti
+CACHE_FILE = "cache_data.json"      # File cache locale
+
+# Flask
+SECRET_KEY = "chiave-segreta-32-char"
+DEBUG = False                       # True solo in sviluppo
+
+# Admin
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD_HASH = "pbkdf2:sha256:600000$..."
+SESSION_TIMEOUT = 30                # Minuti
+```
+
+### Generare Valori Sicuri
+
+```bash
+# SECRET_KEY
+python -c "import secrets; print(secrets.token_hex(32))"
+
+# ADMIN_PASSWORD_HASH
+python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('mia_password'))"
+```
+
+### File .gitignore
+
+```
+config.py
+service_account_credentials.json
+cache_data.json
+*.pyc
+__pycache__/
+```
+
+---
+
+## 📋 Google Sheets - Schema Completo
+
+### Config Sheet
+
+| Colonna | Nome | Descrizione |
+|---------|------|-------------|
+| A | Season_ID | ID stagione (es. OP12, PKM01) |
+| B | TCG | Codice TCG (OP, PKM, RFB) |
+| C | Name | Nome visualizzato |
+| D | Season_Num | Numero stagione |
+| E | Status | ACTIVE / CLOSED / ARCHIVED |
+| F-K | Settings | Configurazioni varie |
+| L | Next_Tournament | Data prossimo torneo |
+
+### Tournaments Sheet
+
+| Colonna | Nome | Descrizione |
+|---------|------|-------------|
+| A | Tournament_ID | ID univoco (es. OP12_2025-11-17) |
+| B | Season_ID | Riferimento stagione |
+| C | Date | Data torneo (YYYY-MM-DD) |
+| D | Participants | Numero partecipanti |
+| E | Rounds | Numero round |
+| F | Format | Formato (Swiss, etc.) |
+| G | Location | Luogo |
+| H | Winner | Nome vincitore |
+
+### Seasonal_Standings_PROV / _FINAL
+
+| Colonna | Nome | Descrizione |
+|---------|------|-------------|
+| A | Season_ID | ID stagione |
+| B | Membership | ID giocatore |
+| C | Name | Nome giocatore |
+| D | Points | Punti totali stagione |
+| E | Tournaments_Played | Tornei giocati |
+| F | Tournaments_Counted | Tornei contati (dopo scarto) |
+| G | Total_Wins | Vittorie tornei |
+| H | Match_Wins | Vittorie match |
+| I | Best_Rank | Miglior piazzamento |
+| J | Top8_Count | Volte in Top 8 |
+| K | Position | Posizione in classifica |
+
+### Riftbound_Matches (per H2H futuro)
+
+| Colonna | Nome | Descrizione |
+|---------|------|-------------|
+| A | Tournament_ID | ID torneo |
+| B | Player1_ID | Membership giocatore 1 |
+| C | Player1_Name | Nome giocatore 1 |
+| D | Player2_ID | Membership giocatore 2 |
+| E | Player2_Name | Nome giocatore 2 |
+| F | Winner_ID | Membership vincitore |
+| G | Round | Numero round |
+| H | Table | Numero tavolo |
+| I | Result | Risultato testuale |
+
+**NOTA:** Questo foglio viene popolato durante import ma NON è ancora utilizzato dalla webapp per visualizzare statistiche H2H.
+
+---
+
+## 🌐 Webapp - Flusso Dati
+
+### Request Flow
+
+```
+Browser → Flask Route → cache.get_data() → Template Jinja2 → HTML
+                              ↓
+                      (se cache scaduta)
+                              ↓
+                      Google Sheets API
+```
+
+### Routes Principali
+
+| Route | Template | Dati |
+|-------|----------|------|
+| `/` | landing.html | standings top 3, stats highlights |
+| `/classifiche` | classifiche_page.html | lista stagioni per TCG |
+| `/classifica/<season>` | classifica.html | standings completi |
+| `/players` | players.html | lista giocatori |
+| `/player/<membership>` | player.html | profilo + charts + achievement |
+| `/stats/<scope>` | stats.html | spotlights, pulse, tales, hof |
+| `/achievements` | achievements.html | catalogo 40 achievement |
+
+### Jinja2 Filters Custom
+
+```python
+@app.template_filter('format_player_name')
+def format_player_name(name, tcg, membership=''):
+    # OP: Nome completo
+    # PKM: "Nome I."
+    # RFB: Membership (nickname)
+```
 
 ---
 
