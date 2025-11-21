@@ -32,7 +32,7 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 - **📊 Classifiche Stagionali** - Rankings con scarto dinamico (migliori N-2 tornei)
 - **🏅 Achievement System** - 40+ achievement sbloccabili automaticamente
 - **📈 Statistiche Avanzate** - MVP, Sharpshooter, Metronome, Phoenix, Big Stage, Closer
-- **👤 Profili Giocatori** - Storico completo, win rate, trend, grafici, achievement
+- **👤 Profili Giocatori** - Storico completo, win rate, trend, 3 grafici avanzati (doughnut, bar, radar), achievement
 - **📉 Analytics** - Pulse (KPI), Tales (narrative), Hall of Fame
 - **🔄 Import Automatico** - Da CSV (One Piece), TDF/XML (Pokémon), CSV Multi-Round (Riftbound)
 - **⚡ Cache Intelligente** - Aggiornamento automatico ogni 5 minuti
@@ -87,11 +87,37 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 - Display personalizzato "Nome I."
 
 ### UI/UX Improvements 🎨
+- **Grafici Avanzati Profilo Giocatore** 📊
+  - Match Record (doughnut): W-T-L lifetime con percentuali
+  - Ranking Distribution (bar): Frequenza in ogni fascia (1°, 2°, 3°, Top8, oltre)
+  - Performance Radar (pentagon): 5 metriche normalizzate (Win Rate, Top8 Rate, Victory Rate, Avg Perf, Consistency)
+  - 9 tooltip informativi per user-friendly UX
 - **Nuova pagina Classifiche** (`/classifiche`) con lista tutte le stagioni
 - **Menu rinnovato** con Home, Classifiche, Achievement, Stats
 - **Pulsanti PKM/RFB attivi** sulla homepage
 - **Stagioni ARCHIVED nascoste** da dropdown e liste
 - **Custom name display** per TCG (OP: full, PKM: Nome I., RFB: nickname)
+- **Lista giocatori corretta** con punti medi e stats accurate
+
+---
+
+## 🆕 Recent Updates (Nov 2024)
+
+### 📊 Advanced Player Charts (Latest)
+- **3 grafici interattivi** nella scheda giocatore:
+  - **Doughnut Chart**: Match Record lifetime (W-T-L con percentuali)
+  - **Bar Chart**: Distribuzione ranking (🥇 1°, 🥈 2°, 🥉 3°, Top8, oltre)
+  - **Radar Chart**: Performance overview su 5 metriche (Win Rate, Top8 Rate, Victory Rate, Avg Perf, Consistency)
+- **9 tooltip informativi** con spiegazioni dettagliate per ogni metrica
+- **Formule ottimizzate**: Avg Performance normalizzato a 25pt, Consistency basato su std dev
+- **Responsive design** con Chart.js 4.4.0
+
+### 🔧 Bug Fixes & Improvements
+- **Fixed**: Player list stats now show correct data (tournaments, wins, avg points)
+- **Fixed**: Tournament record in player history shows actual W-T-L instead of wrong ranking
+- **Fixed**: ARCHIVED seasons skip worst-2-tournament drop (data archive only)
+- **Refactor**: Import scripts renamed for consistency (`import_pokemon.py`, `import_onepiece.py`, `import_riftbound.py`)
+- **Docs**: Comprehensive Pokemon points system clarification in IMPORT_GUIDE
 
 ---
 
