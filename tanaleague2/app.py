@@ -405,17 +405,13 @@ def index():
         for player in season_standings:
             if player.get('membership'):
                 global_players.add(player.get('membership'))
-        # Conta tornei dalla stagione (se disponibile)
-        global_tournaments += season.get('events_count', 0)
 
-    # Fallback: se events_count non è disponibile, conta dai tornei nel cache
-    if global_tournaments == 0:
-        tournaments = data.get('tournaments', [])
-        for t in tournaments:
-            t_season = t.get('season_id', '')
-            # Conta solo tornei di stagioni non-ARCHIVED
-            if any(s.get('id') == t_season for s in all_active_seasons):
-                global_tournaments += 1
+    # Conta tornei da tournaments_by_season (è un dizionario, non una lista!)
+    tournaments_by_season = data.get('tournaments_by_season', {})
+    for season in all_active_seasons:
+        sid = season.get('id', '')
+        season_tournaments = tournaments_by_season.get(sid, [])
+        global_tournaments += len(season_tournaments)
 
     # Top 3 standings (from podio season)
     standings = standings_by_season.get(podio_season_id, [])[:3]
