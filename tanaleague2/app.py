@@ -280,12 +280,24 @@ def _tcg_code(sid: str) -> str:
     return prefix.upper()
 
 def _is_valid_season_id(sid: str) -> bool:
-    """Allow only real seasons (letters+digits, e.g. OP12) and ALL-<TCG> (e.g. ALL-OP)."""
+    """
+    Allow valid season IDs:
+    - Base format: OP12, PKM25, RFB1 (letters + digits)
+    - Extended format: PKM-FS25, RFB-S1 (letters + hyphen + letters + digits)
+    - Aggregate format: ALL-OP, ALL-PKM (ALL- prefix)
+    """
     import re
     if not isinstance(sid, str):
         return False
     sid = sid.strip().upper()
-    return bool(re.match(r'^[A-Z]{2,}\d{1,3}$', sid) or re.match(r'^ALL-[A-Z]+$', sid))
+    # Base: OP12, PKM25, RFB1
+    # Extended: PKM-FS25, RFB-S1
+    # Aggregate: ALL-OP, ALL-PKM
+    return bool(
+        re.match(r'^[A-Z]{2,}\d{1,3}$', sid) or           # OP12, PKM25
+        re.match(r'^[A-Z]{2,}-[A-Z]+\d{1,3}$', sid) or    # PKM-FS25, RFB-S1
+        re.match(r'^ALL-[A-Z]+$', sid)                     # ALL-OP
+    )
 
 def _season_key_desc(sid: str):
     """Sort by TCG prefix then by numeric part DESC (OP12 > OP11 > OP2)."""
