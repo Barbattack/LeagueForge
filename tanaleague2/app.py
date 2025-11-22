@@ -1123,6 +1123,111 @@ def achievements():
         return render_template('error.html', error=f'Errore caricamento achievement: {str(e)}'), 500
 
 
+@app.route('/achievement/<ach_id>')
+def achievement_detail(ach_id):
+    """
+    Pagina dettaglio singolo achievement.
+
+    Mostra:
+    - Info achievement (emoji, nome, descrizione, rarity, punti)
+    - Lista giocatori che l'hanno sbloccato con:
+      - Badge "🥇 First!" per il primo a sbloccarlo
+      - Data di unlock
+      - Link al profilo giocatore
+    - Statistiche: X su Y giocatori (Z%)
+
+    Args:
+        ach_id: ID achievement (es. "glory_first_blood")
+
+    Returns:
+        Template: achievement_detail.html
+        404: Se achievement non trovato
+    """
+    from cache import cache
+    try:
+        sheet = cache.connect_sheet()
+
+        # 1. Carica info achievement da Achievement_Definitions
+        ws_achievements = sheet.worksheet("Achievement_Definitions")
+        achievement_rows = ws_achievements.get_all_values()[4:]
+
+        achievement = None
+        for row in achievement_rows:
+            if row and row[0] == ach_id:
+                achievement = {
+                    'id': row[0],
+                    'name': row[1],
+                    'description': row[2],
+                    'category': row[3] if len(row) > 3 else 'Other',
+                    'rarity': row[4] if len(row) > 4 else 'Common',
+                    'emoji': row[5] if len(row) > 5 else '🏆',
+                    'points': int(row[6]) if len(row) > 6 and row[6] else 0
+                }
+                break
+
+        if not achievement:
+            return render_template('error.html', error='Achievement non trovato'), 404
+
+        # 2. Carica tutti i player che hanno sbloccato questo achievement
+        ws_player_ach = sheet.worksheet("Player_Achievements")
+        player_ach_rows = ws_player_ach.get_all_values()[4:]
+
+        unlocks_raw = []
+        for row in player_ach_rows:
+            if row and len(row) >= 3 and row[1] == ach_id:
+                unlocks_raw.append({
+                    'membership': row[0],
+                    'unlocked_date': row[2] if len(row) > 2 else '',
+                    'tournament_id': row[3] if len(row) > 3 else ''
+                })
+
+        # 3. Carica nomi giocatori da Players sheet
+        ws_players = sheet.worksheet("Players")
+        players_data = ws_players.get_all_values()[3:]
+
+        player_names = {}
+        for row in players_data:
+            if row and row[0]:
+                # membership -> name
+                player_names[row[0]] = row[1] if len(row) > 1 else row[0]
+
+        total_players = len([r for r in players_data if r and r[0]])
+
+        # 4. Arricchisci unlocks con nomi e ordina per data
+        unlocks = []
+        for u in unlocks_raw:
+            unlocks.append({
+                'membership': u['membership'],
+                'name': player_names.get(u['membership'], u['membership']),
+                'unlocked_date': u['unlocked_date'],
+                'tournament_id': u['tournament_id']
+            })
+
+        # Ordina per data (più vecchi prima = primi a sbloccare)
+        def parse_date(d):
+            try:
+                from datetime import datetime
+                return datetime.strptime(d, '%Y-%m-%d')
+            except:
+                return datetime.max
+
+        unlocks.sort(key=lambda x: parse_date(x['unlocked_date']))
+
+        # 5. Calcola statistiche
+        unlock_count = len(unlocks)
+        unlock_percentage = (unlock_count / total_players * 100) if total_players > 0 else 0
+
+        return render_template('achievement_detail.html',
+                               achievement=achievement,
+                               unlocks=unlocks,
+                               unlock_count=unlock_count,
+                               total_players=total_players,
+                               unlock_percentage=unlock_percentage)
+
+    except Exception as e:
+        return render_template('error.html', error=f'Errore caricamento achievement: {str(e)}'), 500
+
+
 # ============================================================================
 # ROUTES - ADMIN PANEL (Protected)
 # ============================================================================

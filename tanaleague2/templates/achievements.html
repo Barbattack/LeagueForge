@@ -40,6 +40,8 @@
         <span class="badge bg-warning text-dark">Legendary</span>
     </div>
     <small class="text-muted mt-2 d-block">La % indica quanti giocatori hanno sbloccato l'achievement.</small>
+    <hr class="my-2">
+    <small class="text-primary"><i class="fas fa-hand-pointer"></i> <strong>Clicca su un achievement</strong> per scoprire chi l'ha sbloccato!</small>
 </div>
 
 <!-- Achievement per categoria -->
@@ -69,51 +71,57 @@
         <div class="row">
             {% for ach in achievements %}
             <div class="col-md-6 col-lg-4 mb-3">
-                <div class="card h-100 shadow-sm
-                    {% if ach.rarity == 'Legendary' %}border-warning{% endif %}
-                    {% if ach.rarity == 'Epic' %}border-purple{% endif %}
-                    {% if ach.rarity == 'Rare' %}border-primary{% endif %}"
-                    {% if ach.rarity == 'Legendary' %}style="border-width: 3px; box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);"{% endif %}
-                    {% if ach.rarity == 'Epic' %}style="border-width: 2px; box-shadow: 0 0 10px rgba(138, 43, 226, 0.3);"{% endif %}>
-                    <div class="card-body">
-                        <div class="d-flex align-items-start">
-                            <div class="me-2" style="font-size: 2rem;">{{ ach.emoji }}</div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1 fw-bold
-                                    {% if ach.rarity == 'Legendary' %}text-warning{% endif %}
-                                    {% if ach.rarity == 'Epic' %}text-purple{% endif %}
-                                    {% if ach.rarity == 'Rare' %}text-primary{% endif %}">
-                                    {{ ach.name }}
-                                </h6>
-                                <p class="mb-2 small text-muted">{{ ach.description }}</p>
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="badge
-                                        {% if ach.rarity == 'Legendary' %}bg-warning text-dark{% endif %}
-                                        {% if ach.rarity == 'Epic' %}bg-purple{% endif %}
-                                        {% if ach.rarity == 'Rare' %}bg-primary{% endif %}
-                                        {% if ach.rarity == 'Uncommon' %}bg-success{% endif %}
-                                        {% if ach.rarity == 'Common' %}bg-secondary{% endif %}">
-                                        {{ ach.rarity }}
-                                    </span>
-                                    <small class="text-muted fw-bold">{{ ach.points }} pt</small>
-                                </div>
-                                <!-- Progress bar unlock % -->
-                                <div class="progress" style="height: 18px;">
-                                    <div class="progress-bar
-                                        {% if ach.unlock_percentage >= 50 %}bg-success{% endif %}
-                                        {% if ach.unlock_percentage >= 20 and ach.unlock_percentage < 50 %}bg-info{% endif %}
-                                        {% if ach.unlock_percentage < 20 %}bg-warning{% endif %}"
-                                        role="progressbar"
-                                        style="width: {{ ach.unlock_percentage }}%;"
-                                        aria-valuenow="{{ ach.unlock_percentage }}" aria-valuemin="0" aria-valuemax="100">
-                                        <small>{{ "%.1f"|format(ach.unlock_percentage) }}%</small>
+                <a href="{{ url_for('achievement_detail', ach_id=ach.id) }}" class="text-decoration-none">
+                    <div class="card h-100 shadow-sm achievement-card
+                        {% if ach.rarity == 'Legendary' %}border-warning{% endif %}
+                        {% if ach.rarity == 'Epic' %}border-purple{% endif %}
+                        {% if ach.rarity == 'Rare' %}border-primary{% endif %}"
+                        {% if ach.rarity == 'Legendary' %}style="border-width: 3px; box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);"{% endif %}
+                        {% if ach.rarity == 'Epic' %}style="border-width: 2px; box-shadow: 0 0 10px rgba(138, 43, 226, 0.3);"{% endif %}>
+                        <div class="card-body">
+                            <div class="d-flex align-items-start">
+                                <div class="me-2" style="font-size: 2rem;">{{ ach.emoji }}</div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold
+                                        {% if ach.rarity == 'Legendary' %}text-warning{% endif %}
+                                        {% if ach.rarity == 'Epic' %}text-purple{% endif %}
+                                        {% if ach.rarity == 'Rare' %}text-primary{% endif %}
+                                        {% if ach.rarity not in ['Legendary', 'Epic', 'Rare'] %}text-dark{% endif %}">
+                                        {{ ach.name }}
+                                    </h6>
+                                    <p class="mb-2 small text-muted">{{ ach.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge
+                                            {% if ach.rarity == 'Legendary' %}bg-warning text-dark{% endif %}
+                                            {% if ach.rarity == 'Epic' %}bg-purple{% endif %}
+                                            {% if ach.rarity == 'Rare' %}bg-primary{% endif %}
+                                            {% if ach.rarity == 'Uncommon' %}bg-success{% endif %}
+                                            {% if ach.rarity == 'Common' %}bg-secondary{% endif %}">
+                                            {{ ach.rarity }}
+                                        </span>
+                                        <small class="text-muted fw-bold">{{ ach.points }} pt</small>
+                                    </div>
+                                    <!-- Progress bar unlock % -->
+                                    <div class="progress" style="height: 18px;">
+                                        <div class="progress-bar
+                                            {% if ach.unlock_percentage >= 50 %}bg-success{% endif %}
+                                            {% if ach.unlock_percentage >= 20 and ach.unlock_percentage < 50 %}bg-info{% endif %}
+                                            {% if ach.unlock_percentage < 20 %}bg-warning{% endif %}"
+                                            role="progressbar"
+                                            style="width: {{ ach.unlock_percentage }}%;"
+                                            aria-valuenow="{{ ach.unlock_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                            <small>{{ "%.1f"|format(ach.unlock_percentage) }}%</small>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-1">
+                                        <small class="text-muted">{{ ach.unlock_count }} / {{ total_players }} giocatori</small>
+                                        <small class="click-hint text-primary">Scopri chi <i class="fas fa-arrow-right"></i></small>
                                     </div>
                                 </div>
-                                <small class="text-muted">{{ ach.unlock_count }} / {{ total_players }} giocatori</small>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
             {% endfor %}
         </div>
@@ -136,6 +144,37 @@
 }
 .border-purple {
     border-color: #8a2be2 !important;
+}
+
+/* Achievement cards - clickable effect */
+.achievement-card {
+    transition: all 0.25s ease;
+    cursor: pointer;
+}
+
+.achievement-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15) !important;
+}
+
+.achievement-card:hover .click-hint {
+    opacity: 1;
+    transform: translateX(3px);
+}
+
+.click-hint {
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+/* Legendary card special hover */
+.achievement-card.border-warning:hover {
+    box-shadow: 0 12px 40px rgba(255, 193, 7, 0.4) !important;
+}
+
+/* Epic card special hover */
+.achievement-card.border-purple:hover {
+    box-shadow: 0 12px 35px rgba(138, 43, 226, 0.35) !important;
 }
 </style>
 {% endblock %}
