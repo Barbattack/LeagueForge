@@ -18,12 +18,10 @@
     </div>
     <div class="ticker-content">
       <span class="ticker-text">
-        {% if stats and stats.pulse and stats.pulse.kpi %}
-        🎮 {{ stats.pulse.kpi.unique_players }} giocatori in competizione
+        🎮 {{ global_players_count }} giocatori in competizione
         &nbsp;•&nbsp;
-        🏆 {{ stats.pulse.kpi.events_total }} tornei disputati
+        🏆 {{ global_tournaments_count }} tornei disputati
         &nbsp;•&nbsp;
-        {% endif %}
         ⚔️ 3 TCG: One Piece, Pokémon, Riftbound
         &nbsp;•&nbsp;
         🔥 Classifiche sempre aggiornate!
@@ -32,12 +30,10 @@
         &nbsp;•&nbsp;
       </span>
       <span class="ticker-text" aria-hidden="true">
-        {% if stats and stats.pulse and stats.pulse.kpi %}
-        🎮 {{ stats.pulse.kpi.unique_players }} giocatori in competizione
+        🎮 {{ global_players_count }} giocatori in competizione
         &nbsp;•&nbsp;
-        🏆 {{ stats.pulse.kpi.events_total }} tornei disputati
+        🏆 {{ global_tournaments_count }} tornei disputati
         &nbsp;•&nbsp;
-        {% endif %}
         ⚔️ 3 TCG: One Piece, Pokémon, Riftbound
         &nbsp;•&nbsp;
         🔥 Classifiche sempre aggiornate!
@@ -172,11 +168,26 @@
   </div>
 </div>
 
-<!-- CTA FINALE -->
-<div class="text-center py-4">
-  <p class="text-muted mb-3">Pronto a competere?</p>
-  <a href="{{ url_for('classifiche_page') }}" class="btn btn-primary btn-lg">
-    Inizia da qui →
+<!-- CTA + CONTATTI -->
+<div class="text-center py-5 bg-light rounded">
+  <h4 class="mb-3">Vuoi partecipare ai tornei?</h4>
+  <p class="text-muted mb-4">Vieni a trovarci a La Tana delle Pulci o seguici sui social!</p>
+
+  <!-- Social Links -->
+  <div class="d-flex justify-content-center gap-3 mb-4">
+    <a href="https://www.instagram.com/latanadellepulci_albenga/" target="_blank" class="btn btn-outline-danger btn-lg" title="Instagram">
+      <i class="fab fa-instagram"></i>
+    </a>
+    <a href="https://www.facebook.com/latanadellepulci" target="_blank" class="btn btn-outline-primary btn-lg" title="Facebook">
+      <i class="fab fa-facebook"></i>
+    </a>
+    <a href="https://wa.me/393XXXXXXXXX" target="_blank" class="btn btn-outline-success btn-lg" title="WhatsApp">
+      <i class="fab fa-whatsapp"></i>
+    </a>
+  </div>
+
+  <a href="{{ url_for('classifiche_page') }}" class="btn btn-primary">
+    📊 Vai alle Classifiche
   </a>
 </div>
 

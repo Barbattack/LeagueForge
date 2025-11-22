@@ -393,6 +393,30 @@ def index():
         rfb_active = [s for s in rfb_seasons_sorted if s.get('status','').upper() == 'ACTIVE']
         rfb_active_season_id = rfb_active[0]['id'] if rfb_active else rfb_seasons_sorted[0]['id']
 
+    # === GLOBAL STATS per ticker (tutte le stagioni non-ARCHIVED) ===
+    all_active_seasons = op_seasons + pkm_seasons + rfb_seasons  # Già filtrate senza ARCHIVED
+    global_players = set()
+    global_tournaments = 0
+
+    for season in all_active_seasons:
+        sid = season.get('id', '')
+        season_standings = standings_by_season.get(sid, [])
+        # Conta giocatori unici
+        for player in season_standings:
+            if player.get('membership'):
+                global_players.add(player.get('membership'))
+        # Conta tornei dalla stagione (se disponibile)
+        global_tournaments += season.get('events_count', 0)
+
+    # Fallback: se events_count non è disponibile, conta dai tornei nel cache
+    if global_tournaments == 0:
+        tournaments = data.get('tournaments', [])
+        for t in tournaments:
+            t_season = t.get('season_id', '')
+            # Conta solo tornei di stagioni non-ARCHIVED
+            if any(s.get('id') == t_season for s in all_active_seasons):
+                global_tournaments += 1
+
     # Top 3 standings (from podio season)
     standings = standings_by_season.get(podio_season_id, [])[:3]
 
@@ -426,7 +450,9 @@ def index():
         podio_season_name=podio_season_name,
         stats_season_name=stats_season_name,
         pkm_active_season_id=pkm_active_season_id,
-        rfb_active_season_id=rfb_active_season_id
+        rfb_active_season_id=rfb_active_season_id,
+        global_players_count=len(global_players),
+        global_tournaments_count=global_tournaments
     )
 
 
