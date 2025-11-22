@@ -72,7 +72,10 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 - **Auto-unlock** durante import tornei
 - **Profili giocatore** con achievement sbloccati
 - **Pagina dedicata** `/achievements` con progress tracking
+- **Achievement Detail Page** `/achievement/<id>` con lista chi l'ha sbloccato e badge "Pioneer"
+- **Card cliccabili** con hover effects e invito a esplorare
 - Categorie: Glory, Giant Slayer, Consistency, Legacy, Wildcards, Seasonal, Heartbreak
+- **ARCHIVED seasons** escluse dal calcolo achievement (solo stagioni attive)
 
 ### Riftbound Support 🌌
 - **Import CSV Multi-Round** con aggregazione automatica (R1.csv,R2.csv,R3.csv)
@@ -101,9 +104,37 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 
 ---
 
-## 🆕 Recent Updates (Nov 2024)
+## 🆕 Recent Updates (Nov 2025)
 
-### 📊 Advanced Player Charts (Latest)
+### 🏅 Achievement Detail Page (Latest)
+- **Nuova pagina `/achievement/<id>`** per ogni achievement:
+  - Lista completa di chi l'ha sbloccato
+  - **Badge "Pioneer"** dorato per il primo a sbloccarlo
+  - Data di unlock e link al profilo giocatore
+  - Statistiche: X su Y giocatori (Z%)
+  - Effetti speciali per achievement Legendary/Epic
+- **Card cliccabili** nella pagina `/achievements` con:
+  - Hover effects (scale + shadow)
+  - Hint "Scopri chi" con freccia
+  - Messaggio introduttivo invitante
+
+### 🏠 Landing Page Rinnovata
+- **Ticker LIVE** con stats globali (tutti i TCG, non solo uno)
+  - Giocatori attivi, tornei disputati, achievement sbloccati
+  - Domande random che creano curiosità
+- **Social Links**: Instagram + WhatsApp integrati
+- **CTAs engaging**: "Partecipa ai tornei" con link WhatsApp
+- **Box "Prossimi Tornei"** con link Instagram per aggiornamenti
+
+### 🔧 Bug Fixes & Improvements
+- **Fixed**: Achievement system ora esclude stagioni ARCHIVED dal calcolo stats
+- **Fixed**: Regex season ID accetta formati estesi (es. `PKM-FS25`, `RFB-S1`)
+- **Fixed**: Ticker globale calcola stats corrette da tutti i TCG
+- **Fixed**: Player list stats now show correct data (tournaments, wins, avg points)
+- **Fixed**: Tournament record in player history shows actual W-T-L instead of wrong ranking
+- **Fixed**: ARCHIVED seasons skip worst-2-tournament drop (data archive only)
+
+### 📊 Advanced Player Charts
 - **3 grafici interattivi** nella scheda giocatore:
   - **Doughnut Chart**: Match Record lifetime (W-T-L con percentuali)
   - **Bar Chart**: Distribuzione ranking (🥇 1°, 🥈 2°, 🥉 3°, Top8, oltre)
@@ -111,13 +142,6 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 - **9 tooltip informativi** con spiegazioni dettagliate per ogni metrica
 - **Formule ottimizzate**: Avg Performance normalizzato a 25pt, Consistency basato su std dev
 - **Responsive design** con Chart.js 4.4.0
-
-### 🔧 Bug Fixes & Improvements
-- **Fixed**: Player list stats now show correct data (tournaments, wins, avg points)
-- **Fixed**: Tournament record in player history shows actual W-T-L instead of wrong ranking
-- **Fixed**: ARCHIVED seasons skip worst-2-tournament drop (data archive only)
-- **Refactor**: Import scripts renamed for consistency (`import_pokemon.py`, `import_onepiece.py`, `import_riftbound.py`)
-- **Docs**: Comprehensive Pokemon points system clarification in IMPORT_GUIDE
 
 ---
 
@@ -294,7 +318,8 @@ python import_onepiece.py --csv file.csv --season OP12
 ### Visualizzazione
 
 - **Profilo Giocatore** (`/player/<membership>`): Achievement sbloccati con emoji, descrizione, data
-- **Pagina Achievement** (`/achievements`): Tutti i 40 achievement con % unlock
+- **Pagina Achievement** (`/achievements`): Tutti i 40 achievement con % unlock, card cliccabili
+- **Dettaglio Achievement** (`/achievement/<id>`): Chi l'ha sbloccato, badge Pioneer, stats
 
 ---
 
@@ -385,7 +410,8 @@ TanaLeague/
 │   │   ├── classifica.html         # Classifica singola stagione
 │   │   ├── player.html             # Profilo giocatore + achievement (UPDATED!)
 │   │   ├── players.html            # Lista giocatori
-│   │   ├── achievements.html       # Pagina achievement (NEW!)
+│   │   ├── achievements.html       # Pagina achievement (card cliccabili)
+│   │   ├── achievement_detail.html # Dettaglio singolo achievement (NEW!)
 │   │   ├── stats.html              # Stats avanzate
 │   │   ├── pulse.html              # Pulse (KPI)
 │   │   ├── tales.html              # Tales (narrative)
@@ -490,4 +516,4 @@ Per bug o feature request: Apri issue su GitHub
 
 **Made with ❤️ for the TCG community**
 
-*Last updated: November 2024 (v2.0 - Achievement System Release)*
+*Last updated: November 2025 (v2.1 - Achievement Detail Page + Landing Page Refresh)*

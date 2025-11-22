@@ -26,6 +26,9 @@ Il **TanaLeague Achievement System** è un sistema di gamification completo che:
 - ✅ **Assegna punti** (da 10 a 100 pt) in base a rarity
 - ✅ **Mostra progresso** nei profili giocatori e pagina dedicata
 - ✅ **Supporta tutti i TCG** (One Piece, Pokémon, Riftbound)
+- ✅ **Achievement Detail Page** con lista chi l'ha sbloccato e badge "Pioneer"
+- ✅ **Card cliccabili** con hover effects nella pagina catalogo
+- ✅ **Esclude stagioni ARCHIVED** dal calcolo stats (solo stagioni attive contano)
 
 ### Rarity Levels
 
@@ -83,15 +86,16 @@ membership | achievement_id | unlocked_date | tournament_id | progress
 
 ```
 tanaleague2/
-├── setup_achievements.py      # Script setup iniziale (run once)
+├── setup_achievements.py       # Script setup iniziale (run once)
 ├── achievements.py             # Core logic + unlock functions
-├── import_onepiece.py        # One Piece import (con achievement unlock)
-├── import_pokemon.py        # Pokemon import (con achievement unlock)
+├── import_onepiece.py          # One Piece import (con achievement unlock)
+├── import_pokemon.py           # Pokemon import (con achievement unlock)
 ├── import_riftbound.py         # Riftbound import (con achievement unlock)
-├── app.py                      # Flask routes (profili, pagina achievement)
+├── app.py                      # Flask routes (profili, pagina achievement, detail)
 └── templates/
     ├── player.html             # Profilo con achievement sbloccati
-    └── achievements.html       # Catalogo completo achievement
+    ├── achievements.html       # Catalogo completo (card cliccabili)
+    └── achievement_detail.html # Dettaglio singolo achievement (NEW!)
 ```
 
 ### Workflow Auto-Unlock
@@ -334,6 +338,26 @@ if stats['max_streak_top8'] >= 4:
     unlock_achievement(sheet, membership, 'ACH_CON_003', tournament_id, f"{max_streak_top8}/4")
 ```
 
+### ARCHIVED Seasons Handling
+
+**IMPORTANTE**: Le stagioni con status `ARCHIVED` sono escluse dal calcolo achievement.
+
+```python
+# In achievements.py calculate_player_stats()
+# 1. Carica stagioni ARCHIVED da Config
+archived_seasons = set()
+for row in config_data:
+    if row[4].strip().upper() == "ARCHIVED":
+        archived_seasons.add(row[0])
+
+# 2. Filtra risultati escludendo ARCHIVED
+for result in all_results:
+    if result[0] not in archived_seasons:
+        player_results.append(result)
+```
+
+**Razionale**: Le stagioni ARCHIVED servono solo come archivio storico. Gli achievement devono considerare solo le performance in stagioni attive/chiuse, non dati importati per test o archiviazione.
+
 ### Calcolo Stats
 
 La funzione `calculate_player_stats()` in `achievements.py` calcola tutte le stats lifetime del giocatore:
@@ -511,6 +535,71 @@ Per aggiungere nuova categoria (es. "Season Specific"):
 ```
 
 3. In `app.py`, il grouping by category è automatico
+
+---
+
+## 🎯 Achievement Detail Page
+
+### Overview
+
+La pagina `/achievement/<ach_id>` mostra il dettaglio di un singolo achievement:
+
+- **Info Achievement**: emoji, nome, descrizione, rarity, punti, categoria
+- **Statistiche**: X su Y giocatori l'hanno sbloccato (Z%)
+- **Lista giocatori** che l'hanno sbloccato, ordinati per data
+- **Badge "Pioneer"** dorato per il primo a sbloccarlo
+- **Link profilo** per ogni giocatore
+- **Effetti speciali** per achievement Legendary (shimmer) e Epic (glow viola)
+
+### Route Flask
+
+```python
+@app.route('/achievement/<ach_id>')
+def achievement_detail(ach_id):
+    # 1. Carica info achievement da Achievement_Definitions
+    # 2. Carica tutti i player che l'hanno sbloccato da Player_Achievements
+    # 3. Carica nomi giocatori da Players sheet
+    # 4. Ordina per data (primo = Pioneer)
+    # 5. Calcola statistiche unlock %
+    return render_template('achievement_detail.html', ...)
+```
+
+### Template Features
+
+**achievement_detail.html**:
+- Header con emoji animato (effetto float)
+- Progress bar unlock percentage
+- Tabella giocatori con:
+  - Badge "Pioneer" per il primo
+  - Data unlock
+  - Link al profilo
+- Se nessuno l'ha sbloccato: messaggio invitante con CTA WhatsApp
+- Breadcrumb per navigazione
+
+### Card Cliccabili in Catalogo
+
+In `achievements.html`, ogni card è ora un link:
+
+```html
+<a href="{{ url_for('achievement_detail', ach_id=ach.id) }}">
+    <div class="card achievement-card">
+        <!-- ... contenuto card ... -->
+        <small class="click-hint">Scopri chi <i class="fas fa-arrow-right"></i></small>
+    </div>
+</a>
+```
+
+**CSS Hover Effects**:
+```css
+.achievement-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+}
+.achievement-card:hover .click-hint {
+    opacity: 1;
+    transform: translateX(3px);
+}
+```
 
 ---
 

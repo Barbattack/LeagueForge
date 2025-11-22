@@ -145,7 +145,9 @@ RFB01        RFB   Riftbound S1      1           ACTIVE    0          0         
 ```
 
 **Colonne Config**:
-- `season_id`: ID univoco (es. OP12, PKM-FS25, RFB01)
+- `season_id`: ID univoco (formati supportati):
+  - Base: `OP12`, `PKM25`, `RFB01` (lettere + numeri)
+  - Esteso: `PKM-FS25`, `RFB-S1` (lettere + trattino + lettere + numeri)
 - `tcg`: Gioco (OP, PKM, RFB)
 - `name`: Nome descrittivo stagione
 - `season_num`: Numero stagione progressivo
@@ -461,9 +463,10 @@ RFB02  |  RFB  |  Riftbound Season 2  |  2  |  ACTIVE  |  0  |  0  |  best_n_min
 
 - **ARCHIVED**: Stagione vecchia, solo archivio dati
   - **NON** applica scarto tornei peggiori (conta TUTTI i tornei)
-  - **NON** sblocca achievement
+  - **NON** sblocca achievement (risultati esclusi dal calcolo stats)
   - **NASCOSTA** da UI (dropdown, liste)
   - Serve solo per popolare stats aggregate nella webapp
+  - I risultati ARCHIVED non influenzano gli achievement dei giocatori
 
 ### Chiudere Stagione
 

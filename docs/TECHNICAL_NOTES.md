@@ -944,13 +944,14 @@ Browser → Flask Route → cache.get_data() → Template Jinja2 → HTML
 
 | Route | Template | Dati |
 |-------|----------|------|
-| `/` | landing.html | standings top 3, stats highlights |
+| `/` | landing.html | standings top 3, ticker LIVE, social links |
 | `/classifiche` | classifiche_page.html | lista stagioni per TCG |
 | `/classifica/<season>` | classifica.html | standings completi |
 | `/players` | players.html | lista giocatori |
 | `/player/<membership>` | player.html | profilo + charts + achievement |
 | `/stats/<scope>` | stats.html | spotlights, pulse, tales, hof |
-| `/achievements` | achievements.html | catalogo 40 achievement |
+| `/achievements` | achievements.html | catalogo 40 achievement (card cliccabili) |
+| `/achievement/<ach_id>` | achievement_detail.html | dettaglio achievement + chi l'ha sbloccato (NEW!) |
 
 ### Jinja2 Filters Custom
 
@@ -961,6 +962,67 @@ def format_player_name(name, tcg, membership=''):
     # PKM: "Nome I."
     # RFB: Membership (nickname)
 ```
+
+---
+
+## 🔍 Season ID Validation
+
+### Regex Pattern
+
+La funzione `_is_valid_season_id()` in `app.py` valida gli ID stagione con 3 pattern:
+
+```python
+def _is_valid_season_id(sid: str) -> bool:
+    """
+    Allow valid season IDs:
+    - Base format: OP12, PKM25, RFB1 (letters + digits)
+    - Extended format: PKM-FS25, RFB-S1 (letters + hyphen + letters + digits)
+    - Aggregate format: ALL-OP, ALL-PKM (ALL- prefix)
+    """
+    import re
+    if not isinstance(sid, str):
+        return False
+    sid = sid.strip().upper()
+    return bool(
+        re.match(r'^[A-Z]{2,}\d{1,3}$', sid) or          # OP12, PKM25
+        re.match(r'^[A-Z]{2,}-[A-Z]+\d{1,3}$', sid) or   # PKM-FS25, RFB-S1
+        re.match(r'^ALL-[A-Z]+$', sid)                    # ALL-OP
+    )
+```
+
+**Esempi validi**: `OP12`, `PKM25`, `RFB01`, `PKM-FS25`, `RFB-S1`, `ALL-OP`, `ALL-PKM`
+
+---
+
+## 📊 Landing Page - Global Stats Ticker
+
+### Calcolo Stats Globali
+
+Il ticker nella landing page mostra stats aggregate da **tutti** i TCG (non solo una stagione):
+
+```python
+# In app.py route index()
+all_active_seasons = op_seasons + pkm_seasons + rfb_seasons
+global_players = set()
+global_tournaments = 0
+
+# Conta giocatori unici (membership) da tutte le stagioni attive
+for season in all_active_seasons:
+    sid = season.get('id', '')
+    season_standings = standings_by_season.get(sid, [])
+    for player in season_standings:
+        if player.get('membership'):
+            global_players.add(player.get('membership'))
+
+# Conta tornei da tournaments_by_season (è un DIZIONARIO!)
+tournaments_by_season = data.get('tournaments_by_season', {})
+for season in all_active_seasons:
+    sid = season.get('id', '')
+    season_tournaments = tournaments_by_season.get(sid, [])
+    global_tournaments += len(season_tournaments)
+```
+
+**IMPORTANTE**: `tournaments_by_season` è un dizionario `{season_id: [tournaments]}`, NON una lista!
 
 ---
 
@@ -1107,6 +1169,60 @@ python import_pokemon.py --tdf torneo.tdf --season PKM01 --reimport
 
 ---
 
+## 🏅 Achievement Detail Route
+
+### Route Implementation
+
+```python
+@app.route('/achievement/<ach_id>')
+def achievement_detail(ach_id):
+    """
+    Pagina dettaglio singolo achievement.
+    Mostra chi l'ha sbloccato con badge Pioneer per il primo.
+    """
+    # 1. Carica info achievement da Achievement_Definitions
+    # 2. Carica tutti i player che l'hanno sbloccato da Player_Achievements
+    # 3. Ordina per unlocked_date (primo = Pioneer)
+    # 4. Arricchisci con nomi da Players sheet
+    # 5. Calcola unlock_percentage
+```
+
+### Data Structure
+
+```python
+# Dati passati al template
+achievement = {
+    'id': 'ACH_GLO_001',
+    'name': 'First Blood',
+    'description': 'Vinci il tuo primo torneo',
+    'category': 'Glory',
+    'rarity': 'Uncommon',
+    'emoji': '🎬',
+    'points': 25
+}
+
+unlocks = [
+    {
+        'membership': '0000012345',
+        'name': 'Mario Rossi',
+        'unlocked_date': '2025-01-15',
+        'tournament_id': 'OP12_2025-01-15'
+    },
+    # ... altri giocatori
+]
+
+# Il primo nell'array (index 0) è il Pioneer (ordinato per data)
+```
+
+### Template Features
+
+- **Badge Pioneer**: `{% if loop.index == 1 %}<span class="badge bg-warning">Pioneer</span>{% endif %}`
+- **Effetto shimmer**: Per achievement Legendary
+- **Empty state**: CTA WhatsApp se nessuno l'ha sbloccato
+- **Breadcrumb**: Home > Achievement > Nome
+
+---
+
 **Fine Technical Notes**
 
-Ultimo aggiornamento: 22 Novembre 2025
+Ultimo aggiornamento: 22 Novembre 2025 (v2.1 - Achievement Detail + Landing Refresh)

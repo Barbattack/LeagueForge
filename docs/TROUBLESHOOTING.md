@@ -559,6 +559,32 @@ Ri-importa torneo per sbloccare achievement retroattivamente.
 
 ---
 
+### Achievement sbloccati erroneamente dopo import ARCHIVED
+
+**Sintomi**: Importato torneo in stagione ARCHIVED, achievement sbloccati quando non dovrebbero
+
+**Causa**: Vecchia versione di `achievements.py` non filtrava stagioni ARCHIVED
+
+**Soluzione**: Aggiornare `achievements.py` con la versione che filtra ARCHIVED:
+
+```python
+# In calculate_player_stats()
+# Carica stagioni ARCHIVED da Config
+archived_seasons = set()
+for row in config_data:
+    if row[4].strip().upper() == "ARCHIVED":
+        archived_seasons.add(row[0])
+
+# Filtra risultati ESCLUDENDO stagioni ARCHIVED
+for result in all_results:
+    if result[0] not in archived_seasons:
+        player_results.append(result)
+```
+
+**Importante**: Le stagioni ARCHIVED servono solo come archivio dati, NON devono influenzare gli achievement.
+
+---
+
 ### Achievement mostrato in profilo ma senza emoji/descrizione
 
 **Causa**: `Achievement_Definitions` non caricato o ID mismatch
@@ -878,6 +904,8 @@ Output:
 | `TemplateNotFound` | Template HTML mancante | Verifica cartella templates/ |
 | `No module named X` | Dipendenze non installate | pip install -r requirements.txt |
 | `service_account_credentials.json not found` | File credenziali mancante | Upload in tanaleague2/ |
+| Season non appare in /classifiche | Regex season ID non valido | Usa formato OP12, PKM-FS25, etc. |
+| Achievement conteggiano ARCHIVED | Vecchia versione achievements.py | Aggiorna file achievements.py |
 
 ---
 
