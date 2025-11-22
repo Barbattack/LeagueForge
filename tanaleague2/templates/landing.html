@@ -55,16 +55,40 @@
   </div>
   <div class="row g-3 justify-content-center text-center">
     <div class="col-4 col-md-3">
-      <div class="fs-2 mb-1">🎮</div>
-      <div class="fw-bold small">Partecipa</div>
+      <a href="https://wa.me/393791836462" target="_blank" class="text-decoration-none partecipa-link">
+        <div class="fs-2 mb-1">🎮</div>
+        <div class="fw-bold small text-success">Partecipa</div>
+        <div class="text-success small">Contattaci! →</div>
+      </a>
     </div>
     <div class="col-4 col-md-3">
       <div class="fs-2 mb-1">⭐</div>
       <div class="fw-bold small">Accumula</div>
+      <div class="text-muted small">Guadagna punti</div>
     </div>
     <div class="col-4 col-md-3">
       <div class="fs-2 mb-1">🏆</div>
       <div class="fw-bold small">Scala</div>
+      <div class="text-muted small">Conquista il podio</div>
+    </div>
+  </div>
+</div>
+
+<!-- PROSSIMI TORNEI - Call to Action -->
+<div class="mb-5">
+  <div class="card border-warning">
+    <div class="card-body text-center py-4">
+      <div class="fs-2 mb-2">🗓️</div>
+      <h5 class="card-title text-warning mb-2">Prossimi Tornei</h5>
+      <p class="text-muted mb-3">
+        Ogni settimana nuove sfide ti aspettano!<br>
+        <strong>Seguici su Instagram</strong> per date, orari e aggiornamenti.
+      </p>
+      <div class="d-flex justify-content-center gap-2">
+        <a href="https://www.instagram.com/latanadellepulci" target="_blank" class="btn btn-warning">
+          <i class="fab fa-instagram"></i> Segui per aggiornamenti
+        </a>
+      </div>
     </div>
   </div>
 </div>
@@ -189,6 +213,19 @@
 </div>
 
 <style>
+/* Partecipa link effect */
+.partecipa-link {
+  display: block;
+  padding: 10px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.partecipa-link:hover {
+  background: rgba(25, 135, 84, 0.1);
+  transform: scale(1.05);
+}
+
 /* Ticker - Stile leggero */
 .ticker-container {
   background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 50%, #f8f9fa 100%);
