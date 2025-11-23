@@ -614,6 +614,174 @@ def classifica(season_id=None):
 
 
 # ============================================================================
+# ROUTES - SAGA NARRATIVA
+# ============================================================================
+
+@app.route('/saga/<season_id>')
+def saga(season_id):
+    """
+    Timeline narrativa epica della stagione - stile pergamena fantasy.
+    Genera automaticamente una storia basata sui risultati dei tornei.
+    """
+    import random
+
+    data, err, meta = cache.get_data()
+    if not data:
+        return render_template('error.html', error=err or 'Cache non disponibile'), 500
+
+    seasons = data.get('seasons', [])
+    season_meta = next((s for s in seasons if s.get('id') == season_id), None)
+    if not season_meta:
+        return render_template('error.html', error=f'Stagione {season_id} non trovata'), 404
+
+    tournaments = data.get('tournaments_by_season', {}).get(season_id, [])
+    standings = data.get('standings_by_season', {}).get(season_id, [])
+    results = data.get('results', [])
+
+    # Sort tournaments by date
+    def parse_date(d):
+        from datetime import datetime
+        for fmt in ('%Y-%m-%d', '%d/%m/%Y'):
+            try: return datetime.strptime(str(d), fmt)
+            except: pass
+        return None
+
+    tournaments = sorted(tournaments, key=lambda t: parse_date(t.get('date')) or t.get('date', ''))
+
+    # Generate narrative chapters
+    chapters = []
+    saga_titles = [
+        "La Saga", "Le Cronache", "L'Epopea", "La Leggenda", "Il Racconto"
+    ]
+    saga_subtitles = [
+        "Gloria e Sconfitte nell'Arena", "Dove i Campioni Forgiano il Destino",
+        "L'Ascesa dei Valorosi", "Sangue, Sudore e Carte", "La Battaglia per la Corona"
+    ]
+
+    # Track state for narrative
+    prev_winner = None
+    streak_count = 0
+    streak_holder = None
+
+    for i, t in enumerate(tournaments):
+        winner = t.get('winner', 'Sconosciuto')
+        participants = safe_int(t.get('participants', 0))
+        date = t.get('date', '')
+        t_id = t.get('tournament_id', '')
+
+        # Get tournament results for more context
+        t_results = [r for r in results if r.get('tournament_id') == t_id]
+        t_results_sorted = sorted(t_results, key=lambda x: safe_int(x.get('rank', 99)))
+        second = t_results_sorted[1].get('name', '') if len(t_results_sorted) > 1 else None
+
+        # Track streaks
+        if winner == prev_winner:
+            streak_count += 1
+        else:
+            streak_count = 1
+            streak_holder = winner
+
+        chapter = {'num': _roman(i+1), 'epic': False, 'badge': None}
+
+        # Generate varied narrative based on context
+        if i == 0:
+            # First tournament
+            openers = [
+                f"La stagione ebbe inizio con un torneo memorabile. <span class='highlight-name'>{winner}</span> si impose fin da subito, "
+                f"dominando {participants} avversari e dichiarando le proprie ambizioni.",
+                f"L'alba della stagione vide emergere <span class='highlight-name'>{winner}</span>. Con determinazione implacabile, "
+                f"si fece strada tra {participants} sfidanti, conquistando il primo trofeo.",
+                f"Tutto cominciò quando <span class='highlight-name'>{winner}</span> alzò il primo trofeo della stagione. "
+                f"Nessuno dei {participants} partecipanti poté fermarlo."
+            ]
+            chapter['title'] = random.choice(["L'Alba", "Il Principio", "La Genesi", "L'Inizio"])
+            chapter['text'] = random.choice(openers)
+
+        elif winner == prev_winner:
+            # Streak continues
+            chapter['epic'] = True
+            streak_texts = [
+                f"<span class='highlight-name'>{winner}</span> non si accontentò. Per la {_ordinal(streak_count)} volta consecutiva, "
+                f"il suo dominio fu assoluto. Gli avversari iniziarono a tremare.",
+                f"La leggenda di <span class='highlight-name'>{winner}</span> crebbe ancora. <span class='highlight-event'>Striscia di {streak_count} vittorie!</span> "
+                f"Chi avrebbe potuto fermarlo?",
+                f"Inarrestabile. <span class='highlight-name'>{winner}</span> conquistò un'altra vittoria, la {_ordinal(streak_count)} di fila. "
+                f"Il suo regno sembrava eterno."
+            ]
+            chapter['title'] = random.choice(["Il Dominio", "L'Inarrestabile", "La Striscia", "Il Regno"])
+            chapter['text'] = random.choice(streak_texts)
+            chapter['badge'] = f"🔥 {streak_count} vittorie consecutive"
+
+        elif streak_count > 1 and winner != streak_holder:
+            # Streak broken - UPSET!
+            chapter['epic'] = True
+            upset_texts = [
+                f"Ma ecco il colpo di scena! <span class='highlight-name'>{winner}</span> spezzò la striscia di {prev_winner}. "
+                f"<span class='highlight-event'>L'imbattibile era caduto.</span> L'arena esplose.",
+                f"La caduta dei giganti. <span class='highlight-name'>{winner}</span> compì l'impresa, detronizzando {prev_winner} "
+                f"dopo {streak_count-1} vittorie consecutive. Un nuovo eroe era nato.",
+                f"Nessuno se lo aspettava. <span class='highlight-name'>{winner}</span> emerse dall'ombra e abbatté "
+                f"il regno di {prev_winner}. <span class='highlight-event'>UPSET!</span>"
+            ]
+            chapter['title'] = random.choice(["La Caduta", "L'Upset", "Il Ribaltone", "Il Nuovo Ordine"])
+            chapter['text'] = random.choice(upset_texts)
+            chapter['badge'] = f"⚡ Striscia di {prev_winner} interrotta!"
+
+        else:
+            # Normal tournament, new winner
+            normal_texts = [
+                f"Fu il turno di <span class='highlight-name'>{winner}</span> di scrivere il proprio nome nella storia. "
+                f"Con {participants} anime in lizza, prevalse con maestria.",
+                f"<span class='highlight-name'>{winner}</span> si fece avanti. In un torneo combattuto, "
+                f"emerse vittorioso tra {participants} partecipanti.",
+                f"Le carte favorirono <span class='highlight-name'>{winner}</span> questa volta. "
+                f"Una vittoria meritata che riaccese la corsa al titolo."
+            ]
+            if second:
+                normal_texts.append(
+                    f"<span class='highlight-name'>{winner}</span> e {second} si diedero battaglia fino all'ultimo. "
+                    f"Solo uno poteva prevalere, e fu {winner.split()[0]} a trionfare."
+                )
+            chapter['title'] = random.choice(["Un Nuovo Eroe", "La Svolta", "Cambio di Guardia", "Il Torneo"])
+            chapter['text'] = random.choice(normal_texts)
+
+        chapter['badge'] = chapter.get('badge') or f"🏆 Torneo #{i+1} • {participants} partecipanti"
+        chapters.append(chapter)
+        prev_winner = winner
+
+    # Get current leader
+    leader = standings[0].get('name') if standings else None
+    is_closed = season_meta.get('status', '').upper() == 'CLOSED'
+
+    return render_template(
+        'saga.html',
+        season=season_meta,
+        chapters=chapters,
+        saga_title=f"{random.choice(saga_titles)} di {season_meta.get('name', season_id)}",
+        saga_subtitle=random.choice(saga_subtitles),
+        leader=leader,
+        is_closed=is_closed
+    )
+
+
+def _roman(n):
+    """Convert int to roman numeral."""
+    vals = [(10,'X'),(9,'IX'),(5,'V'),(4,'IV'),(1,'I')]
+    result = ''
+    for v, r in vals:
+        while n >= v:
+            result += r
+            n -= v
+    return result
+
+
+def _ordinal(n):
+    """Italian ordinal."""
+    ords = {1:'prima',2:'seconda',3:'terza',4:'quarta',5:'quinta',6:'sesta',7:'settima',8:'ottava',9:'nona',10:'decima'}
+    return ords.get(n, f'{n}ª')
+
+
+# ============================================================================
 # ROUTES - STATISTICHE AVANZATE (Stats)
 # ============================================================================
 

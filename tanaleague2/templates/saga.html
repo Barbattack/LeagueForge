@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}La Saga di {{ season.name }} - TanaLeague{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+.saga-container {
+    background: linear-gradient(135deg, #3d2914 0%, #5c3d1e 50%, #3d2914 100%);
+    min-height: 100vh;
+    padding: 2rem 0;
+}
+
+.parchment {
+    background: linear-gradient(to bottom, #f5e6c8 0%, #e8d4a8 50%, #d4c191 100%);
+    border-radius: 8px;
+    padding: 3rem 4rem;
+    margin: 0 auto;
+    max-width: 900px;
+    box-shadow:
+        0 0 30px rgba(0,0,0,0.5),
+        inset 0 0 50px rgba(139,90,43,0.2);
+    position: relative;
+    border: 3px solid #8b5a2b;
+}
+
+.parchment::before {
+    content: '';
+    position: absolute;
+    top: 10px; left: 10px; right: 10px; bottom: 10px;
+    border: 1px solid rgba(139,90,43,0.3);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.saga-title {
+    font-family: 'Cinzel', serif;
+    font-size: 2.5rem;
+    color: #3d2914;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+.saga-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 1.3rem;
+    color: #6b4423;
+    text-align: center;
+    font-style: italic;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #8b5a2b;
+}
+
+.chapter {
+    margin-bottom: 2.5rem;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.chapter-header {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    color: #5c3d1e;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.chapter-number {
+    background: #8b5a2b;
+    color: #f5e6c8;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.chapter-text {
+    font-family: 'Crimson Text', serif;
+    font-size: 1.2rem;
+    color: #3d2914;
+    line-height: 1.8;
+    text-align: justify;
+}
+
+.highlight-name {
+    font-weight: 600;
+    color: #8b4513;
+    text-transform: uppercase;
+    font-size: 0.95em;
+}
+
+.highlight-event {
+    background: linear-gradient(to bottom, transparent 50%, rgba(218,165,32,0.3) 50%);
+    padding: 0 2px;
+}
+
+.tournament-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(139,90,43,0.15);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    margin-top: 0.8rem;
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    color: #5c3d1e;
+    border: 1px solid rgba(139,90,43,0.3);
+}
+
+.epic-moment {
+    background: linear-gradient(135deg, rgba(218,165,32,0.1) 0%, rgba(184,134,11,0.15) 100%);
+    border-left: 4px solid #daa520;
+    padding: 1rem 1.5rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.epic-moment .chapter-text {
+    font-style: italic;
+}
+
+.separator {
+    text-align: center;
+    margin: 2rem 0;
+    color: #8b5a2b;
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+}
+
+.finale {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 2px solid #8b5a2b;
+    margin-top: 2rem;
+}
+
+.finale-text {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    color: #3d2914;
+}
+
+.champion-name {
+    font-size: 2rem;
+    color: #8b4513;
+    display: block;
+    margin: 1rem 0;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.back-btn {
+    display: inline-block;
+    background: #8b5a2b;
+    color: #f5e6c8 !important;
+    padding: 0.6rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    font-family: 'Cinzel', serif;
+    margin-top: 1.5rem;
+    transition: all 0.3s;
+}
+
+.back-btn:hover {
+    background: #6b4423;
+    transform: scale(1.05);
+}
+
+.no-data {
+    text-align: center;
+    padding: 3rem;
+    font-family: 'Crimson Text', serif;
+    font-size: 1.3rem;
+    color: #6b4423;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="saga-container">
+    <div class="parchment">
+        {% if chapters %}
+        <h1 class="saga-title">{{ saga_title }}</h1>
+        <p class="saga-subtitle">"{{ saga_subtitle }}"</p>
+
+        {% for chapter in chapters %}
+        <div class="chapter {% if chapter.epic %}epic-moment{% endif %}" style="animation-delay: {{ loop.index * 0.15 }}s">
+            <div class="chapter-header">
+                <span class="chapter-number">{{ chapter.num }}</span>
+                <span>{{ chapter.title }}</span>
+            </div>
+            <p class="chapter-text">{{ chapter.text|safe }}</p>
+            {% if chapter.badge %}
+            <div class="tournament-badge">
+                {{ chapter.badge }}
+            </div>
+            {% endif %}
+        </div>
+
+        {% if not loop.last %}
+        <div class="separator">⚔</div>
+        {% endif %}
+        {% endfor %}
+
+        {% if leader %}
+        <div class="finale">
+            <p class="finale-text">E così, al termine della saga...</p>
+            <span class="champion-name">{{ leader }}</span>
+            <p class="finale-text">{% if is_closed %}si erge come Campione Assoluto{% else %}guida la classifica{% endif %}</p>
+        </div>
+        {% endif %}
+
+        <div style="text-align: center;">
+            <a href="{{ url_for('classifica', season_id=season.id) }}" class="back-btn">← Torna alla Classifica</a>
+        </div>
+
+        {% else %}
+        <div class="no-data">
+            <p>📜 La saga non è ancora iniziata...</p>
+            <p>Nessun torneo registrato per questa stagione.</p>
+            <a href="{{ url_for('classifiche_page') }}" class="back-btn">← Tutte le Stagioni</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
