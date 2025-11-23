@@ -397,6 +397,9 @@ python setup_achievements.py
 | **[docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md)** | Guida completa ai test automatici |
 | **[docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md)** | Step-by-step per migrazione server |
 | **[docs/QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md)** | Cheatsheet comandi e operazioni comuni |
+| **[docs/PYTHON_SCRIPTS.md](docs/PYTHON_SCRIPTS.md)** | Tutti gli script Python eseguibili |
+| **[docs/ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md)** | Guida operazioni admin webapp |
+| **[docs/GOOGLE_SHEETS.md](docs/GOOGLE_SHEETS.md)** | Struttura database Google Sheets |
 
 ---
 
@@ -472,7 +475,13 @@ TanaLeague/
     ├── IMPORT_GUIDE.md             # Guida import tornei
     ├── ACHIEVEMENT_SYSTEM.md       # Sistema achievement
     ├── TECHNICAL_NOTES.md          # Note tecniche
-    └── TROUBLESHOOTING.md          # Risoluzione problemi
+    ├── TROUBLESHOOTING.md          # Risoluzione problemi
+    ├── TESTING_GUIDE.md            # Guida test automatici
+    ├── MIGRATION_GUIDE.md          # Migrazione server
+    ├── QUICK_REFERENCE.md          # Cheatsheet comandi
+    ├── PYTHON_SCRIPTS.md           # Script Python eseguibili
+    ├── ADMIN_GUIDE.md              # Operazioni admin
+    └── GOOGLE_SHEETS.md            # Struttura database
 ```
 
 ---
