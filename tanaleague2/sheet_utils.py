@@ -62,14 +62,19 @@ COL_RESULTS = {
     'deck': 11
 }
 
-# Players sheet
+# Players sheet (skip 3 righe header)
 COL_PLAYERS = {
     'membership': 0,
     'name': 1,
     'tcg': 2,
-    'tournaments_total': 3,
-    'wins_total': 4,
-    'points_total': 5
+    'first_seen': 3,
+    'last_seen': 4,
+    'total_tournaments': 5,
+    'tournament_wins': 6,
+    'match_w': 7,
+    'match_t': 8,
+    'match_l': 9,
+    'total_points': 10
 }
 
 # Achievement_Definitions sheet (skip 4 righe header)

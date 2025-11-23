@@ -34,6 +34,10 @@ from cache import cache
 from config import SECRET_KEY, DEBUG, SESSION_TIMEOUT
 from stats_builder import build_stats
 from datetime import timedelta
+from sheet_utils import (
+    COL_PLAYERS, COL_ACHIEVEMENT_DEF, COL_PLAYER_ACH,
+    safe_get, safe_int, safe_float
+)
 
 
 # ============================================================================
@@ -915,20 +919,19 @@ def players_list():
         
         players = []
         for row in all_players:
-            if row and row[0]:
-                # Colonne Players: A=Membership, B=Name, C=TCG, D=First_Seen, E=Last_Seen
-                # F=Total_Tournaments, G=Tournament_Wins, H=Match_W, I=Match_T, J=Match_L, K=Total_Points
-                total_tournaments = safe_int(row[5] if len(row) > 5 else None, 0)
-                total_points = safe_float(row[10] if len(row) > 10 else None, 0.0)
+            membership = safe_get(row, COL_PLAYERS, 'membership')
+            if membership:
+                total_tournaments = safe_int(row, COL_PLAYERS, 'total_tournaments', 0)
+                total_points = safe_float(row, COL_PLAYERS, 'total_points', 0.0)
                 avg_points = round(total_points / total_tournaments, 1) if total_tournaments > 0 else 0.0
 
                 players.append({
-                    'membership': row[0],
-                    'name': row[1],
-                    'tcg': row[2] if len(row) > 2 else 'OP',
+                    'membership': membership,
+                    'name': safe_get(row, COL_PLAYERS, 'name'),
+                    'tcg': safe_get(row, COL_PLAYERS, 'tcg', 'OP'),
                     'tournaments': total_tournaments,
-                    'wins': safe_int(row[6] if len(row) > 6 else None, 0),
-                    'points': avg_points  # Punti medi per torneo
+                    'wins': safe_int(row, COL_PLAYERS, 'tournament_wins', 0),
+                    'points': avg_points
                 })
 
         # Ordina per punti medi DESC
@@ -980,8 +983,8 @@ def player(membership):
         # Leggi TCG dal foglio Players
         ws_players = sheet.worksheet("Players")
         players_data = ws_players.get_all_values()[3:]
-        player_row = next((p for p in players_data if p and p[0] == membership), None)
-        player_tcg = player_row[2] if player_row and len(player_row) > 2 else 'OP'
+        player_row = next((p for p in players_data if safe_get(p, COL_PLAYERS, 'membership') == membership), None)
+        player_tcg = safe_get(player_row, COL_PLAYERS, 'tcg', 'OP') if player_row else 'OP'
 
         # Dati base
         player_name = player_results[0][9] if player_results[0][9] else membership
@@ -1125,20 +1128,21 @@ def player(membership):
             ws_achievements = sheet.worksheet("Achievement_Definitions")
             achievement_defs = {}
             for row in ws_achievements.get_all_values()[4:]:
-                if row and row[0]:
-                    achievement_defs[row[0]] = {
-                        'name': row[1],
-                        'description': row[2],
-                        'category': row[3],
-                        'rarity': row[4],
-                        'emoji': row[5],
-                        'points': int(row[6]) if row[6] else 0
+                ach_id = safe_get(row, COL_ACHIEVEMENT_DEF, 'achievement_id')
+                if ach_id:
+                    achievement_defs[ach_id] = {
+                        'name': safe_get(row, COL_ACHIEVEMENT_DEF, 'name'),
+                        'description': safe_get(row, COL_ACHIEVEMENT_DEF, 'description'),
+                        'category': safe_get(row, COL_ACHIEVEMENT_DEF, 'category'),
+                        'rarity': safe_get(row, COL_ACHIEVEMENT_DEF, 'rarity'),
+                        'emoji': safe_get(row, COL_ACHIEVEMENT_DEF, 'emoji'),
+                        'points': safe_int(row, COL_ACHIEVEMENT_DEF, 'points', 0)
                     }
 
             ws_player_ach = sheet.worksheet("Player_Achievements")
             for row in ws_player_ach.get_all_values()[4:]:
-                if row and row[0] == membership:
-                    ach_id = row[1]
+                if safe_get(row, COL_PLAYER_ACH, 'membership') == membership:
+                    ach_id = safe_get(row, COL_PLAYER_ACH, 'achievement_id')
                     if ach_id in achievement_defs:
                         ach_info = achievement_defs[ach_id]
                         achievements_unlocked.append({
@@ -1149,7 +1153,7 @@ def player(membership):
                             'rarity': ach_info['rarity'],
                             'emoji': ach_info['emoji'],
                             'points': ach_info['points'],
-                            'unlocked_date': row[2] if len(row) > 2 else ''
+                            'unlocked_date': safe_get(row, COL_PLAYER_ACH, 'unlocked_date', '')
                         })
                         achievement_points += ach_info['points']
         except Exception as e:
