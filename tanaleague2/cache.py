@@ -11,6 +11,10 @@ import json
 import os
 from datetime import datetime, timedelta
 from config import SHEET_ID, CREDENTIALS_FILE, CACHE_REFRESH_MINUTES, CACHE_FILE
+from sheet_utils import (
+    COL_CONFIG, COL_STANDINGS, COL_TOURNAMENTS,
+    safe_get, safe_int, safe_float
+)
 
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
@@ -66,13 +70,13 @@ class SheetCache:
             config_data = ws_config.get_all_values()[4:]  # Skip header
             seasons = []
             for row in config_data:
-                if row and row[0]:
+                if row and safe_get(row, COL_CONFIG, 'season_id'):
                     seasons.append({
-                        'id': row[0],
-                        'tcg': row[1],
-                        'name': row[2],
-                        'status': row[4] if len(row) > 4 else 'UNKNOWN',
-                        'next_tournament': row[11] if len(row) > 11 and row[11] else None
+                        'id': safe_get(row, COL_CONFIG, 'season_id'),
+                        'tcg': safe_get(row, COL_CONFIG, 'tcg'),
+                        'name': safe_get(row, COL_CONFIG, 'name'),
+                        'status': safe_get(row, COL_CONFIG, 'status', 'UNKNOWN'),
+                        'next_tournament': safe_get(row, COL_CONFIG, 'next_tournament')
                     })
             
             # Leggi Seasonal_Standings per ogni stagione
@@ -95,15 +99,15 @@ class SheetCache:
             # Crea mappe per season_id
             prov_map = {}
             for row in prov_rows:
-                if not row or not row[0]:
+                sid = safe_get(row, COL_STANDINGS, 'season_id')
+                if not sid:
                     continue
-                sid = row[0]
                 prov_map.setdefault(sid, []).append(row)
             final_map = {}
             for row in final_rows:
-                if not row or not row[0]:
+                sid = safe_get(row, COL_STANDINGS, 'season_id')
+                if not sid:
                     continue
-                sid = row[0]
                 final_map.setdefault(sid, []).append(row)
 
             # Scegli sheet giusto in base allo status stagione
@@ -120,16 +124,16 @@ class SheetCache:
                 standings_by_season[sid] = []
                 for row in rows:
                     standings_by_season[sid].append({
-                        'position': row[10] if len(row) > 10 else '',
-                        'membership': row[1],
-                        'name': row[2],
-                        'points': float(row[3]) if row[3] else 0,
-                        'tournaments_played': int(row[4]) if row[4] else 0,
-                        'tournaments_counted': int(row[5]) if row[5] else 0,
-                        'total_wins': int(row[6]) if row[6] else 0,
-                        'match_wins': int(row[7]) if row[7] else 0,
-                        'best_rank': int(row[8]) if row[8] else 999,
-                        'top8_count': int(row[9]) if row[9] else 0
+                        'position': safe_get(row, COL_STANDINGS, 'position', ''),
+                        'membership': safe_get(row, COL_STANDINGS, 'membership'),
+                        'name': safe_get(row, COL_STANDINGS, 'name'),
+                        'points': safe_float(row, COL_STANDINGS, 'points', 0),
+                        'tournaments_played': safe_int(row, COL_STANDINGS, 'tournaments_played', 0),
+                        'tournaments_counted': safe_int(row, COL_STANDINGS, 'tournaments_counted', 0),
+                        'total_wins': safe_int(row, COL_STANDINGS, 'total_wins', 0),
+                        'match_wins': safe_int(row, COL_STANDINGS, 'match_wins', 0),
+                        'best_rank': safe_int(row, COL_STANDINGS, 'best_rank', 999),
+                        'top8_count': safe_int(row, COL_STANDINGS, 'top8_count', 0)
                     })
             # Leggi Tournaments 
             # Leggi Tournaments per metadata
@@ -138,17 +142,19 @@ class SheetCache:
             
             tournaments_by_season = {}
             for row in tournaments_data:
-                if not row or not row[0]:
+                t_id = safe_get(row, COL_TOURNAMENTS, 'tournament_id')
+                if not t_id:
                     continue
-                season_id = row[1]
+                season_id = safe_get(row, COL_TOURNAMENTS, 'season_id')
                 if season_id not in tournaments_by_season:
                     tournaments_by_season[season_id] = []
-                
+
                 tournaments_by_season[season_id].append({
-                    'id': row[0],
-                    'date': row[2],
-                    'participants': int(row[3]) if row[3] else 0,
-                    'winner': row[7] if len(row) > 7 else ''
+                    'id': t_id,
+                    'tournament_id': t_id,
+                    'date': safe_get(row, COL_TOURNAMENTS, 'date'),
+                    'participants': safe_int(row, COL_TOURNAMENTS, 'participants', 0),
+                    'winner': safe_get(row, COL_TOURNAMENTS, 'winner', '')
                 })
             
             self.cache_data = {
