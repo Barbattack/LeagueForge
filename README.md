@@ -106,7 +106,18 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 
 ## 🆕 Recent Updates (Nov 2025)
 
-### 🏅 Achievement Detail Page (Latest)
+### 🏗️ v2.2 - Blueprint Refactor + Infrastructure (Latest)
+
+- **Flask Blueprints**: App.py ridotto da 1527 → 1037 righe
+  - `routes/admin.py` - Route admin (login, dashboard, import)
+  - `routes/achievements.py` - Route achievement (catalogo, dettaglio)
+- **CI/CD Pipeline**: GitHub Actions per test automatici
+- **Sistema Logging**: Structured logging con RotatingFileHandler
+- **Backup Script**: `backup_sheets.py` per backup Google Sheets → CSV
+- **Setup Locale**: Documentazione completa per test su Windows/Mac/Linux
+- **DEVELOPMENT.md**: Nuova guida sviluppo con troubleshooting
+
+### 🏅 Achievement Detail Page
 - **Nuova pagina `/achievement/<id>`** per ogni achievement:
   - Lista completa di chi l'ha sbloccato
   - **Badge "Pioneer"** dorato per il primo a sbloccarlo
@@ -195,13 +206,15 @@ Webapp disponibile su `http://localhost:5000`
          │ (gspread API)
          ↓
 ┌─────────────────┐
-│   Flask App     │  ← Backend Python (app.py + cache.py + achievements.py)
+│   Flask App     │  ← Backend Python
+│   + Blueprints  │  ← Modular routes (admin, achievements)
 │   + Cache       │  ← Cache file-based (5 min TTL)
+│   + Logging     │  ← Structured logging (RotatingFileHandler)
 └────────┬────────┘
          │ (Jinja2)
          ↓
 ┌─────────────────┐
-│  HTML Templates │  ← Frontend Bootstrap 5 + Font Awesome
+│  HTML Templates │  ← Frontend Bootstrap 5 + Chart.js
 │   + Bootstrap   │
 └─────────────────┘
 ```
@@ -376,8 +389,10 @@ python setup_achievements.py
 | Documento | Descrizione |
 |-----------|-------------|
 | **[docs/SETUP.md](docs/SETUP.md)** | Guida installazione e configurazione completa |
+| **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** | Guida sviluppo: test, logging, CI/CD, setup locale |
 | **[docs/IMPORT_GUIDE.md](docs/IMPORT_GUIDE.md)** | Come importare tornei da CSV/PDF/TDF |
 | **[docs/ACHIEVEMENT_SYSTEM.md](docs/ACHIEVEMENT_SYSTEM.md)** | Sistema achievement in dettaglio |
+| **[docs/TECHNICAL_NOTES.md](docs/TECHNICAL_NOTES.md)** | Note tecniche implementative |
 | **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** | Risoluzione problemi comuni |
 
 ---
@@ -388,45 +403,73 @@ python setup_achievements.py
 TanaLeague/
 ├── README.md                       # Questo file
 ├── requirements.txt                # Dipendenze Python
+├── pytest.ini                      # Configurazione pytest
+├── .gitignore                      # File esclusi da Git
+│
+├── .github/workflows/              # CI/CD
+│   └── test.yml                    # GitHub Actions - test automatici
+│
+├── tests/                          # Test automatici
+│   ├── conftest.py                 # Fixtures pytest
+│   ├── test_app.py                 # Test routes
+│   └── test_achievements.py        # Test achievement system
 │
 ├── tanaleague2/                    # Codice principale
-│   ├── app.py                      # Flask app + routes
+│   ├── app.py                      # Flask app + routes pubbliche
+│   │
+│   ├── routes/                     # Flask Blueprints (modular routes)
+│   │   ├── __init__.py             # Blueprint registration
+│   │   ├── admin.py                # Route admin (/admin/*)
+│   │   └── achievements.py         # Route achievement (/achievements)
+│   │
 │   ├── cache.py                    # Cache manager Google Sheets
-│   ├── config.py                   # Configurazione
-│   ├── achievements.py             # Sistema achievement (NEW!)
-│   ├── setup_achievements.py       # Script setup sheets (NEW!)
+│   ├── config.py                   # Configurazione (NON in git!)
+│   ├── config.example.py           # Template configurazione
+│   ├── auth.py                     # Autenticazione admin
 │   │
-│   ├── import_onepiece.py        # Import One Piece (CSV)
-│   ├── import_riftbound.py         # Import Riftbound (CSV Multi-Round) (UPDATED!)
-│   ├── import_pokemon.py        # Import Pokémon (TDF)
+│   ├── achievements.py             # Logica unlock achievement
+│   ├── setup_achievements.py       # Script setup sheets achievement
 │   │
-│   ├── stats_builder.py            # Builder statistiche
+│   ├── import_onepiece.py          # Import One Piece (CSV)
+│   ├── import_pokemon.py           # Import Pokémon (TDF/XML)
+│   ├── import_riftbound.py         # Import Riftbound (CSV Multi-Round)
+│   │
+│   ├── stats_builder.py            # Builder statistiche avanzate
 │   ├── stats_cache.py              # Cache file stats
 │   │
-│   ├── templates/                  # Template HTML
+│   ├── logger.py                   # Sistema logging strutturato
+│   ├── backup_sheets.py            # Backup Google Sheets → CSV
+│   │
+│   ├── logs/                       # Log applicazione (auto-created)
+│   │   └── tanaleague.log
+│   │
+│   ├── templates/                  # Template HTML Jinja2
 │   │   ├── base.html               # Layout base + menu
 │   │   ├── landing.html            # Homepage
-│   │   ├── classifiche_page.html   # Lista classifiche (NEW!)
+│   │   ├── classifiche_page.html   # Lista classifiche
 │   │   ├── classifica.html         # Classifica singola stagione
-│   │   ├── player.html             # Profilo giocatore + achievement (UPDATED!)
+│   │   ├── player.html             # Profilo giocatore + grafici + achievement
 │   │   ├── players.html            # Lista giocatori
-│   │   ├── achievements.html       # Pagina achievement (card cliccabili)
-│   │   ├── achievement_detail.html # Dettaglio singolo achievement (NEW!)
+│   │   ├── achievements.html       # Catalogo achievement (card cliccabili)
+│   │   ├── achievement_detail.html # Dettaglio singolo achievement
 │   │   ├── stats.html              # Stats avanzate
-│   │   ├── pulse.html              # Pulse (KPI)
-│   │   ├── tales.html              # Tales (narrative)
-│   │   ├── hall.html               # Hall of Fame
+│   │   ├── admin/                  # Template admin panel
+│   │   │   ├── login.html
+│   │   │   ├── dashboard.html
+│   │   │   └── import_result.html
 │   │   └── error.html              # Error page
 │   │
-│   └── static/                     # Assets
+│   └── static/                     # Assets statici
 │       ├── style.css
 │       └── logo.png
 │
-└── docs/                           # Documentazione (NEW!)
-    ├── SETUP.md
-    ├── IMPORT_GUIDE.md
-    ├── ACHIEVEMENT_SYSTEM.md
-    └── TROUBLESHOOTING.md
+└── docs/                           # Documentazione
+    ├── SETUP.md                    # Setup e installazione
+    ├── DEVELOPMENT.md              # Guida sviluppo (test, CI/CD, locale)
+    ├── IMPORT_GUIDE.md             # Guida import tornei
+    ├── ACHIEVEMENT_SYSTEM.md       # Sistema achievement
+    ├── TECHNICAL_NOTES.md          # Note tecniche
+    └── TROUBLESHOOTING.md          # Risoluzione problemi
 ```
 
 ---
@@ -516,4 +559,4 @@ Per bug o feature request: Apri issue su GitHub
 
 **Made with ❤️ for the TCG community**
 
-*Last updated: November 2025 (v2.1 - Achievement Detail Page + Landing Page Refresh)*
+*Last updated: November 2025 (v2.2 - Blueprint Refactor + CI/CD + Local Dev Setup)*
