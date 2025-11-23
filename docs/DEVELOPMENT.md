@@ -389,4 +389,96 @@ git push
 
 ---
 
+## 💾 Backup Google Sheets
+
+### Cos'è?
+
+Script che scarica tutti i dati dal Google Sheet e li salva in locale come file CSV.
+
+**Posizione:** `/home/user/TanaLeague/tanaleague2/backup_sheets.py`
+
+### Perché è importante?
+
+- **Sicurezza**: Se cancelli qualcosa per sbaglio, hai una copia
+- **Storico**: Puoi vedere come erano i dati in passato
+- **Indipendenza**: Non dipendi solo da Google
+
+### Come usarlo
+
+**Backup completo (tutti i fogli):**
+```bash
+cd tanaleague2
+python backup_sheets.py
+```
+
+**Output:**
+```
+🔄 BACKUP GOOGLE SHEETS - TanaLeague
+📅 Data: 2025-11-23 14:30:00
+📁 Output: backups/2025-11-23_14-30-00
+
+📋 Backup fogli...
+   ✅ Config: 15 righe
+   ✅ Tournaments: 45 righe
+   ✅ Results: 1250 righe
+   ✅ Players: 52 righe
+   ...
+
+✅ BACKUP COMPLETATO
+```
+
+**Dove vanno i backup:**
+```
+tanaleague2/backups/
+├── 2025-11-23_14-30-00/
+│   ├── backup_info.json
+│   ├── Config.csv
+│   ├── Results.csv
+│   └── ...
+├── 2025-11-22_10-00-00/
+│   └── ...
+```
+
+### Comandi utili
+
+```bash
+# Backup completo
+python backup_sheets.py
+
+# Backup solo un foglio
+python backup_sheets.py --sheet Results
+
+# Backup in cartella specifica
+python backup_sheets.py --output /path/to/backups
+
+# Vedere fogli disponibili
+python backup_sheets.py --list
+```
+
+### Backup automatico (scheduling)
+
+**Su Linux/Mac (crontab):**
+```bash
+# Apri crontab
+crontab -e
+
+# Aggiungi questa riga per backup giornaliero alle 3:00
+0 3 * * * cd /path/to/TanaLeague/tanaleague2 && python backup_sheets.py
+```
+
+**Su PythonAnywhere:**
+1. Vai al tab **Tasks**
+2. Aggiungi nuovo task schedulato
+3. Comando: `cd ~/TanaLeague/tanaleague2 && python backup_sheets.py`
+4. Imposta orario (es. 03:00)
+
+### Ripristino da backup
+
+I file CSV possono essere:
+1. Aperti con Excel/Google Sheets
+2. Reimportati manualmente se necessario
+3. Usati come riferimento per recuperare dati
+
+---
+
 **Ultimo aggiornamento:** Novembre 2025
