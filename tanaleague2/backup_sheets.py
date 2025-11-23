@@ -59,14 +59,14 @@ except ImportError:
 # Directory backup (relativa a questo script)
 DEFAULT_BACKUP_DIR = Path(__file__).parent / "backups"
 
-# Credenziali Google
-CREDENTIALS_FILE = Path(__file__).parent / "service_account_credentials.json"
-
-# Sheet ID (importa da config se esiste)
+# Importa configurazione da config.py
 try:
-    from config import SHEET_ID
+    from config import SHEET_ID, CREDENTIALS_FILE
 except ImportError:
-    SHEET_ID = None  # Dovrai specificarlo manualmente
+    print("⚠️  config.py non trovato, alcune funzionalità potrebbero non funzionare.")
+    print("   Copia config.example.py in config.py e configura i valori.")
+    SHEET_ID = None
+    CREDENTIALS_FILE = Path(__file__).parent / "service_account_credentials.json"
 
 # Fogli da backuppare (in ordine di importanza)
 SHEETS_TO_BACKUP = [
