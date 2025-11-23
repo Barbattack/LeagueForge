@@ -1,0 +1,86 @@
+# =============================================================================
+# TanaLeague - CI/CD Pipeline
+# =============================================================================
+# Questo file dice a GitHub cosa fare automaticamente quando fai push.
+#
+# COSA FA:
+# 1. Ogni volta che fai push su qualsiasi branch
+# 2. GitHub avvia una macchina virtuale Ubuntu
+# 3. Installa Python e le dipendenze
+# 4. Esegue tutti i test
+# 5. Ti dice se i test passano o falliscono
+#
+# DOVE VEDERE I RISULTATI:
+# - GitHub → Repository → Tab "Actions"
+# - Vedrai ✅ verde (test passati) o ❌ rosso (test falliti)
+# =============================================================================
+
+name: Tests
+
+# QUANDO eseguire (trigger)
+on:
+  # Ad ogni push su qualsiasi branch
+  push:
+    branches: [ main, master, develop, 'feature/*', 'claude/*' ]
+  # Ad ogni Pull Request verso main/master
+  pull_request:
+    branches: [ main, master ]
+  # Permette di eseguire manualmente dal tab Actions
+  workflow_dispatch:
+
+jobs:
+  # ==========================================================================
+  # JOB: test
+  # ==========================================================================
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest  # Usa macchina virtuale Ubuntu
+
+    steps:
+      # ----------------------------------------------------------------------
+      # Step 1: Scarica il codice dal repository
+      # ----------------------------------------------------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ----------------------------------------------------------------------
+      # Step 2: Installa Python
+      # ----------------------------------------------------------------------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # ----------------------------------------------------------------------
+      # Step 3: Cache delle dipendenze (velocizza esecuzioni successive)
+      # ----------------------------------------------------------------------
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # ----------------------------------------------------------------------
+      # Step 4: Installa dipendenze
+      # ----------------------------------------------------------------------
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ----------------------------------------------------------------------
+      # Step 5: Esegui i test
+      # ----------------------------------------------------------------------
+      - name: Run tests
+        run: |
+          pytest tests/ -v --tb=short
+
+      # ----------------------------------------------------------------------
+      # Step 6: (Opzionale) Report coverage
+      # ----------------------------------------------------------------------
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ --cov=tanaleague2 --cov-report=term-missing
+        continue-on-error: true  # Non fallisce se coverage è basso
