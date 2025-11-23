@@ -11,6 +11,10 @@ Blueprint per le route achievement:
 from flask import Blueprint, render_template
 
 from cache import cache
+from sheet_utils import (
+    COL_ACHIEVEMENT_DEF, COL_PLAYER_ACH, COL_PLAYERS,
+    safe_get, safe_int
+)
 
 
 # =============================================================================
@@ -61,21 +65,22 @@ def achievements_list():
         total_points = 0
 
         for row in achievement_rows:
-            if not row or not row[0]:
+            ach_id = safe_get(row, COL_ACHIEVEMENT_DEF, 'achievement_id')
+            if not ach_id:
                 continue
 
-            category = row[3] if len(row) > 3 else 'Other'
+            category = safe_get(row, COL_ACHIEVEMENT_DEF, 'category', 'Other')
             if category not in achievements_by_category:
                 achievements_by_category[category] = []
 
             ach = {
-                'id': row[0],
-                'name': row[1],
-                'description': row[2],
+                'id': ach_id,
+                'name': safe_get(row, COL_ACHIEVEMENT_DEF, 'name'),
+                'description': safe_get(row, COL_ACHIEVEMENT_DEF, 'description'),
                 'category': category,
-                'rarity': row[4] if len(row) > 4 else 'Common',
-                'emoji': row[5] if len(row) > 5 else '',
-                'points': int(row[6]) if len(row) > 6 and row[6] else 0
+                'rarity': safe_get(row, COL_ACHIEVEMENT_DEF, 'rarity', 'Common'),
+                'emoji': safe_get(row, COL_ACHIEVEMENT_DEF, 'emoji', ''),
+                'points': safe_int(row, COL_ACHIEVEMENT_DEF, 'points', 0)
             }
 
             achievements_by_category[category].append(ach)
@@ -88,13 +93,13 @@ def achievements_list():
 
         unlock_counts = {}
         for row in player_ach_rows:
-            if row and row[1]:
-                ach_id = row[1]
+            ach_id = safe_get(row, COL_PLAYER_ACH, 'achievement_id')
+            if ach_id:
                 unlock_counts[ach_id] = unlock_counts.get(ach_id, 0) + 1
 
         # Conta giocatori totali
         ws_players = sheet.worksheet("Players")
-        total_players = len([r for r in ws_players.get_all_values()[3:] if r and r[0]])
+        total_players = len([r for r in ws_players.get_all_values()[3:] if safe_get(r, COL_PLAYERS, 'membership')])
 
         # Aggiungi % unlock agli achievement
         for category in achievements_by_category:
@@ -153,15 +158,15 @@ def achievement_detail(ach_id):
 
         achievement = None
         for row in achievement_rows:
-            if row and row[0] == ach_id:
+            if safe_get(row, COL_ACHIEVEMENT_DEF, 'achievement_id') == ach_id:
                 achievement = {
-                    'id': row[0],
-                    'name': row[1],
-                    'description': row[2],
-                    'category': row[3] if len(row) > 3 else 'Other',
-                    'rarity': row[4] if len(row) > 4 else 'Common',
-                    'emoji': row[5] if len(row) > 5 else '',
-                    'points': int(row[6]) if len(row) > 6 and row[6] else 0
+                    'id': ach_id,
+                    'name': safe_get(row, COL_ACHIEVEMENT_DEF, 'name'),
+                    'description': safe_get(row, COL_ACHIEVEMENT_DEF, 'description'),
+                    'category': safe_get(row, COL_ACHIEVEMENT_DEF, 'category', 'Other'),
+                    'rarity': safe_get(row, COL_ACHIEVEMENT_DEF, 'rarity', 'Common'),
+                    'emoji': safe_get(row, COL_ACHIEVEMENT_DEF, 'emoji', ''),
+                    'points': safe_int(row, COL_ACHIEVEMENT_DEF, 'points', 0)
                 }
                 break
 
@@ -174,11 +179,11 @@ def achievement_detail(ach_id):
 
         unlocks_raw = []
         for row in player_ach_rows:
-            if row and len(row) >= 3 and row[1] == ach_id:
+            if safe_get(row, COL_PLAYER_ACH, 'achievement_id') == ach_id:
                 unlocks_raw.append({
-                    'membership': row[0],
-                    'unlocked_date': row[2] if len(row) > 2 else '',
-                    'tournament_id': row[3] if len(row) > 3 else ''
+                    'membership': safe_get(row, COL_PLAYER_ACH, 'membership'),
+                    'unlocked_date': safe_get(row, COL_PLAYER_ACH, 'unlocked_date', ''),
+                    'tournament_id': safe_get(row, COL_PLAYER_ACH, 'tournament_id', '')
                 })
 
         # 3. Carica nomi giocatori da Players sheet
@@ -187,10 +192,11 @@ def achievement_detail(ach_id):
 
         player_names = {}
         for row in players_data:
-            if row and row[0]:
-                player_names[row[0]] = row[1] if len(row) > 1 else row[0]
+            membership = safe_get(row, COL_PLAYERS, 'membership')
+            if membership:
+                player_names[membership] = safe_get(row, COL_PLAYERS, 'name', membership)
 
-        total_players = len([r for r in players_data if r and r[0]])
+        total_players = len([r for r in players_data if safe_get(r, COL_PLAYERS, 'membership')])
 
         # 4. Arricchisci unlocks con nomi e ordina per data
         unlocks = []
