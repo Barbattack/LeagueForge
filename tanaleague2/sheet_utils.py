@@ -46,13 +46,14 @@ COL_TOURNAMENTS = {
 }
 
 # Results sheet (skip 3 righe header)
+# NOTA: La struttura varia per TCG, questa è la mappatura base
 COL_RESULTS = {
-    'tournament_id': 0,
-    'season_id': 1,
+    'season_id': 0,
+    'tournament_id': 1,
     'membership': 2,
-    'name': 3,
-    'rank': 4,
-    'points': 5,
+    'rank': 3,
+    'points': 4,
+    'name': 5,
     'record': 6,
     'match_w': 7,
     'match_l': 8,
@@ -69,6 +70,27 @@ COL_PLAYERS = {
     'tournaments_total': 3,
     'wins_total': 4,
     'points_total': 5
+}
+
+# Achievement_Definitions sheet (skip 4 righe header)
+COL_ACHIEVEMENT_DEF = {
+    'achievement_id': 0,
+    'name': 1,
+    'description': 2,
+    'category': 3,
+    'rarity': 4,
+    'emoji': 5,
+    'points': 6,
+    'requirement_type': 7,
+    'requirement_value': 8
+}
+
+# Player_Achievements sheet
+COL_PLAYER_ACH = {
+    'membership': 0,
+    'achievement_id': 1,
+    'unlocked_date': 2,
+    'tournament_id': 3
 }
 
 

@@ -44,6 +44,10 @@ UTILIZZO negli import scripts:
 import gspread
 from datetime import datetime
 from typing import Dict, List, Set, Tuple
+from sheet_utils import (
+    COL_CONFIG, COL_RESULTS, COL_ACHIEVEMENT_DEF, COL_PLAYER_ACH,
+    safe_get, safe_int
+)
 
 
 # ============================================================================
@@ -78,20 +82,20 @@ def load_achievement_definitions(sheet) -> Dict[str, Dict]:
 
     achievements = {}
     for row in rows:
-        if not row or not row[0]:
+        ach_id = safe_get(row, COL_ACHIEVEMENT_DEF, 'achievement_id')
+        if not ach_id:
             continue
 
-        ach_id = row[0]
         achievements[ach_id] = {
             'id': ach_id,
-            'name': row[1],
-            'description': row[2],
-            'category': row[3],
-            'rarity': row[4],
-            'emoji': row[5],
-            'points': int(row[6]) if row[6] else 0,
-            'requirement_type': row[7],
-            'requirement_value': row[8]
+            'name': safe_get(row, COL_ACHIEVEMENT_DEF, 'name'),
+            'description': safe_get(row, COL_ACHIEVEMENT_DEF, 'description'),
+            'category': safe_get(row, COL_ACHIEVEMENT_DEF, 'category'),
+            'rarity': safe_get(row, COL_ACHIEVEMENT_DEF, 'rarity'),
+            'emoji': safe_get(row, COL_ACHIEVEMENT_DEF, 'emoji'),
+            'points': safe_int(row, COL_ACHIEVEMENT_DEF, 'points', 0),
+            'requirement_type': safe_get(row, COL_ACHIEVEMENT_DEF, 'requirement_type'),
+            'requirement_value': safe_get(row, COL_ACHIEVEMENT_DEF, 'requirement_value')
         }
 
     _achievement_cache = achievements
@@ -111,8 +115,8 @@ def load_player_achievements(sheet, membership: str) -> Set[str]:
 
     unlocked = set()
     for row in rows:
-        if row and row[0] == membership:
-            unlocked.add(row[1])  # achievement_id
+        if safe_get(row, COL_PLAYER_ACH, 'membership') == membership:
+            unlocked.add(safe_get(row, COL_PLAYER_ACH, 'achievement_id'))
 
     return unlocked
 
@@ -137,11 +141,10 @@ def calculate_player_stats(sheet, membership: str, tcg: str = None) -> Dict:
 
     archived_seasons = set()
     for row in config_data:
-        if row and len(row) > 4:
-            season_id = row[0]  # Col 0 = Season_ID
-            status = row[4].strip().upper() if row[4] else ""  # Col 4 = Status
-            if status == "ARCHIVED":
-                archived_seasons.add(season_id)
+        season_id = safe_get(row, COL_CONFIG, 'season_id')
+        status = (safe_get(row, COL_CONFIG, 'status') or '').strip().upper()
+        if status == "ARCHIVED":
+            archived_seasons.add(season_id)
 
     # 2. Carica risultati
     ws_results = sheet.worksheet("Results")
@@ -150,30 +153,29 @@ def calculate_player_stats(sheet, membership: str, tcg: str = None) -> Dict:
     # 3. Filtra risultati del giocatore ESCLUDENDO stagioni ARCHIVED
     player_results = []
     for r in all_results:
-        if r and len(r) >= 10 and r[2] == membership:
-            season_id = r[0]  # Col 0 = Season_ID
+        if safe_get(r, COL_RESULTS, 'membership') == membership:
+            season_id = safe_get(r, COL_RESULTS, 'season_id')
             if season_id not in archived_seasons:
                 player_results.append(r)
 
     if tcg:
         # Filtra per TCG
-        player_results = [r for r in player_results if r[0].startswith(tcg)]
+        player_results = [r for r in player_results if safe_get(r, COL_RESULTS, 'season_id', '').startswith(tcg)]
 
     # Calcoli base
     tournaments_played = len(player_results)
-    tournament_wins = sum(1 for r in player_results if r[3] and int(r[3]) == 1)
-    top8_count = sum(1 for r in player_results if r[3] and int(r[3]) <= 8)
+    tournament_wins = sum(1 for r in player_results if safe_int(r, COL_RESULTS, 'rank', 999) == 1)
+    top8_count = sum(1 for r in player_results if safe_int(r, COL_RESULTS, 'rank', 999) <= 8)
 
     # Ranks
-    ranks = [int(r[3]) for r in player_results if r[3]]
+    ranks = [safe_int(r, COL_RESULTS, 'rank', 999) for r in player_results]
+    ranks = [rk for rk in ranks if rk < 999]
     best_rank = min(ranks) if ranks else 999
 
     # Perfect wins (4-0 o 5-0 senza sconfitte)
     perfect_wins = 0
     for r in player_results:
-        if r[3] and int(r[3]) == 1:  # Vittoria
-            # Check se senza sconfitte (serve parse W-L-D se disponibile)
-            # Per ora contiamo solo vittorie
+        if safe_int(r, COL_RESULTS, 'rank', 999) == 1:
             perfect_wins += 1
 
     # TCG giocati
