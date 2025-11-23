@@ -7,6 +7,7 @@ Guida pratica per sviluppatori e manutentori di TanaLeague.
 ## 📋 Indice
 
 - [Setup Ambiente](#-setup-ambiente)
+- [Setup Locale Completo](#️-setup-locale-completo-windowsmaclinux)
 - [Requirements (Dipendenze)](#-requirements-dipendenze)
 - [Logging (Log dell'applicazione)](#-logging)
 - [Testing (Test automatici)](#-testing)
@@ -49,6 +50,176 @@ pip install --user -r requirements.txt
 
 # 3. Reload webapp dal tab Web
 ```
+
+---
+
+## 🖥️ Setup Locale Completo (Windows/Mac/Linux)
+
+Questa sezione spiega come configurare l'ambiente locale per testare TanaLeague sul tuo PC.
+
+### Prerequisiti
+
+- Python 3.10+ installato
+- Git installato
+- Accesso a PythonAnywhere (per copiare i file segreti)
+
+### Step 1: Clona il repository
+
+```bash
+# Clona il repo
+git clone https://github.com/tuousername/TanaLeague.git
+cd TanaLeague
+
+# Installa dipendenze
+pip install -r requirements.txt
+```
+
+### Step 2: Copia i file segreti da PythonAnywhere
+
+Questi file contengono credenziali e NON sono nel repository Git (sono in `.gitignore`).
+
+**Devi copiarli manualmente da PythonAnywhere al tuo PC:**
+
+| File su PythonAnywhere | Copia in locale |
+|------------------------|-----------------|
+| `~/TanaLeague/tanaleague2/config.py` | `tanaleague2/config.py` |
+| `~/TanaLeague/tanaleague2/service_account_credentials.json` | `tanaleague2/service_account_credentials.json` |
+
+**Come copiare da PythonAnywhere:**
+
+1. Vai su PythonAnywhere → **Files**
+2. Naviga a `~/TanaLeague/tanaleague2/`
+3. Clicca su `config.py` → **Download**
+4. Clicca su `service_account_credentials.json` → **Download**
+5. Metti i file scaricati nella cartella `tanaleague2/` del tuo PC
+
+### Step 3 (Alternativo): Crea config.py da zero
+
+Se non vuoi copiare il config.py esistente, puoi crearne uno nuovo:
+
+```bash
+cd tanaleague2
+cp config.example.py config.py
+```
+
+Poi modifica `config.py` con i tuoi valori:
+
+```python
+# config.py - Modifica questi valori
+
+# 1. SHEET_ID - Lo trovi nell'URL del tuo Google Sheet
+# URL: https://docs.google.com/spreadsheets/d/QUESTO_E_LO_SHEET_ID/edit
+SHEET_ID = "IL_TUO_SHEET_ID"
+
+# 2. SECRET_KEY - Genera una stringa casuale
+# Esegui: python -c "import secrets; print(secrets.token_hex(32))"
+SECRET_KEY = "la_stringa_generata"
+
+# 3. ADMIN_PASSWORD_HASH - Genera l'hash della password
+# Vedi sezione sotto per istruzioni
+ADMIN_PASSWORD_HASH = "pbkdf2:sha256:..."
+```
+
+### Come generare ADMIN_PASSWORD_HASH
+
+```bash
+# Esegui questo comando Python
+python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('LA_TUA_PASSWORD'))"
+```
+
+**Esempio:**
+```bash
+$ python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('miapassword123'))"
+pbkdf2:sha256:600000$abc123...xyz789
+```
+
+Copia l'output (inizia con `pbkdf2:`) e incollalo in `config.py` come valore di `ADMIN_PASSWORD_HASH`.
+
+### Step 4: Avvia l'applicazione
+
+```bash
+cd tanaleague2
+python app.py
+```
+
+**Output atteso:**
+```
+ * Running on http://127.0.0.1:5000
+ * Debug mode: on
+```
+
+Apri il browser su `http://localhost:5000`
+
+### Step 5: Verifica che tutto funzioni
+
+Testa queste pagine:
+
+| URL | Cosa deve mostrare |
+|-----|-------------------|
+| `http://localhost:5000/` | Homepage con 3 TCG |
+| `http://localhost:5000/classifiche` | Lista stagioni |
+| `http://localhost:5000/achievements` | Catalogo achievement |
+| `http://localhost:5000/admin/login` | Form login admin |
+| `http://localhost:5000/players` | Lista giocatori |
+
+### Troubleshooting
+
+#### Errore: `ModuleNotFoundError: No module named 'xxx'`
+
+```bash
+# Reinstalla dipendenze
+pip install -r requirements.txt
+```
+
+#### Errore: `FileNotFoundError: config.py`
+
+```bash
+# Crea config.py dal template
+cd tanaleague2
+cp config.example.py config.py
+# Poi modifica config.py con i tuoi valori
+```
+
+#### Errore: `gspread.exceptions.SpreadsheetNotFound`
+
+- Verifica che `SHEET_ID` in config.py sia corretto
+- Verifica che il service account abbia accesso al Google Sheet
+- Controlla che `service_account_credentials.json` sia nella cartella giusta
+
+#### Errore: `google.auth.exceptions.DefaultCredentialsError`
+
+```bash
+# Verifica che il file credentials esista
+ls tanaleague2/service_account_credentials.json
+
+# Se non esiste, copialo da PythonAnywhere
+```
+
+#### Errore: `Address already in use` (porta 5000 occupata)
+
+```bash
+# Usa una porta diversa
+python app.py --port 5001
+# Oppure: flask run --port 5001
+```
+
+#### L'app parte ma le pagine mostrano errori
+
+1. Controlla i log: `tanaleague2/logs/tanaleague.log`
+2. Verifica connessione a Google Sheets
+3. Verifica che il Google Sheet abbia tutti i fogli necessari
+
+### Checklist Setup Locale
+
+- [ ] Repository clonato
+- [ ] `pip install -r requirements.txt` eseguito
+- [ ] `config.py` presente in `tanaleague2/`
+- [ ] `service_account_credentials.json` presente in `tanaleague2/`
+- [ ] `SHEET_ID` configurato correttamente
+- [ ] `SECRET_KEY` configurato
+- [ ] `ADMIN_PASSWORD_HASH` configurato
+- [ ] `python app.py` avvia senza errori
+- [ ] Homepage carica su `http://localhost:5000`
 
 ---
 
@@ -300,30 +471,38 @@ pytest --cov=tanaleague2       # Mostra quanto codice è testato
 
 ```
 TanaLeague/
-├── requirements.txt              # ⬅️ NUOVO: Dipendenze
-├── pytest.ini                    # ⬅️ NUOVO: Config test
+├── requirements.txt              # Dipendenze Python
+├── pytest.ini                    # Config test
+├── .gitignore                    # File esclusi da Git
 │
 ├── .github/
 │   └── workflows/
-│       └── test.yml              # ⬅️ NUOVO: CI/CD (solo GitHub)
+│       └── test.yml              # CI/CD (solo GitHub)
 │
-├── tests/                        # ⬅️ NUOVO: Test automatici
+├── tests/                        # Test automatici
 │   ├── __init__.py
 │   ├── conftest.py
 │   ├── test_app.py
 │   └── test_achievements.py
 │
 ├── tanaleague2/
-│   ├── logger.py                 # ⬅️ NUOVO: Sistema logging
-│   ├── logs/                     # ⬅️ NUOVO: Cartella log (creata auto)
+│   ├── app.py                    # App principale (route pubbliche)
+│   ├── routes/                   # ⬅️ NUOVO: Blueprint modulari
+│   │   ├── __init__.py           #   Registration blueprints
+│   │   ├── admin.py              #   Route admin (/admin/*)
+│   │   └── achievements.py       #   Route achievement
+│   ├── cache.py                  # Cache Google Sheets
+│   ├── achievements.py           # Logica unlock achievement
+│   ├── config.py                 # ⚠️ NON in Git (segreti)
+│   ├── config.example.py         # Template per config.py
+│   ├── logger.py                 # Sistema logging
+│   ├── logs/                     # Cartella log (creata auto)
 │   │   └── tanaleague.log
-│   ├── app.py
-│   ├── cache.py
-│   ├── achievements.py
+│   ├── backup_sheets.py          # Script backup Google Sheets
 │   └── ... (altri file)
 │
 └── docs/
-    ├── DEVELOPMENT.md            # ⬅️ NUOVO: Questa guida
+    ├── DEVELOPMENT.md            # Questa guida
     └── ... (altre guide)
 ```
 
