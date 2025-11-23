@@ -22,6 +22,7 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 - [Achievement System](#-achievement-system-new)
 - [Deploy](#-deploy-su-pythonanywhere)
 - [Documentazione](#-documentazione)
+- [Franchise Model](#-franchise-model)
 - [Struttura Progetto](#-struttura-progetto)
 
 ---
@@ -106,7 +107,21 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 
 ## 🆕 Recent Updates (Nov 2025)
 
-### 🏗️ v2.2 - Blueprint Refactor + Infrastructure (Latest)
+### 🏪 v2.3 - Franchise Model + Plug-and-Play (Latest)
+
+- **Franchise Tools**: Strumenti per distribuire TanaLeague ad altri negozi
+  - `create_store_package.py` - Crea pacchetti ZIP pre-configurati
+  - `api_utils.py` - Retry automatico su rate limit API
+  - `install.bat` / `install.sh` - Script installazione
+- **Modello Plug-and-Play**:
+  - I negozi ricevono uno ZIP, estraggono e fanno doppio-click!
+  - Nessuna configurazione tecnica richiesta
+  - Google Sheets separati per ogni negozio
+- **Setup Wizard Migliorato**: Configurazione interattiva completa
+- **Rate Limit Handling**: Exponential backoff automatico per API Google
+- **Documentazione Franchise**: Guida completa per franchise manager
+
+### 🏗️ v2.2 - Blueprint Refactor + Infrastructure
 
 - **Flask Blueprints**: App.py ridotto da 1527 → 1037 righe
   - `routes/admin.py` - Route admin (login, dashboard, import)
@@ -401,6 +416,62 @@ python setup_achievements.py
 | **[docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md)** | Migrazione server |
 | **[docs/TECHNICAL_NOTES.md](docs/TECHNICAL_NOTES.md)** | Note tecniche |
 | **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** | Risoluzione problemi |
+| **[docs/FRANCHISE_GUIDE.md](docs/FRANCHISE_GUIDE.md)** | Guida modello franchise |
+
+---
+
+## 🏪 Franchise Model
+
+TanaLeague supporta un modello franchise per distribuire il sistema ad altri negozi.
+
+### Come Funziona
+
+1. **Tu (Franchise Manager)**:
+   - Gestisci UN Service Account Google
+   - Crei pacchetti pre-configurati per ogni negozio
+   - Ogni negozio ha il proprio Google Sheet separato
+
+2. **I Negozi**:
+   - Ricevono uno ZIP pre-configurato
+   - Estraggono ed eseguono `install.bat` (Windows) o `install.sh` (Mac/Linux)
+   - Doppio-click su `avvia.bat` per avviare
+   - Nessuna configurazione tecnica richiesta!
+
+### Creare un Pacchetto per un Nuovo Negozio
+
+```bash
+cd tanaleague2
+python create_store_package.py
+```
+
+Lo script:
+1. Chiede nome negozio, email, password admin
+2. Crea automaticamente un Google Sheet
+3. Inizializza tutti i fogli necessari
+4. Genera un pacchetto ZIP pronto all'uso
+
+### Contenuto del Pacchetto ZIP
+
+```
+TanaLeague_NomeNegozio/
+├── tanaleague2/
+│   ├── app.py
+│   ├── config.py          # Pre-configurato!
+│   ├── credentials.json   # Credenziali condivise
+│   └── ...
+├── install.bat            # Windows
+├── avvia.bat              # Avvio Windows
+└── LEGGIMI.txt            # Istruzioni
+```
+
+### Rate Limiting & Scalabilità
+
+- **Limite API**: 300 req/min per progetto (condiviso tra tutti i negozi)
+- **Retry automatico**: Il sistema gestisce automaticamente i rate limit
+- **10 negozi**: Funziona senza problemi
+- **50+ negozi**: Considera Service Account separati
+
+Per dettagli completi: **[docs/FRANCHISE_GUIDE.md](docs/FRANCHISE_GUIDE.md)**
 
 ---
 
@@ -412,6 +483,8 @@ TanaLeague/
 ├── requirements.txt                # Dipendenze Python
 ├── pytest.ini                      # Configurazione pytest
 ├── .gitignore                      # File esclusi da Git
+├── install.bat                     # Script installazione Windows
+├── install.sh                      # Script installazione Mac/Linux
 │
 ├── .github/workflows/              # CI/CD
 │   └── test.yml                    # GitHub Actions - test automatici
@@ -447,10 +520,12 @@ TanaLeague/
 │   ├── logger.py                   # Sistema logging strutturato
 │   ├── backup_sheets.py            # Backup Google Sheets → CSV
 │   │
-│   ├── setup_wizard.py             # Setup interattivo (NEW!)
-│   ├── init_database.py            # Inizializza fogli Google Sheet (NEW!)
-│   ├── check_setup.py              # Verifica configurazione (NEW!)
-│   ├── load_demo_data.py           # Carica dati demo (NEW!)
+│   ├── setup_wizard.py             # Setup interattivo
+│   ├── init_database.py            # Inizializza fogli Google Sheet
+│   ├── check_setup.py              # Verifica configurazione
+│   ├── load_demo_data.py           # Carica dati demo
+│   ├── create_store_package.py     # Crea pacchetti franchise (NEW!)
+│   ├── api_utils.py                # Utility API con retry (NEW!)
 │   │
 │   ├── logs/                       # Log applicazione (auto-created)
 │   │   └── tanaleague.log
@@ -578,4 +653,4 @@ Per bug o feature request: Apri issue su GitHub
 
 **Made with ❤️ for the TCG community**
 
-*Last updated: November 2025 (v2.2 - Blueprint Refactor + CI/CD + Local Dev Setup)*
+*Last updated: November 2025 (v2.3 - Franchise Model + Plug-and-Play)*
