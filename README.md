@@ -394,6 +394,9 @@ python setup_achievements.py
 | **[docs/ACHIEVEMENT_SYSTEM.md](docs/ACHIEVEMENT_SYSTEM.md)** | Sistema achievement in dettaglio |
 | **[docs/TECHNICAL_NOTES.md](docs/TECHNICAL_NOTES.md)** | Note tecniche implementative |
 | **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** | Risoluzione problemi comuni |
+| **[docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md)** | Guida completa ai test automatici |
+| **[docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md)** | Step-by-step per migrazione server |
+| **[docs/QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md)** | Cheatsheet comandi e operazioni comuni |
 
 ---
 
