@@ -77,12 +77,19 @@ from import_validator import (
     batch_delete_tournament
 )
 
-# CONFIG
-SHEET_ID = "19ZF35DTmgZG8v1GfzKE5JmMUTXLo300vuw_AdrgQPFE"  # MODIFICA!
-CREDENTIALS_FILE = "/home/latanadellepulci/tanaleague2/service_account_credentials.json"  # Path PythonAnywhere
+# CONFIG - Importa da config.py
+try:
+    from config import SHEET_ID, CREDENTIALS_FILE
+except ImportError:
+    print("❌ Errore: config.py non trovato!")
+    print("   Copia config.example.py in config.py e configura i valori.")
+    print("   Oppure esegui: python setup_wizard.py")
+    sys.exit(1)
+
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
 def connect_sheet():
+    """Connette al Google Sheet usando credenziali da config.py"""
     creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
     client = gspread.authorize(creds)
     return client.open_by_key(SHEET_ID)

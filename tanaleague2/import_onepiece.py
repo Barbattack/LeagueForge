@@ -89,19 +89,20 @@ from import_validator import (
 # CONFIGURAZIONE
 # ============================================
 
+# Importa configurazione da config.py
+try:
+    from config import SHEET_ID, CREDENTIALS_FILE
+except ImportError:
+    print("❌ Errore: config.py non trovato!")
+    print("   Copia config.example.py in config.py e configura i valori.")
+    print("   Oppure esegui: python setup_wizard.py")
+    sys.exit(1)
+
 # Scopes necessari per Google Sheets
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ]
-
-# ID del tuo Google Sheet (lo troverai nell'URL)
-# Esempio URL: https://docs.google.com/spreadsheets/d/ABC123XYZ/edit
-# ABC123XYZ è il SHEET_ID
-SHEET_ID = "19ZF35DTmgZG8v1GfzKE5JmMUTXLo300vuw_AdrgQPFE"  # <-- MODIFICA QUESTO!
-
-# Path al file JSON delle credenziali del Service Account
-CREDENTIALS_FILE = "service_account_credentials.json"  # <-- MODIFICA QUESTO!
 
 
 # ============================================
