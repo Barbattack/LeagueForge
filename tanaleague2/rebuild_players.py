@@ -66,7 +66,7 @@ for row in all_results:
     stats['match_w'] += safe_int(row, COL_RESULTS, 'match_w', 0)
     stats['match_t'] += safe_int(row, COL_RESULTS, 'match_t', 0)
     stats['match_l'] += safe_int(row, COL_RESULTS, 'match_l', 0)
-    stats['total_points'] += safe_float(row, COL_RESULTS, 'points', 0)
+    stats['total_points'] += safe_float(row, COL_RESULTS, 'points_total', 0)
 
     date = tid.split('_')[1] if '_' in tid else ''
     if date:

@@ -48,18 +48,19 @@ COL_TOURNAMENTS = {
 # Results sheet (skip 3 righe header)
 # NOTA: La struttura varia per TCG, questa è la mappatura base
 COL_RESULTS = {
-    'season_id': 0,
+    'result_id': 0,
     'tournament_id': 1,
     'membership': 2,
     'rank': 3,
-    'points': 4,
-    'name': 5,
-    'record': 6,
-    'match_w': 7,
-    'match_l': 8,
-    'match_t': 9,
-    'omw': 10,
-    'deck': 11
+    'win_points': 4,
+    'omw': 5,
+    'points_victory': 6,
+    'points_ranking': 7,
+    'points_total': 8,
+    'name': 9,
+    'match_w': 10,
+    'match_t': 11,
+    'match_l': 12
 }
 
 # Players sheet (skip 3 righe header)
