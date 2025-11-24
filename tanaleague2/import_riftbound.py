@@ -81,6 +81,7 @@ from datetime import datetime
 import argparse
 from typing import Dict, List
 from achievements import check_and_unlock_achievements
+from sheet_utils import fuzzy_match
 from import_validator import (
     ImportValidator,
     validate_riftbound_csv,
@@ -197,16 +198,16 @@ def parse_csv_rounds(csv_files: List[str], season_id: str, tournament_date: str)
                 winner_membership = ""
                 if match_result and ":" in match_result:
                     winner_name = match_result.split(":")[0].strip()
-                    # Match con Player 1 o Player 2
-                    if winner_name.lower() == p1_name.lower():
+                    # Match con Player 1 o Player 2 (usa fuzzy matching)
+                    if fuzzy_match(winner_name, p1_name):
                         winner_membership = p1_id
-                    elif winner_name.lower() == p2_name.lower():
+                    elif fuzzy_match(winner_name, p2_name):
                         winner_membership = p2_id
                     else:
-                        # Fallback: cerca se il nome del vincitore contiene parte del nome del giocatore
-                        if p1_last.lower() in winner_name.lower() or p1_first.lower() in winner_name.lower():
+                        # Fallback: match parziale su cognome/nome
+                        if fuzzy_match(winner_name, p1_last, 80) or fuzzy_match(winner_name, p1_first, 80):
                             winner_membership = p1_id
-                        elif p2_last.lower() in winner_name.lower() or p2_first.lower() in winner_name.lower():
+                        elif fuzzy_match(winner_name, p2_last, 80) or fuzzy_match(winner_name, p2_first, 80):
                             winner_membership = p2_id
 
                 # Salva match

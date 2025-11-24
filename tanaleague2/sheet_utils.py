@@ -130,6 +130,76 @@ def safe_float(row, col_map, key, default=0.0):
         return default
 
 
+def normalize_name(name: str) -> str:
+    """Normalizza nome per confronto: lowercase, spazi singoli, strip."""
+    if not name:
+        return ''
+    return ' '.join(name.lower().split())
+
+
+def fuzzy_match(name1: str, name2: str, threshold: int = 85) -> bool:
+    """
+    Confronto fuzzy tra due nomi.
+    Ritorna True se la similarità è >= threshold (default 85%).
+
+    Gestisce: doppi spazi, accenti diversi, typo minori.
+    """
+    if not name1 or not name2:
+        return False
+
+    n1 = normalize_name(name1)
+    n2 = normalize_name(name2)
+
+    # Match esatto dopo normalizzazione
+    if n1 == n2:
+        return True
+
+    # Fuzzy matching con rapidfuzz
+    try:
+        from rapidfuzz import fuzz
+        score = fuzz.ratio(n1, n2)
+        return score >= threshold
+    except ImportError:
+        # Fallback se rapidfuzz non installato
+        return n1 == n2
+
+
+def find_best_match(target: str, candidates: list, threshold: int = 85) -> tuple:
+    """
+    Trova il miglior match per target in una lista di candidati.
+
+    Returns:
+        (best_match, score) o (None, 0) se nessun match sopra threshold
+    """
+    if not target or not candidates:
+        return None, 0
+
+    target_norm = normalize_name(target)
+
+    try:
+        from rapidfuzz import fuzz
+        best_match = None
+        best_score = 0
+
+        for candidate in candidates:
+            if not candidate:
+                continue
+            score = fuzz.ratio(target_norm, normalize_name(candidate))
+            if score > best_score:
+                best_score = score
+                best_match = candidate
+
+        if best_score >= threshold:
+            return best_match, best_score
+        return None, 0
+    except ImportError:
+        # Fallback esatto
+        for candidate in candidates:
+            if normalize_name(candidate) == target_norm:
+                return candidate, 100
+        return None, 0
+
+
 class SheetRow:
     """Wrapper per accedere a righe Google Sheets con nomi colonna."""
 
