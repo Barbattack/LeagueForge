@@ -212,7 +212,7 @@ def update_player_stats_after_tournament(sheet, membership: str, tcg: str,
 
 def batch_update_player_stats(sheet, updates: list):
     """
-    Aggiorna multipli giocatori in batch (più efficiente).
+    Aggiorna multipli giocatori in batch VERO (1 read + 1 write).
 
     Args:
         sheet: Google Sheet connesso
@@ -221,16 +221,78 @@ def batch_update_player_stats(sheet, updates: list):
     Returns:
         int: Numero di aggiornamenti riusciti
     """
-    success = 0
-    for u in updates:
-        if update_player_stats_after_tournament(
-            sheet,
-            membership=u.get('membership'),
-            tcg=u.get('tcg'),
-            rank=u.get('rank', 999),
-            season_id=u.get('season_id', ''),
-            tournament_date=u.get('date'),
-            name=u.get('name')
-        ):
-            success += 1
-    return success
+    if not updates:
+        return 0
+
+    try:
+        ws = sheet.worksheet("Player_Stats")
+        api_delay()
+        data = safe_api_call(ws.get_all_values)
+        header_rows = 3
+        now = datetime.now().strftime('%Y-%m-%d %H:%M')
+
+        # Mappa membership+tcg -> row_idx
+        existing = {}
+        for i, row in enumerate(data[header_rows:], start=header_rows + 1):
+            key = (safe_get(row, COL_PLAYER_STATS, 'membership'),
+                   safe_get(row, COL_PLAYER_STATS, 'tcg'))
+            existing[key] = (i, row)
+
+        # Prepara batch updates
+        batch_data = []
+        new_rows = []
+
+        for u in updates:
+            membership = u.get('membership')
+            tcg = u.get('tcg')
+            rank = u.get('rank', 999)
+            date = u.get('date', '')
+            name = u.get('name', '')
+            key = (membership, tcg)
+
+            if key in existing:
+                # Update esistente
+                row_idx, current = existing[key]
+                total_t = safe_int(current, COL_PLAYER_STATS, 'total_tournaments', 0) + 1
+                total_w = safe_int(current, COL_PLAYER_STATS, 'total_wins', 0)
+                curr_streak = safe_int(current, COL_PLAYER_STATS, 'current_streak', 0)
+                best_streak = safe_int(current, COL_PLAYER_STATS, 'best_streak', 0)
+                top8 = safe_int(current, COL_PLAYER_STATS, 'top8_count', 0)
+                seasons = safe_int(current, COL_PLAYER_STATS, 'seasons_count', 0)
+                player_name = name or safe_get(current, COL_PLAYER_STATS, 'name', '')
+
+                if rank == 1:
+                    total_w += 1
+                if rank <= 8:
+                    top8 += 1
+                    curr_streak += 1
+                    best_streak = max(best_streak, curr_streak)
+                else:
+                    curr_streak = 0
+
+                new_row = [membership, player_name, tcg, total_t, total_w, curr_streak,
+                          best_streak, top8, rank if rank < 999 else '', date, seasons, now]
+                batch_data.append({'range': f'A{row_idx}:L{row_idx}', 'values': [new_row]})
+            else:
+                # Nuovo giocatore
+                is_top8 = rank <= 8
+                new_row = [membership, name, tcg, 1, 1 if rank == 1 else 0,
+                          1 if is_top8 else 0, 1 if is_top8 else 0, 1 if is_top8 else 0,
+                          rank if rank < 999 else '', date, 1, now]
+                new_rows.append(new_row)
+
+        # Batch update esistenti
+        if batch_data:
+            api_delay()
+            safe_api_call(ws.batch_update, batch_data, value_input_option='USER_ENTERED')
+
+        # Append nuovi
+        if new_rows:
+            api_delay()
+            safe_api_call(ws.append_rows, new_rows, value_input_option='USER_ENTERED')
+
+        return len(updates)
+
+    except Exception as e:
+        print(f"⚠️ Errore batch_update_player_stats: {e}")
+        return 0

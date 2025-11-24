@@ -84,7 +84,7 @@ def load_achievement_definitions(sheet) -> Dict[str, Dict]:
             return _achievement_cache
 
     ws = sheet.worksheet("Achievement_Definitions")
-    rows = ws.get_all_values()[4:]  # Skip header (primi 4 righe)
+    rows = safe_api_call(ws.get_all_values)[4:]  # Skip header (primi 4 righe)
 
     achievements = {}
     for row in rows:
@@ -117,7 +117,7 @@ def load_player_achievements(sheet, membership: str) -> Set[str]:
         Set di achievement_id già sbloccati
     """
     ws = sheet.worksheet("Player_Achievements")
-    rows = ws.get_all_values()[4:]  # Skip header
+    rows = safe_api_call(ws.get_all_values)[4:]  # Skip header
 
     unlocked = set()
     for row in rows:
@@ -143,7 +143,7 @@ def calculate_player_stats(sheet, membership: str, tcg: str = None) -> Dict:
     """
     # 1. Carica lista stagioni ARCHIVED da Config
     ws_config = sheet.worksheet("Config")
-    config_data = ws_config.get_all_values()[4:]  # Skip header (righe 1-4)
+    config_data = safe_api_call(ws_config.get_all_values)[4:]  # Skip header (righe 1-4)
 
     archived_seasons = set()
     for row in config_data:
@@ -154,7 +154,7 @@ def calculate_player_stats(sheet, membership: str, tcg: str = None) -> Dict:
 
     # 2. Carica risultati
     ws_results = sheet.worksheet("Results")
-    all_results = ws_results.get_all_values()[3:]  # Skip header
+    all_results = safe_api_call(ws_results.get_all_values)[3:]  # Skip header
 
     # 3. Filtra risultati del giocatore ESCLUDENDO stagioni ARCHIVED
     player_results = []
@@ -480,7 +480,7 @@ def check_and_unlock_achievements(sheet, import_data: Dict):
     season_id = import_data['tournament'][1]
 
     ws_config = sheet.worksheet("Config")
-    config_data = ws_config.get_all_values()
+    config_data = safe_api_call(ws_config.get_all_values)
 
     season_status = None
     for row in config_data[4:]:  # Skip header (righe 1-3)
@@ -551,7 +551,7 @@ def check_and_unlock_achievements(sheet, import_data: Dict):
     # 4. BATCH WRITE - scrivi TUTTI gli achievement in una volta sola!
     if achievements_to_unlock:
         ws_player_ach = sheet.worksheet("Player_Achievements")
-        ws_player_ach.append_rows(achievements_to_unlock, value_input_option='RAW')
+        safe_api_call(ws_player_ach.append_rows, achievements_to_unlock, value_input_option='RAW')
         print(f"  ✅ {total_unlocked} achievement sbloccati!")
     else:
         print("  ✅ Nessun nuovo achievement sbloccato")

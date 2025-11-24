@@ -46,7 +46,7 @@ except ImportError:
 from api_utils import safe_api_call
 
 # Delay tra operazioni API per evitare rate limit (millisecondi)
-API_DELAY_MS = 300  # 0.3 secondi
+API_DELAY_MS = 1200  # 1.2 secondi per rispettare 60 req/min
 
 def api_delay():
     """Breve pausa tra chiamate API per rispettare rate limits"""
@@ -63,7 +63,7 @@ from sheet_utils import (
     safe_get, safe_int, safe_float, fuzzy_match
 )
 from achievements import check_and_unlock_achievements
-from player_stats import update_player_stats_after_tournament
+from player_stats import update_player_stats_after_tournament, batch_update_player_stats
 
 # =============================================================================
 # CONSTANTS
@@ -775,17 +775,12 @@ def finalize_import(
     # 2. Player_Stats update
     print("   📊 Aggiornamento Player_Stats...")
     try:
-        for p in tournament_data['participants']:
-            update_player_stats_after_tournament(
-                sheet,
-                membership=p['membership'],
-                tcg=tcg,
-                rank=p['rank'],
-                season_id=season_id,
-                tournament_date=tournament_date,
-                name=p['name']
-            )
-            stats['player_stats_updated'] += 1
+        batch_updates = [
+            {'membership': p['membership'], 'tcg': tcg, 'rank': p['rank'],
+             'season_id': season_id, 'date': tournament_date, 'name': p['name']}
+            for p in tournament_data['participants']
+        ]
+        stats['player_stats_updated'] = batch_update_player_stats(sheet, batch_updates)
         print(f"   ✅ {stats['player_stats_updated']} giocatori aggiornati")
     except Exception as e:
         print(f"   ⚠️  Errore Player_Stats (non bloccante): {e}")
