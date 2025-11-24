@@ -98,6 +98,22 @@ COL_PLAYER_ACH = {
     'tournament_id': 3
 }
 
+# Player_Stats sheet (skip 3 righe header) - Aggregati pre-calcolati
+COL_PLAYER_STATS = {
+    'membership': 0,
+    'name': 1,
+    'tcg': 2,
+    'total_tournaments': 3,
+    'total_wins': 4,
+    'current_streak': 5,
+    'best_streak': 6,
+    'top8_count': 7,
+    'last_rank': 8,
+    'last_date': 9,
+    'seasons_count': 10,
+    'updated_at': 11
+}
+
 
 # =============================================================================
 # HELPER FUNCTIONS

@@ -68,6 +68,7 @@ from datetime import datetime
 import sys
 import argparse
 from achievements import check_and_unlock_achievements
+from player_stats import update_player_stats_after_tournament
 from import_validator import (
     ImportValidator,
     validate_pokemon_tdf,
@@ -655,6 +656,30 @@ def import_to_sheet(data, test_mode=False):
 
         # 6. Check e sblocca achievement
         check_and_unlock_achievements(sheet, data)
+
+        # 7. Aggiorna Player_Stats
+        print(f"   📊 Aggiornamento Player_Stats...")
+        try:
+            tcg_code = 'PKM'  # Pokemon
+            stats_updated = 0
+            for result_row in data['results']:
+                # result_row: [result_id, tournament_id, membership, rank, ...]
+                membership = result_row[2]
+                rank = result_row[3]
+                name = result_row[9] if len(result_row) > 9 else ''
+                update_player_stats_after_tournament(
+                    sheet,
+                    membership=membership,
+                    tcg=tcg_code,
+                    rank=int(rank) if rank else 999,
+                    season_id=season_id,
+                    tournament_date=tournament_date,
+                    name=name
+                )
+                stats_updated += 1
+            print(f"   ✅ {stats_updated} giocatori aggiornati")
+        except Exception as e:
+            print(f"   ⚠️  Errore Player_Stats (non bloccante): {e}")
 
     if test_mode:
         print("\n⚠️  TEST COMPLETATO - Nessun dato scritto")

@@ -81,6 +81,7 @@ from datetime import datetime
 import argparse
 from typing import Dict, List
 from achievements import check_and_unlock_achievements
+from player_stats import update_player_stats_after_tournament
 from sheet_utils import fuzzy_match
 from import_validator import (
     ImportValidator,
@@ -718,6 +719,29 @@ def import_to_sheet(data: Dict, test_mode: bool = False):
 
         # 6. Check e sblocca achievement
         check_and_unlock_achievements(sheet, data)
+
+        # 7. Aggiorna Player_Stats
+        print(f"   📊 Aggiornamento Player_Stats...")
+        try:
+            stats_updated = 0
+            for result_row in data['results']:
+                # result_row: [result_id, tournament_id, membership, rank, ...]
+                membership = result_row[2]
+                rank = result_row[3]
+                name = result_row[9] if len(result_row) > 9 else ''
+                update_player_stats_after_tournament(
+                    sheet,
+                    membership=membership,
+                    tcg=tcg,
+                    rank=int(rank) if rank else 999,
+                    season_id=season_id,
+                    tournament_date=tournament_date,
+                    name=name
+                )
+                stats_updated += 1
+            print(f"   ✅ {stats_updated} giocatori aggiornati")
+        except Exception as e:
+            print(f"   ⚠️  Errore Player_Stats (non bloccante): {e}")
     else:
         print(f"✅ Players: {len(data['players'])} totali (stats non calcolate in test mode)")
 

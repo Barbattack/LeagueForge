@@ -74,6 +74,7 @@ import re
 from typing import Dict, List, Tuple
 import argparse
 from achievements import check_and_unlock_achievements
+from player_stats import update_player_stats_after_tournament
 from import_validator import (
     ImportValidator,
     validate_onepiece_csv,
@@ -1031,6 +1032,28 @@ def import_tournament_to_sheet(sheet, csv_path: str, season_id: str):
         check_and_unlock_achievements(sheet, data)
     except Exception as e:
         print(f"   ⚠️  Errore achievement check (non bloccante): {e}")
+
+    # 7.8 Aggiorna Player_Stats (aggregati pre-calcolati)
+    print(f"   📊 Aggiornamento Player_Stats...")
+    try:
+        tcg_code = 'OP'  # One Piece
+        stats_updated = 0
+        for idx, row in df.iterrows():
+            membership = str(row['Membership Number']).zfill(10)
+            rank = int(row['Ranking'])
+            update_player_stats_after_tournament(
+                sheet,
+                membership=membership,
+                tcg=tcg_code,
+                rank=rank,
+                season_id=season_id,
+                tournament_date=tournament_date,
+                name=row['User Name']
+            )
+            stats_updated += 1
+        print(f"   ✅ {stats_updated} giocatori aggiornati")
+    except Exception as e:
+        print(f"   ⚠️  Errore Player_Stats (non bloccante): {e}")
 
     print(f"\n✅ IMPORT COMPLETATO!")
     print(f"\n📊 RIASSUNTO:")
