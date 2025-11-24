@@ -191,7 +191,8 @@ def check_duplicate_tournament(sheet, tournament_id: str, allow_reimport: bool =
         - existing_data: Dati esistenti se torneo già presente
     """
     ws_tournaments = sheet.worksheet("Tournaments")
-    existing_ids = ws_tournaments.col_values(1)[3:]  # Skip header
+    api_delay()
+    existing_ids = safe_api_call(ws_tournaments.col_values, 1)[3:]  # Skip header
 
     if tournament_id in existing_ids:
         if allow_reimport:
