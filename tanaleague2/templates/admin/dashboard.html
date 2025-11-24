@@ -18,7 +18,7 @@
             </small>
         </div>
         {% endif %}
-        <a href="{{ url_for('admin_logout') }}" class="btn btn-danger btn-sm">
+        <a href="{{ url_for('admin.logout') }}" class="btn btn-danger btn-sm">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     </div>
@@ -53,7 +53,7 @@
         <h5 class="mb-0">🏴‍☠️ One Piece TCG - Import CSV</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ url_for('admin_import_onepiece') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('admin.import_onepiece') }}" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="op_season" class="form-label">Stagione</label>
@@ -96,7 +96,7 @@
         <h5 class="mb-0">⚡ Pokémon TCG - Import TDF/XML</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ url_for('admin_import_pokemon') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('admin.import_pokemon') }}" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="pkm_season" class="form-label">Stagione</label>
@@ -139,7 +139,7 @@
         <h5 class="mb-0">🌌 Riftbound TCG - Import PDF</h5>
     </div>
     <div class="card-body">
-        <form method="POST" action="{{ url_for('admin_import_riftbound') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('admin.import_riftbound') }}" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="rfb_season" class="form-label">Stagione</label>
