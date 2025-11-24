@@ -12,9 +12,10 @@ Questo documento contiene dettagli tecnici implementativi per la manutenzione e 
 1. [Pokemon TCG](#-pokemon-tcg)
 2. [One Piece TCG](#️-one-piece-tcg)
 3. [Riftbound TCG](#-riftbound-tcg)
+4. [Architettura Import Unificata](#-architettura-import-unificata)
 
 ### Backend
-4. [Google Sheets - Dettagli Implementativi](#️-google-sheets---dettagli-implementativi)
+5. [Google Sheets - Dettagli Implementativi](#️-google-sheets---dettagli-implementativi)
 5. [Sistema Cache (cache.py)](#️-sistema-cache-cachepy)
 6. [Stats Builder (stats_builder.py)](#-stats-builder-stats_builderpy)
 7. [Admin Panel (auth.py)](#-admin-panel-authpy)
@@ -91,27 +92,70 @@ for round in rounds:
 
 ## 🏴‍☠️ One Piece TCG
 
-### Formato Input: CSV
+### Formato Input: Multi-Round CSV (v2 - Raccomandato)
 
+I file CSV sono esportati dal portale ufficiale Bandai, uno per ogni round più un file classifica finale.
+
+**File Round (R1.csv, R2.csv, etc.):**
 ```csv
-Ranking,Name,Points,OMW,Player ID,Deck
-1,Rossi Mario,9,65.5,OP123,Roronoa Zoro
+"Rank","Match Point","Status","Player Name - 1","Membership Number - 1"
+"1","6","joining","PlayerName","0000123456"
 ```
 
-**IMPORTANTE:** Non ha tracking W/T/L nel CSV. Le colonne 10-12 in Results rimangono vuote.
+**File Classifica Finale:**
+```csv
+"Rank","Match Point","Status","Player Name - 1","Membership Number - 1","OMW%"
+"1","9","joining","PlayerName","0000123456","65.5"
+```
 
-### Sistema Punti Semplificato
+**Utilizzo:**
+```bash
+python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
+```
+
+### Calcolo W/T/L dal Delta Punti
+
+Lo script v2 calcola vittorie, pareggi e sconfitte dalla **progressione dei punti** tra round:
 
 ```python
-# One Piece non ha pareggi
-points_victory = points / 3  # Punti dal CSV diviso 3
+def calculate_wlt_from_progression(progression: List[Dict]) -> Tuple[int, int, int]:
+    """
+    Calcola W/T/L dal delta punti tra round consecutivi.
+    Sistema Swiss: Win=+3, Tie=+1, Loss=+0
+    """
+    wins, ties, losses = 0, 0, 0
+
+    for i in range(1, len(progression)):
+        prev_points = progression[i-1]['match_point']
+        curr_points = progression[i]['match_point']
+        delta = curr_points - prev_points
+
+        if delta == 3:
+            wins += 1
+        elif delta == 1:
+            ties += 1
+        elif delta == 0:
+            losses += 1
+
+    return wins, ties, losses
+```
+
+**NOTA:** Il primo round si deduce dai punti iniziali (es. 3 = Win, 0 = Loss).
+
+### OMW% dal CSV
+
+Il file ClassificaFinale contiene l'OMW% calcolato dal software Bandai, letto direttamente.
+
+### Sistema Punti TanaLeague
+
+```python
+# Punti vittoria = numero vittorie (W), NON win_points
+points_victory = wins
 points_ranking = n_participants - (rank - 1)
 points_total = points_victory + points_ranking
 ```
 
-### OMW% dal CSV
-
-A differenza di Pokemon (calcolato da match), One Piece legge OMW% direttamente dal CSV.
+**IMPORTANTE:** `points_victory` è il numero di vittorie (W), coerente con Pokemon e Riftbound.
 
 ---
 
@@ -128,14 +172,16 @@ RFB_2025_11_17_R2.csv   ← Round 2
 RFB_2025_11_17_R3.csv   ← Round 3
 ```
 
-**Utilizzo:**
+**Utilizzo (v2 - Raccomandato):**
 ```bash
-# Import multi-round (RACCOMANDATO)
-python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01
+# Import multi-round con script v2
+python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 
 # Test mode
-python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01 --test
+python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
 ```
+
+**NOTA:** Lo script v2 usa `import_base.py` per condividere logica comune con One Piece.
 
 ### Struttura CSV (22 colonne)
 
@@ -295,6 +341,123 @@ Col 13 (row[12]): L (sconfitte match)
 - **Sintomo:** `winner_membership` vuoto
 - **Causa:** Nome vincitore nel Match Result non corrisponde esattamente ai nomi giocatori
 - **Soluzione:** Lo script ha fallback che cerca parti del nome (cognome/nome)
+
+---
+
+## 🏗️ Architettura Import Unificata
+
+### import_base.py
+
+Modulo centrale che fornisce funzioni comuni a tutti gli script di import v2:
+
+```python
+# Funzioni principali
+connect_sheet()              # Connessione Google Sheets
+check_duplicate_tournament() # Verifica torneo già importato
+write_results_to_sheet()     # Scrittura batch Results
+update_players()             # Aggiorna/crea record Players
+update_seasonal_standings()  # Aggiorna classifica stagione
+finalize_import()            # Pipeline completa post-parsing
+```
+
+### Strutture Dati Standard
+
+```python
+# Partecipante singolo
+def create_participant(membership, name, rank, wins=0, ties=0, losses=0,
+                       win_points=0, omw=0.0) -> Dict:
+    return {
+        'membership': membership,
+        'name': name,
+        'rank': rank,
+        'wins': wins,
+        'ties': ties,
+        'losses': losses,
+        'win_points': win_points,
+        'omw': omw
+    }
+
+# Dati torneo completi
+def create_tournament_data(tournament_id, season_id, date, participants,
+                           tcg, source_files=None, winner_name=None) -> Dict:
+    return {
+        'tournament_id': tournament_id,
+        'season_id': season_id,
+        'date': date,
+        'participants': participants,
+        'tcg': tcg,
+        'source_files': source_files or [],
+        'winner_name': winner_name or participants[0]['name'] if participants else ''
+    }
+```
+
+### Calcolo Punti TanaLeague
+
+```python
+def calculate_tanaleague_points(rank: int, wins: int, n_participants: int) -> Dict:
+    """
+    Sistema punti uniforme per tutti i TCG:
+    - points_victory = numero vittorie (W)
+    - points_ranking = n_participants - (rank - 1)
+    - points_total = points_victory + points_ranking
+    """
+    points_victory = wins
+    points_ranking = n_participants - (rank - 1)
+    return {
+        'points_victory': points_victory,
+        'points_ranking': points_ranking,
+        'points_total': points_victory + points_ranking
+    }
+```
+
+### sheet_utils.py - Column Mappings
+
+Mappature colonne centralizzate per evitare indici hard-coded fragili:
+
+```python
+# Results sheet columns
+RESULTS_COLS = {
+    'result_id': 0,
+    'tournament_id': 1,
+    'membership': 2,
+    'rank': 3,
+    'win_points': 4,
+    'omw': 5,
+    'pts_victory': 6,
+    'pts_ranking': 7,
+    'pts_total': 8,
+    'name': 9,
+    'w': 10,
+    't': 11,
+    'l': 12
+}
+
+# Helper functions
+def get_result_value(row: List, col_name: str) -> Any
+def build_result_row(data: Dict) -> List
+```
+
+### player_stats.py - CQRS Pattern
+
+Sistema di statistiche pre-calcolate per query veloci:
+
+```python
+# Struttura Player_Stats sheet
+# Colonne: Membership, Name, TCG, Total_Tournaments, Total_Points,
+#          Total_W, Total_T, Total_L, Tournament_Wins, Best_Rank,
+#          Last_Played, First_Played
+
+# Ricostruzione completa
+python rebuild_player_stats.py
+
+# Aggiornamento incrementale (chiamato da import)
+from player_stats import update_player_stats_for_player
+update_player_stats_for_player(ws_stats, membership, tcg)
+```
+
+**Pattern CQRS-like:**
+- **Write side**: Results sheet (append-only durante import)
+- **Read side**: Player_Stats sheet (materializzato, per query veloci)
 
 ---
 
@@ -1225,4 +1388,4 @@ unlocks = [
 
 **Fine Technical Notes**
 
-Ultimo aggiornamento: 22 Novembre 2025 (v2.1 - Achievement Detail + Landing Refresh)
+Ultimo aggiornamento: 24 Novembre 2025 (v2.2 - Unified Import Architecture + Multi-Round CSV)

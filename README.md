@@ -253,15 +253,24 @@ Webapp disponibile su `http://localhost:5000`
 
 ## 📥 Import Tornei
 
-### One Piece TCG (CSV)
+### Architettura Unificata (v2)
+
+Gli script v2 utilizzano il modulo `import_base.py` che centralizza tutte le funzioni comuni:
+- Connessione Google Sheets
+- Calcolo punti TanaLeague
+- Aggiornamento Players e Seasonal_Standings
+- Sblocco achievement
+
+### One Piece TCG (Multi-Round v2 - RACCOMANDATO)
 
 ```bash
 cd tanaleague2
-python import_onepiece.py --csv path/to/tournament.csv --season OP12
+python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
 ```
 
-**Formato CSV richiesto**: Export da Limitlesstcg
-- Columns: Ranking, User Name, Membership Number, Win Points, OMW %, Record, etc.
+**Formato CSV richiesto**: Export dal portale ufficiale Bandai (uno per round + classifica finale)
+- Calcola automaticamente W/T/L dal delta punti tra round (+3=Win, +1=Tie, +0=Loss)
+- Legge OMW% dal file ClassificaFinale
 
 ### Pokémon TCG (TDF/XML)
 
@@ -272,18 +281,11 @@ python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 
 **Formato TDF richiesto**: Export da Play! Pokémon Tournament software
 
-### Riftbound TCG (CSV Multi-Round)
+### Riftbound TCG (Multi-Round v2 - RACCOMANDATO)
 
-**Import Singolo Round:**
 ```bash
 cd tanaleague2
-python import_riftbound.py --csv RFB_2025_11_17_R1.csv --season RFB01
-```
-
-**Import Multi-Round (RACCOMANDATO):**
-```bash
-cd tanaleague2
-python import_riftbound.py --csv RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB_2025_11_17_R3.csv --season RFB01
+python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 ```
 
 **Formato CSV richiesto**: Export CSV dal software gestione tornei (uno per round)
@@ -295,11 +297,17 @@ python import_riftbound.py --csv RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB
 Tutti gli import supportano `--test` per verificare senza scrivere:
 
 ```bash
-python import_onepiece.py --csv file.csv --season OP12 --test
+python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica Finale.csv --season OP12 --test
 python import_pokemon.py --tdf file.tdf --season PKM-FS25 --test
-python import_riftbound.py --csv file.csv --season RFB01 --test
-# Multi-round test
-python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01 --test
+python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
+```
+
+### Reimport (Sovrascrittura)
+
+Per correggere un torneo già importato, usa `--reimport`:
+
+```bash
+python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica Finale.csv --season OP12 --reimport
 ```
 
 ---
@@ -510,9 +518,16 @@ TanaLeague/
 │   ├── achievements.py             # Logica unlock achievement
 │   ├── setup_achievements.py       # Script setup sheets achievement
 │   │
-│   ├── import_onepiece.py          # Import One Piece (CSV)
+│   ├── import_base.py              # Funzioni comuni import (v2)
+│   ├── import_onepiece_v2.py       # Import One Piece Multi-Round (v2)
+│   ├── import_riftbound_v2.py      # Import Riftbound Multi-Round (v2)
 │   ├── import_pokemon.py           # Import Pokémon (TDF/XML)
-│   ├── import_riftbound.py         # Import Riftbound (CSV Multi-Round)
+│   ├── import_onepiece.py          # Import One Piece (legacy)
+│   ├── import_riftbound.py         # Import Riftbound (legacy)
+│   │
+│   ├── sheet_utils.py              # Mappature colonne sheets
+│   ├── player_stats.py             # CRUD Player_Stats sheet
+│   ├── rebuild_player_stats.py     # Rebuild Player_Stats da Results
 │   │
 │   ├── stats_builder.py            # Builder statistiche avanzate
 │   ├── stats_cache.py              # Cache file stats
@@ -653,4 +668,4 @@ Per bug o feature request: Apri issue su GitHub
 
 **Made with ❤️ for the TCG community**
 
-*Last updated: November 2025 (v2.3 - Franchise Model + Plug-and-Play)*
+*Last updated: November 2025 (v2.4 - Unified Import Architecture + Multi-Round CSV)*
