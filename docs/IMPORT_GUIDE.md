@@ -6,15 +6,30 @@ Guida completa per importare tornei da CSV, PDF e TDF nei 3 TCG supportati.
 
 ## 📋 Indice
 
-- [One Piece (CSV)](#-one-piece-tcg-csv)
+- [One Piece (CSV Multi-Round) - NUOVO v2](#-one-piece-tcg-csv-multi-round---nuovo-v2)
+- [Riftbound (CSV Multi-Round) - v2](#-riftbound-tcg-csv-multi-round---v2)
 - [Pokémon (TDF/XML)](#-pokémon-tcg-tdfxml)
-- [Riftbound (CSV Multi-Round)](#-riftbound-tcg-csv-multi-round)
 - [Test Mode](#-test-mode-dry-run)
 - [Troubleshooting](#-troubleshooting)
 
 ---
 
 ## ⚠️ Note Importanti
+
+### Architettura Unificata (v2)
+
+Gli script v2 usano un **modulo base condiviso** (`import_base.py`) che:
+- Elimina duplicazione di codice (~800 righe risparmiate)
+- Garantisce comportamento uniforme tra TCG
+- Centralizza funzioni comuni (standings, players, achievements)
+
+### Script Disponibili
+
+| TCG | Script Vecchio | Script Nuovo (v2) | Note |
+|-----|----------------|-------------------|------|
+| One Piece | `import_onepiece.py` | `import_onepiece_v2.py` | **Usa v2 per nuovo formato multi-round** |
+| Riftbound | `import_riftbound.py` | `import_riftbound_v2.py` | Stessa logica, architettura pulita |
+| Pokémon | `import_pokemon.py` | - | TDF format, invariato |
 
 ### Validazione Automatica Pre-Import
 
@@ -25,12 +40,6 @@ Guida completa per importare tornei da CSV, PDF e TDF nei 3 TCG supportati.
 - Formato file errato (XML/CSV corrotto)
 - Campi obbligatori mancanti
 - Season non configurata
-- Colonne insufficienti
-
-**Warning (richiedono conferma):**
-- Dati opzionali mancanti
-- Valori anomali ma accettabili
-- Season ARCHIVED
 
 **Garanzia:** Se c'è un errore, **nessun dato viene scritto** su Google Sheets.
 
@@ -82,46 +91,78 @@ Le stagioni con status **ARCHIVED** hanno comportamento speciale durante l'impor
 
 ---
 
-## 🏴‍☠️ One Piece TCG (CSV)
+## 🏴‍☠️ One Piece TCG (CSV Multi-Round) - NUOVO v2
 
-### Formato File
+### Formato File (Nuovo - Multi-Round)
 
-**Sorgente**: Export CSV dal portale Bandai ufficiale per il gioco organizzato One Piece TCG
+**Sorgente**: Export CSV dal portale Bandai ufficiale
 
-**Formato**: CSV con le seguenti colonne (ordine importante):
+**File Necessari** (5 file per torneo):
 ```
-Ranking, User Name, Membership Number, Win Points, OMW %, Record, Points_Victory, Points_Ranking, Points_Total
+OP_2025_11_13_R1.csv              # Round 1 - classifica progressiva
+OP_2025_11_13_R2.csv              # Round 2
+OP_2025_11_13_R3.csv              # Round 3
+OP_2025_11_13_R4.csv              # Round 4
+OP_2025_11_13_ClassificaFinale.csv # Classifica finale con OMW%
 ```
 
-**Esempio CSV:**
+**Formato Round Files (R1-R4):**
 ```csv
-Ranking,User Name,Membership Number,Win Points,OMW %,Record
-1,Cogliati Pietro,12345,12,65.5,4-0
-2,Rossi Mario,67890,9,62.3,3-1
+"Rank","Match Point","Status","Player Name - 1","Membership Number - 1"
+"1","3","joining","Dige","0000475097"
+"1","3","joining","Fidio","0000118859"
 ...
 ```
 
-### Nome File
+**Formato ClassificaFinale:**
+```csv
+Ranking, Membership Number, User Name, Win Points, OMW %, OOMW %, Memo, Deck URLs
+1,0000453763,Iclaf,12,52%,63%,undefined,
+2,0000203688,Lorbag99,9,68.8%,55.7%,undefined,
+...
+```
 
-Il nome del file **deve** contenere la data in uno dei seguenti formati:
+### Come Calcola W/T/L
 
-- `YYYY_MM_DD_OP12.csv` → es. `2025_06_12_OP12.csv`
-- `DD_MM_YYYY_OP12.csv` → es. `12_06_2025_OP12.csv`
-- `YYYY-MM-DD_OP12.csv` → es. `2025-06-12_OP12.csv`
-- `DD_Month_YYYY_OP12.csv` → es. `12_June_2025_OP12.csv`
+Il sistema calcola **automaticamente** vittorie, tie e sconfitte dai delta punti tra round:
 
-**La data viene estratta automaticamente dal nome file!**
+| Delta Punti | Risultato |
+|-------------|-----------|
+| +3 | Vittoria (o BYE) |
+| +1 | Tie (pareggio) |
+| +0 | Sconfitta |
 
-### Import Command
+**Esempio - Giocatore Iclaf:**
+```
+R1: 3 pts  (delta +3 = Win)
+R2: 6 pts  (delta +3 = Win)
+R3: 9 pts  (delta +3 = Win)
+R4: 12 pts (delta +3 = Win)
+→ Record finale: 4-0-0 ✓
+```
+
+### Import Command (v2)
 
 ```bash
 cd tanaleague2
-python import_onepiece.py --csv path/to/file.csv --season OP12
+
+# Import completo
+python import_onepiece_v2.py \
+  --rounds OP_2025_11_13_R1.csv,OP_2025_11_13_R2.csv,OP_2025_11_13_R3.csv,OP_2025_11_13_R4.csv \
+  --classifica OP_2025_11_13_ClassificaFinale.csv \
+  --season OP12
+
+# Con test mode
+python import_onepiece_v2.py \
+  --rounds R1.csv,R2.csv,R3.csv,R4.csv \
+  --classifica ClassificaFinale.csv \
+  --season OP12 --test
 ```
 
 ### Parametri
 
-- `--csv`: Path al file CSV (obbligatorio)
+- `--rounds`: File round CSV separati da virgola (obbligatorio)
+- `--classifica`: File ClassificaFinale con OMW% (obbligatorio)
 - `--season`: ID stagione (es. OP12, OP13) (obbligatorio)
 - `--test`: Test mode - verifica senza scrivere (opzionale)
 - `--reimport`: Permette reimport torneo esistente (opzionale)
@@ -280,7 +321,7 @@ Giocatore con 3W-0T-1L in torneo da 11 giocatori, classificato 1°:
 
 ---
 
-## 🌌 Riftbound TCG (CSV Multi-Round)
+## 🌌 Riftbound TCG (CSV Multi-Round) - v2
 
 ### Formato File
 
@@ -292,17 +333,18 @@ Giocatore con 3W-0T-1L in torneo da 11 giocatori, classificato 1°:
 ```csv
 Table Number, ..., Player 1 User ID, Player 1 First Name, Player 1 Last Name, ...,
 Player 2 User ID, Player 2 First Name, Player 2 Last Name, ...,
-Player 1 Event Record, Player 2 Event Record, ...
+Match Result, ..., Player 1 Event Record, Player 2 Event Record, ...
 ```
 
 **Esempio Riga CSV:**
 ```csv
-1,false,false,false,56480,semm,riva,semriva202.08@gmail.com,97041,Giuseppe,Piazza,o0giuse0o91@gmail.com,COMPLETE,Giuseppe Piazza: 2-0-0,0-2-0,2-0-0,0-2-2,1-1-2,...
+1,false,false,false,56480,semm,riva,email@...,97041,Giuseppe,Piazza,email@...,COMPLETE,Giuseppe Piazza: 2-0-0,0-2-0,2-0-0,0-2-2,1-1-2,...
 ```
 
 **Note Importanti:**
 - **User ID** (Col 5 e 9) diventa il Membership Number
 - **Event Record** (Col 17 e 18) contiene W-L-D totale torneo
+- **Match Result** (Col 14) identifica il vincitore con fuzzy matching
 - **Multi-round**: Importa tutti i CSV insieme per stats complete!
 
 ### Nome File
@@ -314,24 +356,26 @@ Esempio:
 - `RFB_2025_11_17_R2.csv` → Round 2
 - `RFB_2025_11_17_R3.csv` → Round 3
 
-### Import Command
+### Import Command (v2)
 
-**Import Singolo Round** (ok ma meno dati):
 ```bash
 cd tanaleague2
-python import_riftbound.py --csv RFB_2025_11_17_R1.csv --season RFB01
-```
 
-**Import Multi-Round** (RACCOMANDATO):
-```bash
-cd tanaleague2
-python import_riftbound.py --csv RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB_2025_11_17_R3.csv --season RFB01
+# Import Multi-Round (RACCOMANDATO)
+python import_riftbound_v2.py \
+  --rounds RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB_2025_11_17_R3.csv \
+  --season RFB01
+
+# Con test mode
+python import_riftbound_v2.py \
+  --rounds R1.csv,R2.csv,R3.csv \
+  --season RFB01 --test
 ```
 
 ### Parametri
 
-- `--csv`: Path al file CSV (o più file separati da virgola) (obbligatorio)
-- `--season`: ID stagione (es. RFB01, RFB-WIN25) (obbligatorio)
+- `--rounds`: File round CSV separati da virgola (obbligatorio)
+- `--season`: ID stagione (es. RFB01) (obbligatorio)
 - `--test`: Test mode (opzionale)
 - `--reimport`: Permette reimport torneo esistente (opzionale)
 
@@ -397,12 +441,15 @@ python import_riftbound.py --csv RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB
 
 ## 🧪 Test Mode (Dry Run)
 
-**Tutti e 3 gli script** supportano la modalità test per verificare il file senza scrivere su Google Sheets.
+**Tutti gli script** supportano la modalità test per verificare i file senza scrivere su Google Sheets.
 
-### One Piece
+### One Piece (v2)
 
 ```bash
-python import_onepiece.py --csv file.csv --season OP12 --test
+python import_onepiece_v2.py \
+  --rounds R1.csv,R2.csv,R3.csv,R4.csv \
+  --classifica ClassificaFinale.csv \
+  --season OP12 --test
 ```
 
 ### Pokémon
@@ -411,12 +458,10 @@ python import_onepiece.py --csv file.csv --season OP12 --test
 python import_pokemon.py --tdf file.tdf --season PKM-FS25 --test
 ```
 
-### Riftbound
+### Riftbound (v2)
 
 ```bash
-python import_riftbound.py --csv file.csv --season RFB01 --test
-# Multi-round
-python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01 --test
+python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
 ```
 
 ### Cosa Fa Test Mode
