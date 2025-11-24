@@ -433,6 +433,40 @@ def check_special_achievements(stats: Dict, achievements: Dict, unlocked: Set, c
 # MAIN FUNCTION - Called by import scripts
 # ============================================================================
 
+def batch_load_player_achievements(sheet, memberships: list) -> dict:
+    """Carica achievements per multipli giocatori in UNA read."""
+    ws = sheet.worksheet("Player_Achievements")
+    rows = safe_api_call(ws.get_all_values)[4:]
+    result = {m: set() for m in memberships}
+    for row in rows:
+        mem = safe_get(row, COL_PLAYER_ACH, 'membership')
+        if mem in result:
+            result[mem].add(safe_get(row, COL_PLAYER_ACH, 'achievement_id'))
+    return result
+
+def batch_calculate_player_stats(sheet, memberships: list, tcg: str = None) -> dict:
+    """Calcola stats per multipli giocatori in 2 reads."""
+    ws_config = sheet.worksheet("Config")
+    config_data = safe_api_call(ws_config.get_all_values)[4:]
+    archived = {safe_get(r, COL_CONFIG, 'season_id') for r in config_data if safe_get(r, COL_CONFIG, 'status', '').strip().upper() == "ARCHIVED"}
+    ws_results = sheet.worksheet("Results")
+    all_results = safe_api_call(ws_results.get_all_values)[3:]
+    player_results = {m: [] for m in memberships}
+    for r in all_results:
+        mem = safe_get(r, COL_RESULTS, 'membership')
+        if mem in player_results:
+            season_id = safe_get(r, COL_RESULTS, 'season_id')
+            if season_id not in archived and (not tcg or season_id.startswith(tcg)):
+                player_results[mem].append(r)
+    result = {}
+    for mem, results in player_results.items():
+        tournaments = len(results)
+        wins = sum(1 for r in results if safe_int(r, COL_RESULTS, 'rank', 999) == 1)
+        top8 = sum(1 for r in results if safe_int(r, COL_RESULTS, 'rank', 999) <= 8)
+        ranks = [safe_int(r, COL_RESULTS, 'rank', 999) for r in results if safe_int(r, COL_RESULTS, 'rank', 999) < 999]
+        result[mem] = {'tournaments_played': tournaments, 'tournament_wins': wins, 'top8_count': top8, 'best_rank': min(ranks) if ranks else 999, 'tcgs_played': len({safe_get(r, COL_RESULTS, 'season_id', '')[:2] for r in results if safe_get(r, COL_RESULTS, 'season_id')}), 'seasons_played': len({safe_get(r, COL_RESULTS, 'season_id') for r in results})}
+    return result
+
 def check_and_unlock_achievements(sheet, import_data: Dict):
     """
     **FUNZIONE PRINCIPALE**: Controlla e sblocca achievement dopo import torneo.
@@ -503,18 +537,19 @@ def check_and_unlock_achievements(sheet, import_data: Dict):
         print("  ⚠️  Nessun giocatore nel torneo, skip achievement check")
         return
 
-    # 3. Processo ogni giocatore e raccogli achievement da sbloccare (BATCH)
+    # 3. BATCH LOAD - leggi UNA volta sola
+    memberships = [m.zfill(10) for m in players_in_tournament.keys()]
+    all_unlocked = batch_load_player_achievements(sheet, memberships)
+    all_stats = batch_calculate_player_stats(sheet, memberships)
+    
+    # 4. Processo ogni giocatore (in memoria, no API calls!)
     total_unlocked = 0
-    achievements_to_unlock = []  # Lista di [membership, ach_id, date, tournament_id, progress]
+    achievements_to_unlock = []
 
     for membership in players_in_tournament.keys():
         membership_padded = membership.zfill(10)
-
-        # Carica achievement già sbloccati
-        unlocked = load_player_achievements(sheet, membership_padded)
-
-        # Calcola stats
-        stats = calculate_player_stats(sheet, membership_padded)
+        unlocked = all_unlocked[membership_padded]
+        stats = all_stats[membership_padded]
 
         # Check achievement semplici
         simple_unlocks = check_simple_achievements(stats, achievements, unlocked)
@@ -548,7 +583,7 @@ def check_and_unlock_achievements(sheet, import_data: Dict):
             total_unlocked += 1
             print(f"  🏆 {membership_padded}: {achievements[ach_id]['emoji']} {achievements[ach_id]['name']} ({progress})")
 
-    # 4. BATCH WRITE - scrivi TUTTI gli achievement in una volta sola!
+    # 5. BATCH WRITE - scrivi TUTTI gli achievement in una volta sola!
     if achievements_to_unlock:
         ws_player_ach = sheet.worksheet("Player_Achievements")
         safe_api_call(ws_player_ach.append_rows, achievements_to_unlock, value_input_option='RAW')
