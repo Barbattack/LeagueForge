@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+from api_utils import safe_api_call
+import time
+
+API_DELAY_MS = 300
+def api_delay():
+    time.sleep(API_DELAY_MS / 1000.0)
 # -*- coding: utf-8 -*-
 """
 =================================================================================

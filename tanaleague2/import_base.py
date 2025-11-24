@@ -30,6 +30,7 @@ UTILIZZO:
 """
 
 import sys
+import time
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from collections import defaultdict
@@ -40,6 +41,16 @@ try:
 except ImportError:
     print("❌ Moduli mancanti. Esegui: pip install gspread google-auth")
     sys.exit(1)
+
+# Import API retry utilities
+from api_utils import safe_api_call
+
+# Delay tra operazioni API per evitare rate limit (millisecondi)
+API_DELAY_MS = 300  # 0.3 secondi
+
+def api_delay():
+    """Breve pausa tra chiamate API per rispettare rate limits"""
+    time.sleep(API_DELAY_MS / 1000.0)
 
 try:
     from config import SHEET_ID, CREDENTIALS_FILE
@@ -206,7 +217,8 @@ def delete_existing_tournament(sheet, tournament_id: str) -> bool:
     try:
         # 1. Elimina da Results
         ws_results = sheet.worksheet("Results")
-        results = ws_results.get_all_values()
+        api_delay()
+        results = safe_api_call(ws_results.get_all_values)
         rows_to_delete = []
         for i, row in enumerate(results[3:], start=4):
             if row and len(row) > 1 and row[1] == tournament_id:
@@ -220,7 +232,8 @@ def delete_existing_tournament(sheet, tournament_id: str) -> bool:
 
         # 2. Elimina da Tournaments
         ws_tournaments = sheet.worksheet("Tournaments")
-        tournaments = ws_tournaments.get_all_values()
+        api_delay()
+        tournaments = safe_api_call(ws_tournaments.get_all_values)
         for i, row in enumerate(tournaments[3:], start=4):
             if row and row[0] == tournament_id:
                 ws_tournaments.delete_rows(i)
@@ -230,7 +243,8 @@ def delete_existing_tournament(sheet, tournament_id: str) -> bool:
         # 3. Elimina da Vouchers (se esiste)
         try:
             ws_vouchers = sheet.worksheet("Vouchers")
-            vouchers = ws_vouchers.get_all_values()
+            api_delay()
+            vouchers = safe_api_call(ws_vouchers.get_all_values)
             voucher_rows = []
             for i, row in enumerate(vouchers[3:], start=4):
                 if row and len(row) > 1 and row[1] == tournament_id:
@@ -333,7 +347,8 @@ def write_results_to_sheet(sheet, tournament_data: Dict, test_mode: bool = False
         rows.append(result_row)
 
     if rows:
-        ws_results.append_rows(rows, value_input_option='RAW')
+        api_delay()
+        safe_api_call(ws_results.append_rows, rows, value_input_option='RAW')
 
     print(f"✅ Results: {len(rows)} giocatori")
     return len(rows)
@@ -368,7 +383,8 @@ def write_tournament_to_sheet(sheet, tournament_data: Dict, test_mode: bool = Fa
         tournament_data['winner_name']
     ]
 
-    ws_tournaments.append_row(tournament_row, value_input_option='RAW')
+    api_delay()
+    safe_api_call(ws_tournaments.append_row, tournament_row, value_input_option='RAW')
     print(f"✅ Tournament: {tournament_data['tournament_id']}")
     return True
 
@@ -401,7 +417,8 @@ def update_players(sheet, tournament_data: Dict, test_mode: bool = False) -> Tup
     tournament_date = tournament_data['date']
 
     # Leggi players esistenti
-    existing_players = ws_players.get_all_values()
+    api_delay()
+    existing_players = safe_api_call(ws_players.get_all_values)
     # Key: (membership, tcg) -> row_index
     existing_dict = {}
     for i, row in enumerate(existing_players[3:], start=4):
@@ -410,7 +427,8 @@ def update_players(sheet, tournament_data: Dict, test_mode: bool = False) -> Tup
             existing_dict[key] = i
 
     # Leggi TUTTI i results per calcolare lifetime stats
-    all_results = ws_results.get_all_values()[3:]
+    api_delay()
+    all_results = safe_api_call(ws_results.get_all_values)[3:]
 
     # Calcola lifetime stats per TCG
     lifetime_stats = defaultdict(lambda: {
@@ -501,10 +519,12 @@ def update_players(sheet, tournament_data: Dict, test_mode: bool = False) -> Tup
 
     # Batch update
     if rows_to_update:
-        ws_players.batch_update(rows_to_update, value_input_option='RAW')
+        api_delay()
+        safe_api_call(ws_players.batch_update, rows_to_update, value_input_option='RAW')
 
     if rows_to_add:
-        ws_players.append_rows(rows_to_add, value_input_option='RAW')
+        api_delay()
+        safe_api_call(ws_players.append_rows, rows_to_add, value_input_option='RAW')
 
     print(f"✅ Players: {len(rows_to_update)} aggiornati, {len(rows_to_add)} nuovi")
     return len(rows_to_update), len(rows_to_add)
@@ -537,7 +557,8 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str) -> in
     ws_config = sheet.worksheet("Config")
 
     # Leggi status season dalla Config
-    config_data = ws_config.get_all_values()
+    api_delay()
+    config_data = safe_api_call(ws_config.get_all_values)
     season_status = None
     for row in config_data[4:]:
         if row and row[0] == season_id:
@@ -545,7 +566,8 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str) -> in
             break
 
     # Conta tornei in stagione
-    all_tournaments = ws_tournaments.get_all_values()
+    api_delay()
+    all_tournaments = safe_api_call(ws_tournaments.get_all_values)
     season_tournaments = [row for row in all_tournaments[3:] if row and row[1] == season_id]
     total_tournaments = len(season_tournaments)
 
@@ -564,7 +586,8 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str) -> in
         print(f"      Scarto: Peggiori 2 (conta max {max_to_count})")
 
     # Leggi tutti i risultati della stagione
-    all_results = ws_results.get_all_values()
+    api_delay()
+    all_results = safe_api_call(ws_results.get_all_values)
 
     # Raggruppa per giocatore
     player_data = {}
@@ -634,7 +657,8 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str) -> in
     final_standings.sort(key=lambda x: x['total_points'], reverse=True)
 
     # Trova righe esistenti di questa stagione
-    existing_standings = ws_standings.get_all_values()
+    api_delay()
+    existing_standings = safe_api_call(ws_standings.get_all_values)
     rows_to_delete = []
     for i, row in enumerate(existing_standings[3:], start=4):
         if row and row[0] == season_id:
@@ -671,7 +695,8 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str) -> in
     # Batch write
     if rows_to_add:
         end_row = write_start_row + len(rows_to_add) - 1
-        ws_standings.update(
+        api_delay()
+        safe_api_call(ws_standings.update, 
             values=rows_to_add,
             range_name=f"A{write_start_row}:K{end_row}",
             value_input_option='RAW'
@@ -783,7 +808,8 @@ def get_season_config(sheet, season_id: str) -> Optional[Dict]:
         Dict con configurazione o None se non trovata
     """
     ws_config = sheet.worksheet("Config")
-    config_data = ws_config.get_all_values()
+    api_delay()
+    config_data = safe_api_call(ws_config.get_all_values)
 
     for row in config_data[4:]:
         if row and row[0] == season_id:
@@ -813,12 +839,14 @@ def increment_season_tournament_count(sheet, season_id: str) -> bool:
         bool: True se incrementato
     """
     ws_config = sheet.worksheet("Config")
-    config_data = ws_config.get_all_values()
+    api_delay()
+    config_data = safe_api_call(ws_config.get_all_values)
 
     for i, row in enumerate(config_data[4:], start=5):
         if row and row[0] == season_id:
             current_count = int(row[5]) if len(row) > 5 and row[5] else 0
-            ws_config.update_cell(i, 6, current_count + 1)
+            api_delay()
+            safe_api_call(ws_config.update_cell, i, 6, current_count + 1)
             return True
 
     return False

@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+from api_utils import safe_api_call
+import time
+
+API_DELAY_MS = 300
+def api_delay():
+    time.sleep(API_DELAY_MS / 1000.0)
 """
 Player Stats - Funzioni CRUD per Player_Stats sheet.
 
@@ -28,7 +34,7 @@ def get_player_stats(sheet, membership: str, tcg: str = None) -> dict:
     """
     try:
         ws = sheet.worksheet("Player_Stats")
-        data = ws.get_all_values()[3:]  # Skip header
+        data = safe_api_call(ws.get_all_values)[3:]  # Skip header
     except Exception:
         return None
 
@@ -69,7 +75,7 @@ def get_all_player_stats(sheet, tcg: str = None) -> list:
     """
     try:
         ws = sheet.worksheet("Player_Stats")
-        data = ws.get_all_values()[3:]  # Skip header
+        data = safe_api_call(ws.get_all_values)[3:]  # Skip header
     except Exception:
         return []
 
@@ -121,7 +127,7 @@ def update_player_stats_after_tournament(sheet, membership: str, tcg: str,
     """
     try:
         ws = sheet.worksheet("Player_Stats")
-        data = ws.get_all_values()
+        data = safe_api_call(ws.get_all_values)
         header_rows = 3
 
         # Trova riga esistente
@@ -173,7 +179,7 @@ def update_player_stats_after_tournament(sheet, membership: str, tcg: str,
                 now
             ]
 
-            ws.update(f'A{row_idx}:L{row_idx}', [new_row], value_input_option='USER_ENTERED')
+            safe_api_call(ws.update, f'A{row_idx}:L{row_idx}', [new_row], value_input_option='USER_ENTERED')
 
         else:
             # Nuovo giocatore - append
@@ -195,7 +201,7 @@ def update_player_stats_after_tournament(sheet, membership: str, tcg: str,
 
             # Trova ultima riga con dati
             last_row = len(data) + 1
-            ws.update(f'A{last_row}:L{last_row}', [new_row], value_input_option='USER_ENTERED')
+            safe_api_call(ws.update, f'A{last_row}:L{last_row}', [new_row], value_input_option='USER_ENTERED')
 
         return True
 
