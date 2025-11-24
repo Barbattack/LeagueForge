@@ -499,14 +499,14 @@ def update_players(sheet, tournament_data: Dict, test_mode: bool = False) -> Tup
             membership,
             p['name'],
             tcg,
+            stats.get('first_seen', tournament_date),
+            stats.get('last_seen', tournament_date),
             stats['total_tournaments'],
             stats['tournament_wins'],
             stats['match_w'],
             stats['match_t'],
             stats['match_l'],
-            stats['total_points'],
-            stats.get('first_seen', tournament_date),
-            stats.get('last_seen', tournament_date)
+            stats['total_points']
         ]
 
         if key in existing_dict:
