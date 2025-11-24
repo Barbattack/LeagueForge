@@ -88,13 +88,13 @@ python app.py
 | `tanaleague2/routes/admin.py` | Route admin panel |
 | `tanaleague2/routes/achievements.py` | Route achievement |
 
-### Script Import (v2)
+### Script Import
 
 | File | Scopo |
 |------|-------|
 | `tanaleague2/import_base.py` | Funzioni comuni import |
-| `tanaleague2/import_onepiece_v2.py` | Import One Piece multi-round |
-| `tanaleague2/import_riftbound_v2.py` | Import Riftbound multi-round |
+| `tanaleague2/import_onepiece.py` | Import One Piece multi-round |
+| `tanaleague2/import_riftbound.py` | Import Riftbound multi-round |
 | `tanaleague2/import_pokemon.py` | Import Pokemon TDF |
 | `tanaleague2/sheet_utils.py` | Mappature colonne sheets |
 | `tanaleague2/player_stats.py` | CRUD Player_Stats |
@@ -118,20 +118,20 @@ python app.py
 
 ---
 
-## Import Tornei (v2)
+## Import Tornei
 
 ### One Piece (Multi-Round)
 
 ```bash
 cd tanaleague2
-python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
 ```
 
 ### Riftbound (Multi-Round)
 
 ```bash
 cd tanaleague2
-python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 ```
 
 ### Pokemon (TDF)

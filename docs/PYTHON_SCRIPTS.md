@@ -190,9 +190,9 @@ Setup completato!
 
 Gli script di import sono documentati in dettaglio in [IMPORT_GUIDE.md](IMPORT_GUIDE.md).
 
-### Architettura Unificata (v2)
+### Architettura Unificata
 
-Gli script v2 utilizzano il modulo `import_base.py` che centralizza:
+Gli script utilizzano il modulo `import_base.py` che centralizza:
 - Connessione Google Sheets
 - Scrittura Results
 - Aggiornamento Players
@@ -204,35 +204,31 @@ Gli script v2 utilizzano il modulo `import_base.py` che centralizza:
 ```bash
 cd tanaleague2
 
-# One Piece v2 (Multi-Round - RACCOMANDATO)
-python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
-python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12 --test
-python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12 --reimport
+# One Piece (Multi-Round)
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12 --test
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12 --reimport
 
-# Riftbound v2 (Multi-Round - RACCOMANDATO)
-python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
-python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
+# Riftbound (Multi-Round)
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
 
 # Pokemon (TDF/XML)
 python import_pokemon.py --tdf file.tdf --season PKM-FS25
 python import_pokemon.py --tdf file.tdf --season PKM-FS25 --test
-
-# Legacy (deprecato - usare v2)
-# python import_onepiece.py --csv file.csv --season OP12
-# python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01
 ```
 
-### Parametri Script v2
+### Parametri Script
 
 | Parametro | Script | Descrizione |
 |-----------|--------|-------------|
-| `--rounds` | OP v2, RFB v2 | File CSV round separati da virgola |
-| `--classifica` | OP v2 | File classifica finale con OMW% |
+| `--rounds` | OP, RFB | File CSV round separati da virgola |
+| `--classifica` | OP | File classifica finale con OMW% |
 | `--season` | Tutti | ID stagione (es. OP12, RFB01) |
 | `--test` | Tutti | Dry run: verifica senza scrivere |
 | `--reimport` | Tutti | Permette sovrascrittura torneo esistente |
 
-### Calcolo W/T/L (One Piece v2)
+### Calcolo W/T/L (One Piece)
 
 Lo script calcola vittorie, pareggi e sconfitte dal delta punti tra round:
 - **+3 punti** = Vittoria
@@ -396,11 +392,11 @@ cd tanaleague2
 # Avvia app
 python app.py
 
-# Import torneo One Piece (v2)
-python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
+# Import torneo One Piece
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
 
-# Import torneo Riftbound (v2)
-python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
+# Import torneo Riftbound
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 
 # Backup
 python backup_sheets.py

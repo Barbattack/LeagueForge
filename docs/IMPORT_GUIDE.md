@@ -6,8 +6,8 @@ Guida completa per importare tornei da CSV, PDF e TDF nei 3 TCG supportati.
 
 ## 📋 Indice
 
-- [One Piece (CSV Multi-Round) - NUOVO v2](#-one-piece-tcg-csv-multi-round---nuovo-v2)
-- [Riftbound (CSV Multi-Round) - v2](#-riftbound-tcg-csv-multi-round---v2)
+- [One Piece (CSV Multi-Round)](#-one-piece-tcg-csv-multi-round)
+- [Riftbound (CSV Multi-Round)](#-riftbound-tcg-csv-multi-round)
 - [Pokémon (TDF/XML)](#-pokémon-tcg-tdfxml)
 - [Test Mode](#-test-mode-dry-run)
 - [Troubleshooting](#-troubleshooting)
@@ -16,20 +16,20 @@ Guida completa per importare tornei da CSV, PDF e TDF nei 3 TCG supportati.
 
 ## ⚠️ Note Importanti
 
-### Architettura Unificata (v2)
+### Architettura Unificata
 
-Gli script v2 usano un **modulo base condiviso** (`import_base.py`) che:
+Gli script usano un **modulo base condiviso** (`import_base.py`) che:
 - Elimina duplicazione di codice (~800 righe risparmiate)
 - Garantisce comportamento uniforme tra TCG
 - Centralizza funzioni comuni (standings, players, achievements)
 
 ### Script Disponibili
 
-| TCG | Script Vecchio | Script Nuovo (v2) | Note |
-|-----|----------------|-------------------|------|
-| One Piece | `import_onepiece.py` | `import_onepiece_v2.py` | **Usa v2 per nuovo formato multi-round** |
-| Riftbound | `import_riftbound.py` | `import_riftbound_v2.py` | Stessa logica, architettura pulita |
-| Pokémon | `import_pokemon.py` | - | TDF format, invariato |
+| TCG | Script | Note |
+|-----|--------|------|
+| One Piece | `import_onepiece.py` | Formato multi-round |
+| Riftbound | `import_riftbound.py` | Formato multi-round |
+| Pokémon | `import_pokemon.py` | Formato TDF/XML |
 
 ### Validazione Automatica Pre-Import
 
@@ -91,7 +91,7 @@ Le stagioni con status **ARCHIVED** hanno comportamento speciale durante l'impor
 
 ---
 
-## 🏴‍☠️ One Piece TCG (CSV Multi-Round) - NUOVO v2
+## 🏴‍☠️ One Piece TCG (CSV Multi-Round)
 
 ### Formato File (Nuovo - Multi-Round)
 
@@ -141,19 +141,19 @@ R4: 12 pts (delta +3 = Win)
 → Record finale: 4-0-0 ✓
 ```
 
-### Import Command (v2)
+### Import Command
 
 ```bash
 cd tanaleague2
 
 # Import completo
-python import_onepiece_v2.py \
+python import_onepiece.py \
   --rounds OP_2025_11_13_R1.csv,OP_2025_11_13_R2.csv,OP_2025_11_13_R3.csv,OP_2025_11_13_R4.csv \
   --classifica OP_2025_11_13_ClassificaFinale.csv \
   --season OP12
 
 # Con test mode
-python import_onepiece_v2.py \
+python import_onepiece.py \
   --rounds R1.csv,R2.csv,R3.csv,R4.csv \
   --classifica ClassificaFinale.csv \
   --season OP12 --test
@@ -321,7 +321,7 @@ Giocatore con 3W-0T-1L in torneo da 11 giocatori, classificato 1°:
 
 ---
 
-## 🌌 Riftbound TCG (CSV Multi-Round) - v2
+## 🌌 Riftbound TCG (CSV Multi-Round)
 
 ### Formato File
 
@@ -356,18 +356,18 @@ Esempio:
 - `RFB_2025_11_17_R2.csv` → Round 2
 - `RFB_2025_11_17_R3.csv` → Round 3
 
-### Import Command (v2)
+### Import Command
 
 ```bash
 cd tanaleague2
 
 # Import Multi-Round (RACCOMANDATO)
-python import_riftbound_v2.py \
+python import_riftbound.py \
   --rounds RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB_2025_11_17_R3.csv \
   --season RFB01
 
 # Con test mode
-python import_riftbound_v2.py \
+python import_riftbound.py \
   --rounds R1.csv,R2.csv,R3.csv \
   --season RFB01 --test
 ```
@@ -443,10 +443,10 @@ python import_riftbound_v2.py \
 
 **Tutti gli script** supportano la modalità test per verificare i file senza scrivere su Google Sheets.
 
-### One Piece (v2)
+### One Piece
 
 ```bash
-python import_onepiece_v2.py \
+python import_onepiece.py \
   --rounds R1.csv,R2.csv,R3.csv,R4.csv \
   --classifica ClassificaFinale.csv \
   --season OP12 --test
@@ -458,10 +458,10 @@ python import_onepiece_v2.py \
 python import_pokemon.py --tdf file.tdf --season PKM-FS25 --test
 ```
 
-### Riftbound (v2)
+### Riftbound
 
 ```bash
-python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
 ```
 
 ### Cosa Fa Test Mode

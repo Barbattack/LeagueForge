@@ -92,7 +92,7 @@ for round in rounds:
 
 ## 🏴‍☠️ One Piece TCG
 
-### Formato Input: Multi-Round CSV (v2 - Raccomandato)
+### Formato Input: Multi-Round CSV
 
 I file CSV sono esportati dal portale ufficiale Bandai, uno per ogni round più un file classifica finale.
 
@@ -110,12 +110,12 @@ I file CSV sono esportati dal portale ufficiale Bandai, uno per ogni round più 
 
 **Utilizzo:**
 ```bash
-python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
 ```
 
 ### Calcolo W/T/L dal Delta Punti
 
-Lo script v2 calcola vittorie, pareggi e sconfitte dalla **progressione dei punti** tra round:
+Lo script calcola vittorie, pareggi e sconfitte dalla **progressione dei punti** tra round:
 
 ```python
 def calculate_wlt_from_progression(progression: List[Dict]) -> Tuple[int, int, int]:
@@ -172,16 +172,16 @@ RFB_2025_11_17_R2.csv   ← Round 2
 RFB_2025_11_17_R3.csv   ← Round 3
 ```
 
-**Utilizzo (v2 - Raccomandato):**
+**Utilizzo:**
 ```bash
-# Import multi-round con script v2
-python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
+# Import multi-round
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 
 # Test mode
-python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
 ```
 
-**NOTA:** Lo script v2 usa `import_base.py` per condividere logica comune con One Piece.
+**NOTA:** Lo script usa `import_base.py` per condividere logica comune con One Piece.
 
 ### Struttura CSV (22 colonne)
 
@@ -348,7 +348,7 @@ Col 13 (row[12]): L (sconfitte match)
 
 ### import_base.py
 
-Modulo centrale che fornisce funzioni comuni a tutti gli script di import v2:
+Modulo centrale che fornisce funzioni comuni a tutti gli script di import:
 
 ```python
 # Funzioni principali
