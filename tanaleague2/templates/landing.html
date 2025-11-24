@@ -313,9 +313,9 @@ const allQuestions = [
   { emoji: "🌌", text: "Chi domina Riftbound?", link: "{{ url_for('classifica', season_id=rfb_active_season_id) }}", color: "info" },
   {% endif %}
   { emoji: "🤔", text: "Quanto sei forte davvero?", link: "{{ url_for('players_list') }}", color: "secondary" },
-  { emoji: "🏅", text: "Hai già sbloccato il tuo primo achievement?", link: "{{ url_for('achievements') }}", color: "warning" },
-  { emoji: "🎖️", text: "Quanti badge hai collezionato?", link: "{{ url_for('achievements') }}", color: "success" },
-  { emoji: "⭐", text: "Conosci gli achievement segreti?", link: "{{ url_for('achievements') }}", color: "info" }
+  { emoji: "🏅", text: "Hai già sbloccato il tuo primo achievement?", link: "{{ url_for('achievements.achievements_list') }}", color: "warning" },
+  { emoji: "🎖️", text: "Quanti badge hai collezionato?", link: "{{ url_for('achievements.achievements_list') }}", color: "success" },
+  { emoji: "⭐", text: "Conosci gli achievement segreti?", link: "{{ url_for('achievements.achievements_list') }}", color: "info" }
 ];
 
 // Seleziona 3 domande random

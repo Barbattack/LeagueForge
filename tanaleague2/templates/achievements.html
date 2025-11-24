@@ -71,7 +71,7 @@
         <div class="row">
             {% for ach in achievements %}
             <div class="col-md-6 col-lg-4 mb-3">
-                <a href="{{ url_for('achievement_detail', ach_id=ach.id) }}" class="text-decoration-none">
+                <a href="{{ url_for('achievements.achievement_detail', ach_id=ach.id) }}" class="text-decoration-none">
                     <div class="card h-100 shadow-sm achievement-card
                         {% if ach.rarity == 'Legendary' %}border-warning{% endif %}
                         {% if ach.rarity == 'Epic' %}border-purple{% endif %}
