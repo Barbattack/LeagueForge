@@ -157,12 +157,15 @@ def rebuild_stats(sheet, test_mode=False):
 
         # Ultimo risultato
         last_tournament, last_rank = sorted_results[-1] if sorted_results else ('', 999)
-        # Estrai data da tournament_id (formato: YYYYMMDD o simile)
+        # Estrai data da tournament_id (formato: "OP11_20250619" o "OP11_2025-06-19")
         last_date = ''
         if last_tournament and '_' in last_tournament:
-            # Prova a estrarre data (primi 8 caratteri se numerici)
-            date_part = last_tournament.split("_")[1]  # "20251113"
-            if len(date_part) == 8 and date_part.isdigit():
+            date_part = last_tournament.split("_")[1]
+            # Caso 1: Formato ISO con trattini (2025-06-19)
+            if len(date_part) == 10 and date_part[4] == '-' and date_part[7] == '-':
+                last_date = date_part
+            # Caso 2: Formato compatto (20250619)
+            elif len(date_part) == 8 and date_part.isdigit():
                 try:
                     last_date = f"{date_part[:4]}-{date_part[4:6]}-{date_part[6:8]}"
                 except:
