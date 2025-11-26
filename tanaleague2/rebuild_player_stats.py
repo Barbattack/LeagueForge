@@ -105,7 +105,9 @@ def rebuild_stats(sheet, test_mode=False):
     })
 
     for row in all_results:
-        season_id = safe_get(row, COL_RESULTS, 'season_id')
+        tournament_id = safe_get(row, COL_RESULTS, 'tournament_id', '')
+        # Estrai season_id da tournament_id (es. "OP12_20251113" -> "OP12")
+        season_id = tournament_id.split('_')[0] if tournament_id and '_' in tournament_id else ''
 
         # Skip stagioni ARCHIVED
         if season_id in archived_seasons:
@@ -117,8 +119,6 @@ def rebuild_stats(sheet, test_mode=False):
 
         tcg = get_tcg_from_season(season_id)
         key = (membership, tcg)
-
-        tournament_id = safe_get(row, COL_RESULTS, 'tournament_id', '')
         rank = safe_int(row, COL_RESULTS, 'rank', 999)
         name = safe_get(row, COL_RESULTS, 'name', '')
 
@@ -159,10 +159,10 @@ def rebuild_stats(sheet, test_mode=False):
         last_tournament, last_rank = sorted_results[-1] if sorted_results else ('', 999)
         # Estrai data da tournament_id (formato: YYYYMMDD o simile)
         last_date = ''
-        if last_tournament:
+        if last_tournament and '_' in last_tournament:
             # Prova a estrarre data (primi 8 caratteri se numerici)
-            date_part = ''.join(c for c in last_tournament if c.isdigit())[:8]
-            if len(date_part) == 8:
+            date_part = last_tournament.split("_")[1]  # "20251113"
+            if len(date_part) == 8 and date_part.isdigit():
                 try:
                     last_date = f"{date_part[:4]}-{date_part[4:6]}-{date_part[6:8]}"
                 except:
