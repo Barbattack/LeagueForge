@@ -438,3 +438,110 @@ pip install -r requirements.txt --upgrade
 ---
 
 **Ultimo aggiornamento:** Novembre 2025
+
+---
+
+## 🔧 Utility Scripts - Data Recovery
+
+### rebuild_players.py
+
+**Purpose:** Reconstructs Players sheet from Results (use after data corruption or schema changes).
+
+**Usage:**
+```bash
+python rebuild_players.py
+```
+
+**What it does:**
+1. Reads all rows from Results sheet
+2. Groups by (membership, TCG)
+3. Calculates lifetime stats:
+   - Total tournaments, wins
+   - Match W/T/L totals
+   - Total points lifetime
+   - First/last seen dates
+4. Clears Players sheet (rows 4+)
+5. Writes recalculated data
+
+**When to use:**
+- After fixing COL_RESULTS mapping
+- After Players sheet corruption
+- After manual Results edits
+- Migration/schema changes
+
+**Note:** Uses correct COL_RESULTS mapping (name: 9, match_w: 10, points_total: 8).
+
+---
+
+### rebuild_player_stats.py
+
+**Purpose:** Reconstructs Player_Stats sheet from Results with aggregated statistics.
+
+**Usage:**
+```bash
+python rebuild_player_stats.py          # Full rebuild
+python rebuild_player_stats.py --test   # Dry run (no write)
+```
+
+**What it does:**
+1. Reads Results + Config (for ARCHIVED seasons)
+2. Excludes ARCHIVED seasons from calculations
+3. Groups by (membership, TCG)
+4. Calculates:
+   - Total tournaments, wins, top8 count
+   - Current streak, best streak
+   - Last tournament rank & date
+   - Seasons played count
+5. Clears Player_Stats sheet
+6. Writes aggregated data
+
+**Key Features:**
+- Supports both date formats: `OP11_20250619` and `OP11_2025-06-19`
+- Extracts season_id from tournament_id (e.g., "OP12_20251113" → "OP12")
+- Calculates streaks based on top8 finishes
+
+**When to use:**
+- After fixing COL_RESULTS mapping
+- After multiple tournament imports
+- To fix TCG = "UNK" issues
+- To fix incorrect Last_Date values
+
+---
+
+## 🚀 API Optimization (Nov 2024)
+
+### Batch Operations
+
+Import scripts now use batch operations to reduce API calls by 75%:
+
+**Before:**
+- `update_player_stats_after_tournament()` per player: 2 calls × 12 = 24 calls
+- `check_and_unlock_achievements()` per player: 4 calls × 12 = 48 calls
+- **Total: ~80-90 API calls** → Exceeded 60 req/min limit ❌
+
+**After:**
+- `batch_update_player_stats()`: 3 calls total for all players
+- `batch_load_player_achievements()`: 1 call
+- `batch_calculate_player_stats()`: 2 calls
+- **Total: ~15-20 API calls** → Within limits ✅
+
+**Implementation:** All import scripts (`import_onepiece.py`, `import_pokemon.py`, `import_riftbound.py`) automatically use batch operations via `import_base.py`.
+
+### API Rate Limiting
+
+**Configuration:** `API_DELAY_MS = 1200` (1.2 seconds between calls)
+
+**Why 1200ms?**
+- Google Sheets limit: 60 requests/minute = 1 request/second
+- 1200ms = 0.83 requests/second (safe margin)
+
+**Implementation:**
+- All API calls wrapped with `safe_api_call()` from `api_utils.py`
+- Automatic retry with exponential backoff (60s, 120s, 240s)
+- Only retries on RESOURCE_EXHAUSTED errors
+
+**Files using batch operations:**
+- `import_base.py`: Main import logic
+- `achievements.py`: Batch achievement checks
+- `player_stats.py`: Batch stats updates
+

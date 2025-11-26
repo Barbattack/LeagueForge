@@ -1389,3 +1389,158 @@ unlocks = [
 **Fine Technical Notes**
 
 Ultimo aggiornamento: 24 Novembre 2025 (v2.2 - Unified Import Architecture + Multi-Round CSV)
+
+---
+
+## 🚀 Recent Optimizations & Fixes (Nov 2024)
+
+### API Rate Limiting Optimization
+
+**Problem:** Import scripts exceeded Google Sheets API limits (60 req/min), causing 429 errors.
+
+**Root Cause:**
+- `update_player_stats_after_tournament()` called per player: 12 players × 2 API calls = 24 calls
+- `check_and_unlock_achievements()` called per player: 12 players × 4 API calls = 48 calls
+- Total: ~80-90 API calls in 30 seconds = ~160 calls/min ❌
+
+**Solution (Nov 24, 2024):**
+1. **Batch Operations:**
+   - `batch_update_player_stats()`: 1 read + 1-2 writes = 3 calls total (was 24)
+   - `batch_load_player_achievements()`: 1 read for all players (was 12)
+   - `batch_calculate_player_stats()`: 2 reads (Config + Results) for all players (was 24)
+
+2. **API Delay:** Increased `API_DELAY_MS` from 300ms to 1200ms (respects 60 req/min limit)
+
+3. **Wrapped API Calls:** All `get_all_values()`, `append_rows()`, `batch_update()` now use `safe_api_call()` from `api_utils.py`
+
+**Result:** Reduced to ~15-20 API calls per import (75% reduction) ✅
+
+**Modified Files:**
+- `import_base.py`: Batch calls, API delay 1200ms
+- `achievements.py`: Batch functions added
+- `player_stats.py`: True batch update implementation
+
+---
+
+### COL_RESULTS Mapping Fix
+
+**Problem:** Player names showing as numbers, Total_Points always 0, Match stats incorrect.
+
+**Root Cause:** `COL_RESULTS` in `sheet_utils.py` had obsolete/incorrect column indices:
+```python
+# OLD (WRONG):
+COL_RESULTS = {
+    'name': 5,      # WRONG! Should be 9
+    'match_w': 7,   # WRONG! Should be 10
+    'match_t': 9,   # WRONG! Should be 11
+    'match_l': 8,   # WRONG! Should be 12
+    'points': 4,    # win_points, NOT points_total!
+}
+```
+
+**Actual Results Sheet Structure (13 columns):**
+```
+0: result_id
+1: tournament_id
+2: membership
+3: rank
+4: win_points
+5: omw
+6: points_victory
+7: points_ranking
+8: points_total     ← Correct index!
+9: name             ← Correct index!
+10: match_w         ← Correct index!
+11: match_t         ← Correct index!
+12: match_l         ← Correct index!
+```
+
+**Solution (Nov 24, 2024):**
+1. Updated `COL_RESULTS` in `sheet_utils.py` with correct indices
+2. Created `rebuild_players.py` to reconstruct Players sheet from Results
+3. Fixed `rebuild_player_stats.py` to extract `season_id` from `tournament_id` (was trying to read non-existent 'season_id' field)
+4. Added support for both date formats: `OP11_20250619` and `OP11_2025-06-19`
+
+**Modified Files:**
+- `sheet_utils.py`: Corrected COL_RESULTS mapping
+- `rebuild_players.py`: Created (reads Results → writes Players)
+- `rebuild_player_stats.py`: Fixed to use correct mapping + dual date format support
+
+---
+
+### Players Sheet Column Order Fix
+
+**Problem:** Players sheet had columns in wrong order (first_seen/last_seen at end instead of beginning).
+
+**Solution (Nov 24, 2024):**
+Fixed `player_row` order in `import_base.py` (line ~498):
+```python
+# CORRECT ORDER:
+player_row = [
+    membership,          # A
+    p['name'],          # B
+    tcg,                # C
+    stats.get('first_seen', tournament_date),   # D (was at J)
+    stats.get('last_seen', tournament_date),    # E (was at K)
+    stats['total_tournaments'],  # F (was at D)
+    stats['tournament_wins'],    # G (was at E)
+    stats['match_w'],           # H (was at F)
+    stats['match_t'],           # I (was at G)
+    stats['match_l'],           # J (was at H)
+    stats['total_points']       # K (was at I)
+]
+```
+
+**Recovery:** Run `rebuild_players.py` to reconstruct from Results.
+
+---
+
+### Rebuild Scripts
+
+Two utility scripts for data recovery:
+
+**`rebuild_players.py`:**
+- Reads all Results
+- Recalculates lifetime stats per (membership, TCG)
+- Rewrites Players sheet with correct data
+- Usage: `python rebuild_players.py`
+
+**`rebuild_player_stats.py`:**
+- Reads all Results
+- Calculates aggregated stats per (membership, TCG)
+- Rewrites Player_Stats sheet
+- Excludes ARCHIVED seasons
+- Supports both date formats in tournament_id
+- Usage: `python rebuild_player_stats.py [--test]`
+
+---
+
+### Player_Stats Sheet
+
+**Purpose:** Pre-calculated aggregates for faster dashboard queries (CQRS pattern).
+
+**Columns:**
+- Membership, Name, TCG
+- Total Tournaments, Total Wins
+- Current Streak, Best Streak, Top8 Count
+- Last Rank, Last Date, Seasons Count, Updated At
+
+**Key Points:**
+- TCG is lifetime aggregation (OP, PKM, PKMFS) - NOT per-season
+- For per-season stats, use Seasonal_Standings_PROV
+- Updated automatically by import scripts via `batch_update_player_stats()`
+
+---
+
+### Known Issues & TODOs
+
+1. **Seasonal_Standings_PROV naming:** Should rename to `Seasonal_Standings` (remove "_PROV" suffix)
+   - Requires: Manual sheet rename + code updates in ~5-10 files
+   - Status: Deferred to future session
+
+2. **Date Format Inconsistency:** Some tournaments use `YYYYMMDD`, others use `YYYY-MM-DD`
+   - Current: Both formats supported in rebuild scripts
+   - TODO: Standardize to single format in future imports
+
+---
+

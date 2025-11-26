@@ -262,3 +262,117 @@ Scarica da PythonAnywhere:
 ---
 
 **Ultimo aggiornamento:** Novembre 2025
+
+---
+
+## 🔧 Data Recovery & Maintenance
+
+### Rebuild Players Sheet
+```bash
+# Reconstruct Players from Results (after corruption/schema changes)
+python rebuild_players.py
+```
+
+**When to use:**
+- After COL_RESULTS mapping fixes
+- After Players sheet corruption
+- After manual Results edits
+
+**What it does:**
+- Reads all Results rows
+- Recalculates lifetime stats per (membership, TCG)
+- Rewrites Players sheet with correct data
+
+---
+
+### Rebuild Player_Stats Sheet
+```bash
+# Full rebuild
+python rebuild_player_stats.py
+
+# Dry run (no write)
+python rebuild_player_stats.py --test
+```
+
+**When to use:**
+- After fixing COL_RESULTS mapping
+- To fix TCG = "UNK" issues
+- To fix incorrect Last_Date values
+- After multiple tournament imports
+
+**What it does:**
+- Reads Results + Config (excludes ARCHIVED seasons)
+- Calculates aggregated stats per (membership, TCG)
+- Supports both date formats: `YYYYMMDD` and `YYYY-MM-DD`
+- Rewrites Player_Stats sheet
+
+---
+
+## 📊 Google Sheets Structure
+
+### Results Sheet (13 columns)
+```
+0: result_id         | Unique ID (tournament_id_membership)
+1: tournament_id     | Season_Date format (e.g., OP12_20251113)
+2: membership        | Player membership number
+3: rank              | Tournament placement
+4: win_points        | Bandai win points (OP/RB)
+5: omw               | Opponent Match Win %
+6: points_victory    | TanaLeague victory points
+7: points_ranking    | TanaLeague ranking points
+8: points_total      | Total TanaLeague points
+9: name              | Player display name
+10: match_w          | Matches won
+11: match_t          | Matches tied
+12: match_l          | Matches lost
+```
+
+**Important:** `COL_RESULTS` mapping in `sheet_utils.py` must match these indices exactly!
+
+---
+
+### Player_Stats Sheet (12 columns)
+```
+Membership | Name | TCG | Total Tournaments | Total Wins | 
+Current Streak | Best Streak | Top8 Count | Last Rank | 
+Last Date | Seasons Count | Updated At
+```
+
+**Key Points:**
+- TCG is lifetime aggregation (OP, PKM, PKMFS) - NOT per-season
+- For per-season stats, use Seasonal_Standings_PROV
+- Updated automatically by import scripts
+
+---
+
+## 🚀 API Optimization (Nov 2024)
+
+### Rate Limiting Configuration
+```python
+# api_utils.py / import_base.py
+API_DELAY_MS = 1200  # 1.2 seconds between calls
+```
+
+**Google Sheets Limit:** 60 requests/minute = 1 request/second  
+**Our Rate:** 1200ms delay = 0.83 requests/second ✅
+
+### Batch Operations
+All import scripts now use batch operations:
+- `batch_update_player_stats()`: 3 calls (was 24)
+- `batch_load_player_achievements()`: 1 call (was 12)
+- `batch_calculate_player_stats()`: 2 calls (was 24)
+
+**Result:** Reduced from ~80-90 to ~15-20 API calls per import (75% reduction)
+
+---
+
+## ⚠️ Known Issues & TODOs
+
+1. **Seasonal_Standings_PROV:** Should rename to `Seasonal_Standings` (remove "_PROV")
+   - Requires manual Google Sheets rename + code updates
+   - Status: Deferred to future session
+
+2. **Date Format:** Some tournaments use `YYYYMMDD`, others `YYYY-MM-DD`
+   - Current: Both formats supported
+   - TODO: Standardize in future imports
+

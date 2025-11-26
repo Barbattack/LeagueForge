@@ -27,6 +27,27 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 
 ---
 
+---
+
+## 🔄 Recent Updates (Nov 2024)
+
+### Performance & Reliability
+- ✅ **API Rate Limiting Fixed:** Reduced API calls by 75% (batch operations)
+- ✅ **COL_RESULTS Mapping Fixed:** Corrected all column indices for accurate data
+- ✅ **Players Sheet Schema Fixed:** Correct column order for first_seen/last_seen
+- ✅ **Rebuild Scripts:** Added `rebuild_players.py` and `rebuild_player_stats.py` for data recovery
+- ✅ **Dual Date Format Support:** Handles both `YYYYMMDD` and `YYYY-MM-DD` formats
+
+### Technical Improvements
+- Batch operations in `player_stats.py` and `achievements.py`
+- API delay increased to 1200ms (respects 60 req/min limit)
+- All API calls wrapped with retry logic and exponential backoff
+- Comprehensive error handling for corrupted data scenarios
+
+**See:** [TECHNICAL_NOTES.md](docs/TECHNICAL_NOTES.md#-recent-optimizations--fixes-nov-2024) for details.
+
+---
+
 ## ✨ Caratteristiche
 
 ### Funzionalità Principali
