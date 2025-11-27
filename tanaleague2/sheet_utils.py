@@ -112,7 +112,8 @@ COL_PLAYER_STATS = {
     'last_rank': 8,
     'last_date': 9,
     'seasons_count': 10,
-    'updated_at': 11
+    'updated_at': 11,
+    'total_points': 12
 }
 
 

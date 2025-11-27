@@ -776,8 +776,17 @@ def finalize_import(
     print("   📊 Aggiornamento Player_Stats...")
     try:
         batch_updates = [
-            {'membership': p['membership'], 'tcg': tcg, 'rank': p['rank'],
-             'season_id': season_id, 'date': tournament_date, 'name': p['name']}
+            {
+                'membership': p['membership'],
+                'tcg': tcg,
+                'rank': p['rank'],
+                'season_id': season_id,
+                'date': tournament_date,
+                'name': p['name'],
+                'points_total': calculate_tanaleague_points(
+                    p['rank'], p['wins'], tournament_data['n_participants']
+                )['points_total']
+            }
             for p in tournament_data['participants']
         ]
         stats['player_stats_updated'] = batch_update_player_stats(sheet, batch_updates)

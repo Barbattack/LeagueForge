@@ -35,7 +35,7 @@ from config import SECRET_KEY, DEBUG, SESSION_TIMEOUT
 from stats_builder import build_stats
 from datetime import timedelta
 from sheet_utils import (
-    COL_PLAYERS, COL_ACHIEVEMENT_DEF, COL_PLAYER_ACH,
+    COL_PLAYERS, COL_PLAYER_STATS, COL_ACHIEVEMENT_DEF, COL_PLAYER_ACH,
     safe_get, safe_int, safe_float
 )
 
@@ -896,7 +896,10 @@ def api_stats_refresh(scope):
 @app.route('/players')
 def players_list():
     """
-    Lista tutti i giocatori registrati.
+    Lista tutti i giocatori registrati (senza duplicati).
+
+    Legge da Player_Stats per mostrare una sola card per membership,
+    con stats aggregate di tutte le stagioni.
 
     Mostra card per ogni giocatore ordinata per punti medi con:
     - Membership number
@@ -914,29 +917,29 @@ def players_list():
     from cache import cache
     try:
         sheet = cache.connect_sheet()
-        ws_players = sheet.worksheet("Players")
-        all_players = ws_players.get_all_values()[3:]
-        
+        ws_stats = sheet.worksheet("Player_Stats")
+        all_stats = ws_stats.get_all_values()[3:]  # Skip header
+
         players = []
-        for row in all_players:
-            membership = safe_get(row, COL_PLAYERS, 'membership')
+        for row in all_stats:
+            membership = safe_get(row, COL_PLAYER_STATS, 'membership')
             if membership:
-                total_tournaments = safe_int(row, COL_PLAYERS, 'total_tournaments', 0)
-                total_points = safe_float(row, COL_PLAYERS, 'total_points', 0.0)
+                total_tournaments = safe_int(row, COL_PLAYER_STATS, 'total_tournaments', 0)
+                total_points = safe_float(row, COL_PLAYER_STATS, 'total_points', 0.0)
                 avg_points = round(total_points / total_tournaments, 1) if total_tournaments > 0 else 0.0
 
                 players.append({
                     'membership': membership,
-                    'name': safe_get(row, COL_PLAYERS, 'name'),
-                    'tcg': safe_get(row, COL_PLAYERS, 'tcg', 'OP'),
+                    'name': safe_get(row, COL_PLAYER_STATS, 'name', ''),
+                    'tcg': safe_get(row, COL_PLAYER_STATS, 'tcg', 'OP'),
                     'tournaments': total_tournaments,
-                    'wins': safe_int(row, COL_PLAYERS, 'tournament_wins', 0),
+                    'wins': safe_int(row, COL_PLAYER_STATS, 'total_wins', 0),
                     'points': avg_points
                 })
 
         # Ordina per punti medi DESC
         players.sort(key=lambda x: x['points'], reverse=True)
-        
+
         return render_template('players.html', players=players)
     except Exception as e:
         return render_template('error.html', error=f'Errore: {str(e)}'), 500

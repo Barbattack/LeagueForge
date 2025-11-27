@@ -34,7 +34,7 @@ except ImportError:
     print("❌ config.py non trovato. Copia config_example.py e configura.")
     sys.exit(1)
 
-from sheet_utils import COL_RESULTS, COL_CONFIG, safe_get, safe_int
+from sheet_utils import COL_RESULTS, COL_CONFIG, safe_get, safe_int, safe_float
 
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
@@ -45,7 +45,7 @@ SCOPES = [
 PLAYER_STATS_HEADER = [
     "Membership", "Name", "TCG", "Total Tournaments", "Total Wins",
     "Current Streak", "Best Streak", "Top8 Count", "Last Rank",
-    "Last Date", "Seasons Count", "Updated At"
+    "Last Date", "Seasons Count", "Updated At", "Total Points"
 ]
 
 
@@ -101,7 +101,8 @@ def rebuild_stats(sheet, test_mode=False):
         'wins': 0,
         'top8': 0,
         'seasons': set(),
-        'results_by_tournament': []  # [(tournament_id, rank)]
+        'results_by_tournament': [],  # [(tournament_id, rank)]
+        'total_points': 0
     })
 
     for row in all_results:
@@ -133,6 +134,10 @@ def rebuild_stats(sheet, test_mode=False):
             data['wins'] += 1
         if rank <= 8:
             data['top8'] += 1
+
+        # Accumula total_points
+        points_total = safe_float(row, COL_RESULTS, 'points_total', 0)
+        data['total_points'] += points_total
 
     print(f"   Giocatori unici: {len(player_data)}")
 
@@ -183,7 +188,8 @@ def rebuild_stats(sheet, test_mode=False):
             last_rank if last_rank < 999 else '',  # last_rank
             last_date,                 # last_date
             len(data['seasons']),      # seasons_count
-            now                        # updated_at
+            now,                       # updated_at
+            data['total_points']       # total_points
         ]
         rows.append(row)
 
@@ -219,7 +225,7 @@ def rebuild_stats(sheet, test_mode=False):
 
     # Batch write
     all_data = header_rows + rows
-    ws_stats.update(f'A1:L{len(all_data)}', all_data, value_input_option='USER_ENTERED')
+    ws_stats.update(f'A1:M{len(all_data)}', all_data, value_input_option='USER_ENTERED')
 
     print(f"✅ Scritte {len(rows)} righe")
     return len(rows)

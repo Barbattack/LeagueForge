@@ -17,7 +17,7 @@ Pattern CQRS-like:
 """
 
 from datetime import datetime
-from sheet_utils import COL_PLAYER_STATS, safe_get, safe_int
+from sheet_utils import COL_PLAYER_STATS, safe_get, safe_int, safe_float
 
 
 def get_player_stats(sheet, membership: str, tcg: str = None) -> dict:
@@ -56,7 +56,8 @@ def get_player_stats(sheet, membership: str, tcg: str = None) -> dict:
                     'last_rank': safe_int(row, COL_PLAYER_STATS, 'last_rank', 999),
                     'last_date': safe_get(row, COL_PLAYER_STATS, 'last_date', ''),
                     'seasons_count': safe_int(row, COL_PLAYER_STATS, 'seasons_count', 0),
-                    'updated_at': safe_get(row, COL_PLAYER_STATS, 'updated_at', '')
+                    'updated_at': safe_get(row, COL_PLAYER_STATS, 'updated_at', ''),
+                    'total_points': safe_float(row, COL_PLAYER_STATS, 'total_points', 0.0)
                 }
 
     return None
@@ -98,6 +99,7 @@ def get_all_player_stats(sheet, tcg: str = None) -> list:
             'last_rank': safe_int(row, COL_PLAYER_STATS, 'last_rank', 999),
             'last_date': safe_get(row, COL_PLAYER_STATS, 'last_date', ''),
             'seasons_count': safe_int(row, COL_PLAYER_STATS, 'seasons_count', 0),
+            'total_points': safe_float(row, COL_PLAYER_STATS, 'total_points', 0.0),
         })
 
     return results
@@ -106,7 +108,8 @@ def get_all_player_stats(sheet, tcg: str = None) -> list:
 def update_player_stats_after_tournament(sheet, membership: str, tcg: str,
                                          rank: int, season_id: str,
                                          tournament_date: str = None,
-                                         name: str = None):
+                                         name: str = None,
+                                         points_total: float = 0.0):
     """
     Aggiorna stats di un giocatore DOPO un torneo (delta update).
 
@@ -152,6 +155,7 @@ def update_player_stats_after_tournament(sheet, membership: str, tcg: str,
             top8 = safe_int(current, COL_PLAYER_STATS, 'top8_count', 0)
             seasons = safe_int(current, COL_PLAYER_STATS, 'seasons_count', 0)
             player_name = name or safe_get(current, COL_PLAYER_STATS, 'name', '')
+            total_pts = safe_float(current, COL_PLAYER_STATS, 'total_points', 0.0) + points_total
 
             # Calcola nuovi valori
             if rank == 1:
@@ -176,10 +180,11 @@ def update_player_stats_after_tournament(sheet, membership: str, tcg: str,
                 rank if rank < 999 else '',
                 tournament_date or '',
                 seasons,  # Non aggiorniamo qui, serve check stagione
-                now
+                now,
+                total_pts
             ]
 
-            safe_api_call(ws.update, f'A{row_idx}:L{row_idx}', [new_row], value_input_option='USER_ENTERED')
+            safe_api_call(ws.update, f'A{row_idx}:M{row_idx}', [new_row], value_input_option='USER_ENTERED')
 
         else:
             # Nuovo giocatore - append
@@ -196,12 +201,13 @@ def update_player_stats_after_tournament(sheet, membership: str, tcg: str,
                 rank if rank < 999 else '',
                 tournament_date or '',
                 1,                    # seasons_count
-                now
+                now,
+                points_total          # total_points
             ]
 
             # Trova ultima riga con dati
             last_row = len(data) + 1
-            safe_api_call(ws.update, f'A{last_row}:L{last_row}', [new_row], value_input_option='USER_ENTERED')
+            safe_api_call(ws.update, f'A{last_row}:M{last_row}', [new_row], value_input_option='USER_ENTERED')
 
         return True
 
@@ -248,6 +254,7 @@ def batch_update_player_stats(sheet, updates: list):
             rank = u.get('rank', 999)
             date = u.get('date', '')
             name = u.get('name', '')
+            points_total = u.get('points_total', 0.0)
             key = (membership, tcg)
 
             if key in existing:
@@ -260,6 +267,7 @@ def batch_update_player_stats(sheet, updates: list):
                 top8 = safe_int(current, COL_PLAYER_STATS, 'top8_count', 0)
                 seasons = safe_int(current, COL_PLAYER_STATS, 'seasons_count', 0)
                 player_name = name or safe_get(current, COL_PLAYER_STATS, 'name', '')
+                total_pts = safe_float(current, COL_PLAYER_STATS, 'total_points', 0.0) + points_total
 
                 if rank == 1:
                     total_w += 1
@@ -271,14 +279,16 @@ def batch_update_player_stats(sheet, updates: list):
                     curr_streak = 0
 
                 new_row = [membership, player_name, tcg, total_t, total_w, curr_streak,
-                          best_streak, top8, rank if rank < 999 else '', date, seasons, now]
-                batch_data.append({'range': f'A{row_idx}:L{row_idx}', 'values': [new_row]})
+                          best_streak, top8, rank if rank < 999 else '', date, seasons, now,
+                          total_pts]
+                batch_data.append({'range': f'A{row_idx}:M{row_idx}', 'values': [new_row]})
             else:
                 # Nuovo giocatore
                 is_top8 = rank <= 8
                 new_row = [membership, name, tcg, 1, 1 if rank == 1 else 0,
                           1 if is_top8 else 0, 1 if is_top8 else 0, 1 if is_top8 else 0,
-                          rank if rank < 999 else '', date, 1, now]
+                          rank if rank < 999 else '', date, 1, now,
+                          points_total]
                 new_rows.append(new_row)
 
         # Batch update esistenti
