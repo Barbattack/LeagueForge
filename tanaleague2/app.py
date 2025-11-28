@@ -36,8 +36,9 @@ from stats_builder import build_stats
 from datetime import timedelta
 from sheet_utils import (
     COL_PLAYERS, COL_PLAYER_STATS, COL_ACHIEVEMENT_DEF, COL_PLAYER_ACH,
-    safe_get, safe_int, safe_float, validate_sheet_headers
+    validate_sheet_headers
 )
+# Note: safe_int, safe_float sono definiti localmente in questo file (signature diversa da sheet_utils)
 
 
 # ============================================================================
@@ -936,18 +937,31 @@ def players_list():
 
         players = []
         for row in all_stats:
-            membership = safe_get(row, COL_PLAYER_STATS, 'membership')
+            if not row or len(row) <= COL_PLAYER_STATS['membership']:
+                continue
+
+            membership = row[COL_PLAYER_STATS['membership']].strip() if len(row) > COL_PLAYER_STATS['membership'] else ''
             if membership:
-                total_tournaments = safe_int(row, COL_PLAYER_STATS, 'total_tournaments', 0)
-                total_points = safe_float(row, COL_PLAYER_STATS, 'total_points', 0.0)
+                # Estrai valori usando indici del mapping
+                total_tournaments = safe_int(
+                    row[COL_PLAYER_STATS['total_tournaments']] if len(row) > COL_PLAYER_STATS['total_tournaments'] else None,
+                    0
+                )
+                total_points = safe_float(
+                    row[COL_PLAYER_STATS['total_points']] if len(row) > COL_PLAYER_STATS['total_points'] else None,
+                    0.0
+                )
                 avg_points = round(total_points / total_tournaments, 1) if total_tournaments > 0 else 0.0
 
                 players.append({
                     'membership': membership,
-                    'name': safe_get(row, COL_PLAYER_STATS, 'name', ''),
-                    'tcg': safe_get(row, COL_PLAYER_STATS, 'tcg', 'OP'),
+                    'name': row[COL_PLAYER_STATS['name']] if len(row) > COL_PLAYER_STATS['name'] else '',
+                    'tcg': row[COL_PLAYER_STATS['tcg']] if len(row) > COL_PLAYER_STATS['tcg'] else 'OP',
                     'tournaments': total_tournaments,
-                    'wins': safe_int(row, COL_PLAYER_STATS, 'total_wins', 0),
+                    'wins': safe_int(
+                        row[COL_PLAYER_STATS['total_wins']] if len(row) > COL_PLAYER_STATS['total_wins'] else None,
+                        0
+                    ),
                     'points': avg_points
                 })
 
