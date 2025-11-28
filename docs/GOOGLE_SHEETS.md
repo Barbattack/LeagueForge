@@ -11,6 +11,7 @@ Guida completa alla struttura del database Google Sheets.
 - [Tournaments](#-tournaments)
 - [Results](#-results)
 - [Players](#-players)
+- [Player_Stats](#-player_stats)
 - [Seasonal Standings](#-seasonal-standings)
 - [Achievement System](#-achievement-system)
 - [Altri Fogli](#-altri-fogli)
@@ -30,6 +31,7 @@ Il database TanaLeague usa un singolo Google Sheet con piu fogli (worksheets).
 | Tournaments | Lista tornei | Import script |
 | Results | Risultati giocatori | Import script |
 | Players | Anagrafica giocatori | Import script |
+| Player_Stats | Statistiche aggregate (CQRS) | Import script + rebuild_player_stats.py |
 | Seasonal_Standings_PROV | Classifiche provvisorie | Import script |
 | Seasonal_Standings_FINAL | Classifiche finali | Manuale/Script |
 | Achievement_Definitions | Definizioni achievement | setup_achievements.py |
@@ -203,6 +205,97 @@ Se stagione ha >= 8 tornei giocati da un giocatore:
 
 Se stagione ARCHIVED:
 - **Nessuno scarto** (tutti i tornei contano)
+
+---
+
+## Player_Stats
+
+Statistiche aggregate pre-calcolate per ogni giocatore (CQRS read model).
+
+### Descrizione
+
+**Player_Stats** è un foglio di aggregazione che contiene statistiche lifetime calcolate da tutti i tornei nel foglio **Results**. Segue il pattern CQRS (Command Query Responsibility Segregation):
+- **Write side**: Foglio Results (append-only durante import)
+- **Read side**: Foglio Player_Stats (materializzato, per query veloci)
+
+Viene utilizzato dalla route `/players` della webapp per mostrare le card dei giocatori senza duplicati.
+
+### Colonne
+
+| Colonna | Tipo | Descrizione | Esempio |
+|---------|------|-------------|---------|
+| Membership | String | ID univoco giocatore | 0000012345 |
+| Name | String | Nome completo | Pietro Cogliati |
+| TCG | String | TCG principale (con più tornei) | OP |
+| Total Tournaments | Number | Tornei totali lifetime | 25 |
+| Total Wins | Number | Vittorie tornei (1° posto) | 5 |
+| Current Streak | Number | Top8 consecutivi attuali | 3 |
+| Best Streak | Number | Miglior serie Top8 consecutivi | 7 |
+| Top8 Count | Number | Totale piazzamenti Top8 | 18 |
+| Last Rank | Number | Posizione ultimo torneo | 2 |
+| Last Date | Date | Data ultimo torneo | 2025-11-23 |
+| Seasons Count | Number | Stagioni diverse giocate | 4 |
+| Updated At | DateTime | Ultimo aggiornamento | 2025-11-23 14:30 |
+| Total Points | Number | Punti TanaLeague totali lifetime | 450.0 |
+
+### Chiave Primaria Composta
+
+`Membership` + `TCG`
+
+Un giocatore può avere più righe se gioca a TCG diversi (es. OP e PKM).
+
+### Aggiornamento
+
+**Incrementale (automatico):**
+- Durante import tornei tramite `batch_update_player_stats()` in `import_base.py`
+- Aggiorna stats del singolo giocatore dopo ogni torneo
+
+**Completo (manuale):**
+```bash
+cd tanaleague2
+python rebuild_player_stats.py
+```
+
+Ricostruisce l'intero foglio da zero leggendo tutti i Results.
+
+### Inclusione Stagioni ARCHIVED
+
+**IMPORTANTE:** Player_Stats include TUTTI i tornei storici, incluse le stagioni ARCHIVED.
+
+- **Stagioni ACTIVE/CLOSED**: Contano per achievement e classifiche competitive
+- **Stagioni ARCHIVED**: Contano SOLO per stats lifetime personali (Total Tournaments, Total Points, ecc.)
+
+Esempio: Un giocatore con 10 tornei in PKM99 (ARCHIVED) + 5 in PKM-FS25 (ACTIVE) avrà:
+- `Total Tournaments = 15` (include ARCHIVED)
+- `Total Points = somma di tutti i 15 tornei` (include ARCHIVED)
+
+### Utilizzo nella Webapp
+
+Route `/players` (app.py):
+1. Legge Player_Stats invece di Players
+2. Valida header colonne con `validate_sheet_headers()`
+3. Mostra una card per membership number (no duplicati)
+4. Calcola punti medi: `avg_points = total_points / total_tournaments`
+
+### Validazione Header
+
+A partire da Novembre 2025, la webapp valida automaticamente la struttura del foglio:
+```python
+from sheet_utils import validate_sheet_headers, COL_PLAYER_STATS
+
+validation = validate_sheet_headers(ws_stats, COL_PLAYER_STATS, expected_headers)
+if not validation['valid']:
+    # Mostra errore chiaro all'utente
+```
+
+Questo previene crash se qualcuno sposta accidentalmente una colonna.
+
+### Note Tecniche
+
+- **Ordine colonne fisso**: Le colonne DEVONO essere nell'ordine specificato (indici hardcoded)
+- **Header row**: Riga 3 del foglio (index 2)
+- **Skip rows**: Le prime 3 righe (0-2) sono intestazioni/descrizioni
+- **Performance**: Query molto più veloci rispetto a calcolare da Results ogni volta
 
 ---
 

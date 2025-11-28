@@ -484,27 +484,31 @@ python rebuild_player_stats.py --test   # Dry run (no write)
 ```
 
 **What it does:**
-1. Reads Results + Config (for ARCHIVED seasons)
-2. Excludes ARCHIVED seasons from calculations
+1. Reads Results sheet (all tournament data)
+2. **Includes ALL seasons** (ACTIVE, CLOSED, and ARCHIVED) for lifetime stats
 3. Groups by (membership, TCG)
 4. Calculates:
    - Total tournaments, wins, top8 count
-   - Current streak, best streak
+   - Total points (sum of all points_total from Results)
+   - Current streak, best streak (based on top8 finishes)
    - Last tournament rank & date
    - Seasons played count
 5. Clears Player_Stats sheet
-6. Writes aggregated data
+6. Writes aggregated data (13 columns including total_points)
 
 **Key Features:**
 - Supports both date formats: `OP11_20250619` and `OP11_2025-06-19`
 - Extracts season_id from tournament_id (e.g., "OP12_20251113" → "OP12")
+- **Includes ARCHIVED seasons** for complete lifetime statistics
 - Calculates streaks based on top8 finishes
+- Writes total_points column for average points calculation
 
 **When to use:**
 - After fixing COL_RESULTS mapping
 - After multiple tournament imports
 - To fix TCG = "UNK" issues
 - To fix incorrect Last_Date values
+- **After adding ARCHIVED seasons to include historical data**
 
 ---
 

@@ -442,22 +442,39 @@ def build_result_row(data: Dict) -> List
 Sistema di statistiche pre-calcolate per query veloci:
 
 ```python
-# Struttura Player_Stats sheet
-# Colonne: Membership, Name, TCG, Total_Tournaments, Total_Points,
-#          Total_W, Total_T, Total_L, Tournament_Wins, Best_Rank,
-#          Last_Played, First_Played
+# Struttura Player_Stats sheet (13 colonne)
+# Colonne: Membership, Name, TCG, Total_Tournaments, Total_Wins,
+#          Current_Streak, Best_Streak, Top8_Count, Last_Rank,
+#          Last_Date, Seasons_Count, Updated_At, Total_Points
 
 # Ricostruzione completa
 python rebuild_player_stats.py
 
 # Aggiornamento incrementale (chiamato da import)
-from player_stats import update_player_stats_for_player
-update_player_stats_for_player(ws_stats, membership, tcg)
+from player_stats import batch_update_player_stats
+batch_update_player_stats(ws_stats, updates_list)
 ```
 
 **Pattern CQRS-like:**
 - **Write side**: Results sheet (append-only durante import)
 - **Read side**: Player_Stats sheet (materializzato, per query veloci)
+
+**Header Validation (Nov 2025):**
+```python
+from sheet_utils import validate_sheet_headers, COL_PLAYER_STATS
+
+expected = ["Membership", "Name", "TCG", "Total Tournaments", "Total Wins",
+            "Current Streak", "Best Streak", "Top8 Count", "Last Rank",
+            "Last Date", "Seasons Count", "Updated At", "Total Points"]
+
+validation = validate_sheet_headers(ws_stats, COL_PLAYER_STATS, expected, header_row_index=2)
+if not validation['valid']:
+    raise ValueError("Struttura Player_Stats non valida")
+```
+
+**Inclusione ARCHIVED seasons (Nov 2025):**
+- Player_Stats include TUTTI i tornei storici (ACTIVE, CLOSED, ARCHIVED)
+- ARCHIVED seasons contano SOLO per stats lifetime, NON per achievement/classifiche
 
 ---
 

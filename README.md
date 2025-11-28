@@ -128,7 +128,34 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 
 ## 🆕 Recent Updates (Nov 2025)
 
-### 🏪 v2.3 - Franchise Model + Plug-and-Play (Latest)
+### 🎯 v2.4 - Player Cards Fix + Data Integrity (Latest)
+
+- **Fix Duplicate Player Cards**: Eliminati duplicati nella pagina `/players`
+  - Problema: Giocatori con stesso membership ma TCG diversi (es. PKM99 ARCHIVED + PKM-FS25 ACTIVE) apparivano come schede separate
+  - Soluzione: Route `/players` ora legge da `Player_Stats` invece di `Players`
+  - Risultato: **Una card per giocatore** con stats lifetime aggregate
+
+- **ARCHIVED Seasons in Lifetime Stats**: Player_Stats ora include dati storici completi
+  - `rebuild_player_stats.py` include TUTTI i tornei (ACTIVE, CLOSED, ARCHIVED)
+  - ARCHIVED seasons contano per stats lifetime personali (Total Tournaments, Total Points)
+  - ARCHIVED seasons NON contano per achievement/classifiche competitive
+  - Esempio: 10 tornei PKM99 (ARCHIVED) + 5 PKM-FS25 (ACTIVE) = 15 tornei totali visualizzati
+
+- **Header Validation**: Nuova protezione contro errori di configurazione
+  - Funzione `validate_sheet_headers()` in `sheet_utils.py`
+  - Valida ordine e nomi colonne prima di operazioni critiche
+  - Mostra errore chiaro se qualcuno sposta una colonna per sbaglio
+  - Implementata in route `/players` come primo livello di protezione
+
+- **Player_Stats Enhancement**: Aggiunta colonna `total_points`
+  - Calcolo punti medi accurato: `avg_points = total_points / total_tournaments`
+  - Batch update incrementale durante import tornei
+  - Rebuild manuale con `python rebuild_player_stats.py`
+
+**Breaking Changes**: Nessuno (retrocompatibile)
+**Migration Required**: Esegui `python rebuild_player_stats.py` una volta per popolare `total_points`
+
+### 🏪 v2.3 - Franchise Model + Plug-and-Play
 
 - **Franchise Tools**: Strumenti per distribuire TanaLeague ad altri negozi
   - `create_store_package.py` - Crea pacchetti ZIP pre-configurati
@@ -263,6 +290,7 @@ Webapp disponibile su `http://localhost:5000`
 | **Tournaments** | Lista tornei (ID, data, partecipanti, vincitore) |
 | **Results** | Risultati individuali (giocatore, rank, punti, W-L-D) |
 | **Players** | Anagrafica giocatori (membership, nome, TCG, stats lifetime) |
+| **Player_Stats** | Statistiche aggregate pre-calcolate (CQRS read model, include ARCHIVED) |
 | **Seasonal_Standings_PROV** | Classifiche provvisorie (stagioni ACTIVE) |
 | **Seasonal_Standings_FINAL** | Classifiche finali (stagioni CLOSED) |
 | **Achievement_Definitions** | Definizioni 40 achievement (NEW!) |
@@ -687,4 +715,4 @@ Per bug o feature request: Apri issue su GitHub
 
 **Made with ❤️ for the TCG community**
 
-*Last updated: November 2025 (v2.4 - Unified Import Architecture + Multi-Round CSV)*
+*Last updated: November 2025 (v2.4 - Player Cards Fix + Data Integrity)*
