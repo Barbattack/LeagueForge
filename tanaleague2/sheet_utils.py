@@ -218,6 +218,96 @@ def find_best_match(target: str, candidates: list, threshold: int = 85) -> tuple
         return None, 0
 
 
+def validate_sheet_headers(worksheet, col_map: dict, expected_headers: list,
+                          header_row_index: int = 2, strict: bool = False) -> dict:
+    """
+    Valida che gli header del foglio Google Sheets corrispondano al mapping.
+
+    Args:
+        worksheet: Worksheet gspread
+        col_map: Dizionario mapping (es. COL_PLAYER_STATS)
+        expected_headers: Lista header attesi nell'ordine corretto
+        header_row_index: Riga degli header (0-indexed, default 2 = riga 3)
+        strict: Se True solleva eccezione, altrimenti ritorna warning dict
+
+    Returns:
+        dict: {
+            'valid': bool,
+            'errors': list,
+            'warnings': list
+        }
+
+    Example:
+        result = validate_sheet_headers(
+            ws_player_stats,
+            COL_PLAYER_STATS,
+            ["Membership", "Name", "TCG", ...],
+            header_row_index=2
+        )
+        if not result['valid']:
+            print("ERRORI:", result['errors'])
+    """
+    result = {
+        'valid': True,
+        'errors': [],
+        'warnings': []
+    }
+
+    try:
+        # Leggi riga header
+        all_rows = worksheet.get_all_values()
+        if len(all_rows) <= header_row_index:
+            result['valid'] = False
+            result['errors'].append(f"Sheet ha solo {len(all_rows)} righe, impossibile leggere header alla riga {header_row_index + 1}")
+            if strict:
+                raise ValueError(result['errors'][0])
+            return result
+
+        actual_headers = all_rows[header_row_index]
+
+        # Verifica numero colonne
+        expected_count = len(expected_headers)
+        actual_count = len([h for h in actual_headers if h.strip()])  # Conta solo non vuote
+
+        if actual_count < expected_count:
+            msg = f"Mancano {expected_count - actual_count} colonne (attese: {expected_count}, trovate: {actual_count})"
+            result['errors'].append(msg)
+            result['valid'] = False
+
+        # Verifica ordine e nomi colonne
+        for key, expected_idx in col_map.items():
+            if expected_idx >= len(expected_headers):
+                continue  # Ignora indici fuori range
+
+            expected_name = expected_headers[expected_idx]
+
+            if expected_idx >= len(actual_headers):
+                msg = f"Colonna '{key}' (pos {expected_idx}) mancante - atteso '{expected_name}'"
+                result['errors'].append(msg)
+                result['valid'] = False
+                continue
+
+            actual_name = actual_headers[expected_idx].strip()
+
+            # Confronto case-insensitive e normalizzato
+            if normalize_name(actual_name) != normalize_name(expected_name):
+                msg = f"Colonna {expected_idx} - atteso '{expected_name}', trovato '{actual_name}'"
+                result['errors'].append(msg)
+                result['valid'] = False
+
+        if strict and not result['valid']:
+            error_msg = "❌ VALIDAZIONE HEADER FALLITA:\n" + "\n".join(result['errors'])
+            raise ValueError(error_msg)
+
+    except Exception as e:
+        result['valid'] = False
+        result['errors'].append(f"Errore durante validazione: {str(e)}")
+        if strict:
+            raise
+
+    return result
+
+
 class SheetRow:
     """Wrapper per accedere a righe Google Sheets con nomi colonna."""
 

@@ -36,7 +36,7 @@ from stats_builder import build_stats
 from datetime import timedelta
 from sheet_utils import (
     COL_PLAYERS, COL_PLAYER_STATS, COL_ACHIEVEMENT_DEF, COL_PLAYER_ACH,
-    safe_get, safe_int, safe_float
+    safe_get, safe_int, safe_float, validate_sheet_headers
 )
 
 
@@ -918,6 +918,20 @@ def players_list():
     try:
         sheet = cache.connect_sheet()
         ws_stats = sheet.worksheet("Player_Stats")
+
+        # Valida struttura Player_Stats
+        expected_headers = [
+            "Membership", "Name", "TCG", "Total Tournaments", "Total Wins",
+            "Current Streak", "Best Streak", "Top8 Count", "Last Rank",
+            "Last Date", "Seasons Count", "Updated At", "Total Points"
+        ]
+        validation = validate_sheet_headers(ws_stats, COL_PLAYER_STATS, expected_headers, header_row_index=2)
+        if not validation['valid']:
+            error_msg = "⚠️ ATTENZIONE: La struttura del foglio Player_Stats non è corretta!\n"
+            error_msg += "\n".join(validation['errors'])
+            error_msg += "\n\nContatta l'amministratore per correggere il problema."
+            return render_template('error.html', error=error_msg), 500
+
         all_stats = ws_stats.get_all_values()[3:]  # Skip header
 
         players = []

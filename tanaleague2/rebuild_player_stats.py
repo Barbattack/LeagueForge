@@ -34,7 +34,10 @@ except ImportError:
     print("❌ config.py non trovato. Copia config_example.py e configura.")
     sys.exit(1)
 
-from sheet_utils import COL_RESULTS, COL_CONFIG, safe_get, safe_int, safe_float
+from sheet_utils import (
+    COL_RESULTS, COL_CONFIG, COL_PLAYER_STATS,
+    safe_get, safe_int, safe_float, validate_sheet_headers
+)
 
 SCOPES = [
     'https://www.googleapis.com/auth/spreadsheets',
@@ -80,20 +83,7 @@ def rebuild_stats(sheet, test_mode=False):
     all_results = ws_results.get_all_values()[3:]  # Skip header
     print(f"   Trovate {len(all_results)} righe")
 
-    # Carica stagioni ARCHIVED da escludere
-    print("📋 Lettura Config (stagioni ARCHIVED)...")
-    ws_config = sheet.worksheet("Config")
-    config_data = ws_config.get_all_values()[4:]  # Skip header
-
-    archived_seasons = set()
-    for row in config_data:
-        season_id = safe_get(row, COL_CONFIG, 'season_id')
-        status = (safe_get(row, COL_CONFIG, 'status') or '').strip().upper()
-        if status == "ARCHIVED":
-            archived_seasons.add(season_id)
-    print(f"   Stagioni ARCHIVED: {len(archived_seasons)}")
-
-    # Aggrega stats per membership + tcg
+    # Aggrega stats per membership + tcg (INCLUDE stagioni ARCHIVED per stats lifetime)
     print("🧮 Calcolo statistiche...")
     player_data = defaultdict(lambda: {
         'name': '',
@@ -109,10 +99,6 @@ def rebuild_stats(sheet, test_mode=False):
         tournament_id = safe_get(row, COL_RESULTS, 'tournament_id', '')
         # Estrai season_id da tournament_id (es. "OP12_20251113" -> "OP12")
         season_id = tournament_id.split('_')[0] if tournament_id and '_' in tournament_id else ''
-
-        # Skip stagioni ARCHIVED
-        if season_id in archived_seasons:
-            continue
 
         membership = safe_get(row, COL_RESULTS, 'membership')
         if not membership:
