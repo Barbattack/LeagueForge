@@ -69,6 +69,10 @@ SHEETS_STRUCTURE = {
         "headers": ["Membership_Number", "Player_Name", "TCG", "First_Seen", "Last_Seen", "Total_Tournaments", "Tournament_Wins", "Match_W", "Match_T", "Match_L", "Total_Points"],
         "description": "Anagrafica giocatori"
     },
+    "Player_Stats": {
+        "headers": ["Membership", "Name", "TCG", "Total_Tournaments", "Total_Wins", "Current_Streak", "Best_Streak", "Top8_Count", "Last_Rank", "Last_Date", "Seasons_Count", "Updated_At", "Total_Points"],
+        "description": "Statistiche lifetime aggregate (CQRS read model)"
+    },
     "Seasonal_Standings_PROV": {
         "headers": ["Season_ID", "Rank", "Membership_Number", "Player_Name", "Tournaments_Played", "Best_Results", "Total_Points", "Avg_Points"],
         "description": "Classifiche provvisorie stagioni attive"
@@ -188,7 +192,7 @@ def create_worksheet(sheet, name, config, force=False):
 
 def main():
     print("=" * 60)
-    print("🗄️  TANALEAGUE - DATABASE INITIALIZATION")
+    print("🗄️  LEAGUEFORGE - DATABASE INITIALIZATION")
     print("=" * 60)
     print()
     print(f"📊 Google Sheet ID: {SHEET_ID[:20]}...")
