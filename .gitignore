@@ -9,8 +9,9 @@ secrets/
 service_account*.json
 *credentials*.json
 
-# File di configurazione con password
-config.py
+# File di configurazione con password/credenziali hardcoded
+config_local.py
+config.production.py
 
 # Variabili d'ambiente
 .env
