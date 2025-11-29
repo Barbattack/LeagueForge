@@ -6,11 +6,11 @@ Legge Google Sheet ogni N minuti e mantiene cache locale
 """
 
 import gspread
-from google.oauth2.service_account import Credentials
 import json
 import os
 from datetime import datetime, timedelta
-from config import SHEET_ID, CREDENTIALS_FILE, CACHE_REFRESH_MINUTES, CACHE_FILE
+from config import SHEET_ID, CACHE_REFRESH_MINUTES, CACHE_FILE
+from utils_credentials import get_google_credentials
 from sheet_utils import (
     COL_CONFIG, COL_STANDINGS, COL_TOURNAMENTS,
     safe_get, safe_int, safe_float
@@ -56,7 +56,7 @@ class SheetCache:
     
     def connect_sheet(self):
         """Connette a Google Sheet"""
-        creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+        creds = get_google_credentials(scopes=SCOPES)
         client = gspread.authorize(creds)
         return client.open_by_key(SHEET_ID)
     

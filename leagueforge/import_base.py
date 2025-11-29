@@ -37,7 +37,6 @@ from collections import defaultdict
 
 try:
     import gspread
-    from google.oauth2.service_account import Credentials
 except ImportError:
     print("❌ Moduli mancanti. Esegui: pip install gspread google-auth")
     sys.exit(1)
@@ -53,7 +52,8 @@ def api_delay():
     time.sleep(API_DELAY_MS / 1000.0)
 
 try:
-    from config import SHEET_ID, CREDENTIALS_FILE
+    from config import SHEET_ID
+    from utils_credentials import get_google_credentials
 except ImportError:
     print("❌ config.py non trovato. Copia config_example.py e configura.")
     sys.exit(1)
@@ -167,7 +167,7 @@ def connect_sheet():
     Returns:
         gspread.Spreadsheet: Oggetto spreadsheet connesso
     """
-    creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+    creds = get_google_credentials(scopes=SCOPES)
     client = gspread.authorize(creds)
     return client.open_by_key(SHEET_ID)
 
