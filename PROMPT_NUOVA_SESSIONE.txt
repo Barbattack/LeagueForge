@@ -1,0 +1,322 @@
+================================================================================
+SESSIONE SETUP - LeagueForge Deploy & Google Sheets Configuration
+================================================================================
+
+CONTESTO PROGETTO
+================================================================================
+
+LeagueForge è un sistema di gestione classifiche e statistiche per leghe
+competitive di TCG (Trading Card Games), sviluppato come prodotto B2B/franchise
+da vendere a negozi di carte.
+
+INFORMAZIONI REPOSITORY:
+- Repository GitHub: Barbattack/LeagueForge (rinominata da TanaLeague)
+- Branch principale: main
+- Cartella applicazione: leagueforge/ (rinominata da tanaleague2/)
+- Versione attuale: v2.4 - Player Cards Fix + Data Integrity
+- Service Account creato: leagueforge (credenziali JSON disponibili)
+
+TCG SUPPORTATI:
+1. One Piece TCG - Import da CSV (Limitlesstcg)
+2. Pokemon TCG - Import da TDF/XML (Play! Pokemon)
+3. Riftbound TCG - Import da CSV multi-round
+
+
+================================================================================
+LAVORO GIA' COMPLETATO - NON RIPETERE!
+================================================================================
+
+v2.4 - Player Cards Fix + Data Integrity (IMPLEMENTATO E TESTATO)
+
+1. Fix Duplicate Player Cards
+   PROBLEMA RISOLTO: Giocatori con stesso membership ma TCG diversi (es. PKM e
+   PKMFS) apparivano come schede duplicate nella pagina /players.
+
+   SOLUZIONE IMPLEMENTATA:
+   - Route /players in leagueforge/app.py ora legge da Player_Stats invece di Players
+   - Player_Stats: Sheet aggregato con statistiche lifetime per membership (CQRS pattern)
+   - Deduplicazione: Una sola card per membership con stats aggregate di tutti i TCG
+   - Colonna total_points: Aggiunta come 13a colonna per calcolo media punti accurato
+
+   FILES MODIFICATI:
+   - leagueforge/app.py - Route /players usa Player_Stats
+   - leagueforge/sheet_utils.py - COL_PLAYER_STATS con 13 colonne
+   - leagueforge/player_stats.py - Tutte le funzioni gestiscono total_points
+   - leagueforge/import_base.py - Passa points_total durante batch_update
+
+2. ARCHIVED Seasons in Lifetime Stats
+   PROBLEMA RISOLTO: rebuild_player_stats.py escludeva stagioni ARCHIVED,
+   quindi stats lifetime incomplete.
+
+   SOLUZIONE IMPLEMENTATA:
+   - Rimosso filtro che escludeva ARCHIVED
+   - Player_Stats ora include TUTTI i tornei storici (ACTIVE, CLOSED, ARCHIVED)
+   - Distinzione comportamenti:
+     * ACTIVE/CLOSED: Applicano scarto tornei, sbloccano achievement, visibili in UI
+     * ARCHIVED: NO scarto, NO achievement, NASCOSTE da UI, ma INCLUSE in Player_Stats
+
+   FILE MODIFICATO:
+   - leagueforge/rebuild_player_stats.py - Include tutte le stagioni
+
+3. Header Validation (Opzione B - Temporanea)
+   PROBLEMA RISOLTO: Colonne hardcoded con indici fissi - se qualcuno sposta
+   colonne, tutto si rompe.
+
+   SOLUZIONE IMPLEMENTATA:
+   - Funzione validate_sheet_headers() in sheet_utils.py
+   - Valida ordine e nomi colonne prima di operazioni critiche
+   - Implementata in route /players per Player_Stats
+   - NOTA: Soluzione temporanea, in TODO c'è Opzione A (mapping dinamico completo)
+
+   FILES MODIFICATI:
+   - leagueforge/sheet_utils.py - Funzione validate_sheet_headers()
+   - leagueforge/app.py - Validazione in route /players
+
+4. Import Conflict Fix
+   PROBLEMA RISOLTO: Errore "safe_int() takes from 1 to 2 positional arguments
+   but 4 were given"
+
+   SOLUZIONE IMPLEMENTATA:
+   - Rimossi safe_int, safe_float dall'import di sheet_utils in app.py
+   - Route /players usa versione locale (2 parametri) invece di sheet_utils (4 parametri)
+   - Accesso diretto a colonne tramite indici: row[COL_PLAYER_STATS['total_tournaments']]
+
+   FILE MODIFICATO:
+   - leagueforge/app.py - Import corretti
+
+5. Rebrand Completo TanaLeague → LeagueForge
+   COMPLETATO:
+   - 98 files modificati (457 insertions, 444 deletions)
+   - Tutti i riferimenti "TanaLeague" → "LeagueForge"
+   - Tutti i riferimenti "La Tana delle Pulci" → placeholders generici
+   - Folder tanaleague2/ → leagueforge/
+   - Templates con placeholders: @your_store, Your Store Name, Your Address
+   - Footer: Powered by LeagueForge
+   - README, documentazione, LICENSE aggiornati per B2B/franchise
+
+   COMMIT RILEVANTI:
+   - 31f7f18 - Merge PR #4
+   - f600d21 - Fix typos leagueforge2 → leagueforge
+   - 9e33b2e - Rebrand completo
+   - 0d5c90f - Docs update v2.4
+   - ad1b054 - Fix import conflicts
+
+
+================================================================================
+TASK DA COMPLETARE IN QUESTA SESSIONE
+================================================================================
+
+TASK 1: Setup Automatico Google Sheets
+---------------------------------------
+
+OBIETTIVO: Creare automaticamente tutti i fogli necessari nel nuovo Google
+Sheet usando lo script init_database.py.
+
+PREREQUISITI GIA' COMPLETATI:
+- Service account "leagueforge" creato
+- File credenziali JSON scaricato
+
+PASSI DA COMPLETARE:
+1. Creare nuovo Google Sheet vuoto chiamato "LeagueForge_Database"
+2. Condividere sheet con email del service account (permessi Editor)
+3. Copiare SHEET_ID dalla URL
+4. Configurare leagueforge/config.py con SHEET_ID e path credenziali
+5. Eseguire: python leagueforge/init_database.py
+
+Lo script creerà automaticamente:
+- Config (con stagioni esempio)
+- Tournaments
+- Results
+- Players
+- Player_Stats (13 colonne - IMPORTANTE!)
+- Seasonal_Standings_PROV
+- Seasonal_Standings_FINAL
+- Achievement_Definitions (popolato con 40+ achievement)
+- Player_Achievements
+- Vouchers
+- Pokemon_Matches
+- Riftbound_Matches
+- Backup_Log
+
+NOTE IMPORTANTI:
+- Player_Stats deve avere 13 colonne (incluso total_points)
+- Lo script init_database.py esiste già ed è pronto all'uso
+- Documentazione completa in docs/SETUP.md
+
+
+TASK 2: Deploy Web App
+-----------------------
+
+OBIETTIVO: Configurare hosting gratuito per la web app Flask.
+
+OPZIONI DA VALUTARE:
+
+1. PythonAnywhere (raccomandato nella docs):
+   PRO: Specifico per Python, free tier, documentazione già pronta
+   CONTRO: Free tier con limitazioni (richiede reload giornaliero dopo 3 mesi)
+
+2. ALTERNATIVE GRATUITE DA PROPORRE:
+   - Render.com - Free tier con auto-sleep dopo inattività
+   - Railway.app - $5 credito gratuito/mese, poi a pagamento
+   - Fly.io - Free tier generoso, buono per produzione
+   - Replit - Facile ma limitato (public code)
+
+REQUISITI HOSTING:
+- Python 3.8+
+- Flask 2.0+
+- Supporto per requirements.txt
+- Variabili d'ambiente per credenziali Google
+- HTTPS (importante per produzione)
+- CONSIDERAZIONE B2B: Deve essere facile da replicare per ogni negozio franchise
+
+COMPITI:
+1. Valutare pro/contro di ogni opzione considerando modello franchise
+2. Proporre raccomandazione basata su facilità setup + costi scalabilità
+3. Guidare setup completo sulla piattaforma scelta
+4. Configurare credenziali Google Sheets in modo sicuro
+5. Testare deployment e verificare funzionamento
+
+
+================================================================================
+DETTAGLI TECNICI CRITICI - DA CONOSCERE
+================================================================================
+
+ARCHITETTURA DATI - CQRS PATTERN:
+- Results (write model): Tutti i risultati individuali dei tornei
+- Player_Stats (read model): Statistiche aggregate per membership
+- Seasonal_Standings (read model): Classifiche per stagione
+
+PLAYER_STATS - 13 COLONNE (IMPORTANTE!):
+0:  membership
+1:  name
+2:  tcg
+3:  total_tournaments
+4:  total_wins
+5:  current_streak
+6:  best_streak
+7:  top8_count
+8:  last_rank
+9:  last_date
+10: seasons_count
+11: updated_at
+12: total_points  ← AGGIUNTA in v2.4
+
+BEHAVIOR STAGIONI PER STATUS:
+- ACTIVE: Scarto best_n_minus_2, achievement ON, UI visible
+- CLOSED: Scarto best_n_minus_2, achievement ON, UI visible
+- ARCHIVED: NO scarto (tutti tornei), achievement OFF, UI hidden,
+            MA INCLUSE in Player_Stats lifetime
+
+COLUMN MAPPINGS HARDCODED (PROBLEMA NOTO):
+I mapping COL_* in sheet_utils.py sono hardcoded con indici fissi.
+- Soluzione attuale: Header validation (Opzione B) - valida ma non risolve
+- Soluzione futura: Dynamic mapping (Opzione A) - in TODO.md come priorità alta
+
+IMPORT CONFLICTS RISOLTI:
+safe_int/safe_float: Due versioni diverse esistono
+- app.py usa versione locale a 2 parametri
+- sheet_utils.py ha versione a 4 parametri
+- NON importare safe_int/safe_float da sheet_utils in app.py
+
+
+================================================================================
+LISTA TODO ESISTENTE - DA TENERE IN MEMORIA
+================================================================================
+
+File TODO.md contiene:
+
+PRIORITA' ALTA:
+1. Mapping dinamico delle colonne Google Sheets
+   - Problema: Mapping hardcoded, se qualcuno sposta colonne si rompe tutto
+   - Soluzione: Sistema di mapping dinamico che legge header dai fogli
+   - File da modificare: sheet_utils.py, app.py, import_base.py, player_stats.py,
+     rebuild_player_stats.py e tutti gli altri che usano COL_* mappings
+   - Rischio: MEDIO-ALTO (refactoring grande)
+   - Beneficio: Robustezza per negozianti non tecnici
+   - Status: DA FARE (non in questa sessione!)
+
+COMPLETATI:
+- Fix duplicate player cards (v2.4)
+- Fix ARCHIVED seasons escluse da Player_Stats (v2.4)
+- Validazione header Google Sheets - Opzione B (v2.4)
+
+NOTE: L'Opzione A (mapping dinamico) è il prossimo grande task DOPO questa
+sessione di deploy. NON va implementata ora.
+
+
+================================================================================
+STRUTTURA PROGETTO ATTUALE
+================================================================================
+
+LeagueForge/
+├── leagueforge/                    # Main app folder
+│   ├── app.py                      # Flask app
+│   ├── sheet_utils.py              # Column mappings + validation
+│   ├── player_stats.py             # Player_Stats CRUD
+│   ├── import_base.py              # Shared import logic
+│   ├── import_onepiece.py          # OP import
+│   ├── import_pokemon.py           # PKM import
+│   ├── import_riftbound.py         # RFB import
+│   ├── rebuild_player_stats.py     # Rebuild Player_Stats
+│   ├── init_database.py            # AUTO-CREATE sheets ← USARE QUESTO!
+│   ├── setup_achievements.py       # Setup achievement system
+│   ├── config.example.py           # Example config
+│   ├── routes/
+│   │   ├── admin.py
+│   │   └── achievements.py
+│   ├── templates/                  # HTML templates
+│   └── static/                     # CSS, images
+├── docs/                           # Complete documentation
+│   ├── SETUP.md                    # ← GUIDA COMPLETA SETUP
+│   ├── GOOGLE_SHEETS.md
+│   ├── PYTHON_SCRIPTS.md
+│   ├── TECHNICAL_NOTES.md
+│   └── ...
+├── tests/                          # Test suite
+├── TODO.md                         # Future improvements
+├── README.md
+└── requirements.txt
+
+
+================================================================================
+COSA NON FARE - IMPORTANTE!
+================================================================================
+
+NON suggerire di implementare mapping dinamico - è in TODO come task futuro
+NON modificare la logica Player_Stats - è già corretta e testata
+NON cambiare il comportamento ARCHIVED seasons - è stato discusso e finalizzato
+NON proporre refactoring non richiesti - focus su deploy e setup
+NON dimenticare la 13a colonna total_points quando crei Player_Stats
+NON ripetere discussioni già concluse (rebrand, deduplicazione, ecc.)
+NON creare manualmente i fogli - USA init_database.py!
+
+
+================================================================================
+OBIETTIVI SESSIONE
+================================================================================
+
+Al termine di questa sessione devo avere:
+
+1. Nuovo Google Sheet "LeagueForge_Database" configurato
+2. Tutti i fogli creati automaticamente con init_database.py
+3. Service account "leagueforge" connesso e funzionante
+4. Raccomandazione chiara su piattaforma hosting (con motivazione B2B/franchise)
+5. Web app deployata e accessibile online
+6. Test funzionamento completo (homepage, classifiche, players, achievement)
+7. Documentazione aggiornata con URL deploy e istruzioni finali
+
+
+================================================================================
+APPROCCIO RICHIESTO
+================================================================================
+
+- Sii proattivo: Usa gli script esistenti (init_database.py) invece di creare manualmente
+- Valuta alternative: Confronta hosting options considerando il modello franchise B2B
+- Testa sempre: Verifica ogni passo prima di procedere al successivo
+- Documenta: Annota SHEET_ID, URL deploy, credenziali usate
+- Sicurezza: Credenziali Google NON devono mai essere committate su git
+
+
+================================================================================
+INIZIA con la creazione del Google Sheet e l'esecuzione di init_database.py
+================================================================================
