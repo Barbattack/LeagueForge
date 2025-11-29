@@ -252,7 +252,7 @@ Un giocatore può avere più righe se gioca a TCG diversi (es. OP e PKM).
 
 **Completo (manuale):**
 ```bash
-cd leagueforge2
+cd leagueforge
 python rebuild_player_stats.py
 ```
 

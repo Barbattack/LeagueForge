@@ -51,7 +51,7 @@ _(Aggiungi qui future nice-to-have)_
 ### Fix ARCHIVED seasons escluse da Player_Stats
 - ✅ Problema: rebuild_player_stats.py escludeva stagioni ARCHIVED, quindi stats lifetime incomplete
 - ✅ Soluzione: Rimosso filtro ARCHIVED - ora include TUTTI i tornei storici
-- ✅ File modificato: `leagueforge2/rebuild_player_stats.py`
+- ✅ File modificato: `leagueforge/rebuild_player_stats.py`
 - ✅ Completato: 2025-11-28
 
 ### Validazione header Google Sheets (Opzione B)
@@ -59,7 +59,7 @@ _(Aggiungi qui future nice-to-have)_
 - ✅ Soluzione: Aggiunta funzione `validate_sheet_headers()` in sheet_utils.py
 - ✅ La funzione valida ordine e nomi colonne prima di operazioni critiche
 - ✅ Implementata in: route /players di app.py
-- ✅ File modificati: `leagueforge2/sheet_utils.py`, `leagueforge2/app.py`
+- ✅ File modificati: `leagueforge/sheet_utils.py`, `leagueforge/app.py`
 - ✅ Completato: 2025-11-28
 - ⚠️ NOTA: Questa è una soluzione temporanea. Per robustezza completa serve Opzione A (mapping dinamico) - vedi TODO priorità alta
 
