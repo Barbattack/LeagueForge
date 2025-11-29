@@ -1,8 +1,8 @@
-# 🔧 Technical Notes - TanaLeague
+# 🔧 Technical Notes - LeagueForge
 
 **Note tecniche di implementazione per sviluppatori**
 
-Questo documento contiene dettagli tecnici implementativi per la manutenzione e l'estensione del sistema TanaLeague. Per guide utente, vedere [IMPORT_GUIDE.md](IMPORT_GUIDE.md) e [SETUP.md](SETUP.md).
+Questo documento contiene dettagli tecnici implementativi per la manutenzione e l'estensione del sistema LeagueForge. Per guide utente, vedere [IMPORT_GUIDE.md](IMPORT_GUIDE.md) e [SETUP.md](SETUP.md).
 
 ---
 
@@ -146,7 +146,7 @@ def calculate_wlt_from_progression(progression: List[Dict]) -> Tuple[int, int, i
 
 Il file ClassificaFinale contiene l'OMW% calcolato dal software Bandai, letto direttamente.
 
-### Sistema Punti TanaLeague
+### Sistema Punti LeagueForge
 
 ```python
 # Punti vittoria = numero vittorie (W), NON win_points
@@ -286,13 +286,13 @@ def parse_wld_record(record_str: str) -> tuple:
 # Match points (Swiss system) - usato per ranking
 win_points = w * 3 + d * 1 + l * 0
 
-# TanaLeague points (UGUALE a Pokemon e One Piece!)
+# LeagueForge points (UGUALE a Pokemon e One Piece!)
 points_victory = w  # Numero di vittorie (NON win_points!)
 points_ranking = n_participants - (rank - 1)
 points_total = points_victory + points_ranking
 ```
 
-**IMPORTANTE:** `points_victory` per TUTTI i TCG è il numero di vittorie (W), NON win_points. Il sistema punti TanaLeague è uniforme tra Pokemon, One Piece e Riftbound.
+**IMPORTANTE:** `points_victory` per TUTTI i TCG è il numero di vittorie (W), NON win_points. Il sistema punti LeagueForge è uniforme tra Pokemon, One Piece e Riftbound.
 
 ### Ranking Calculation
 
@@ -391,10 +391,10 @@ def create_tournament_data(tournament_id, season_id, date, participants,
     }
 ```
 
-### Calcolo Punti TanaLeague
+### Calcolo Punti LeagueForge
 
 ```python
-def calculate_tanaleague_points(rank: int, wins: int, n_participants: int) -> Dict:
+def calculate_leagueforge_points(rank: int, wins: int, n_participants: int) -> Dict:
     """
     Sistema punti uniforme per tutti i TCG:
     - points_victory = numero vittorie (W)
@@ -748,7 +748,7 @@ else:
 
 ### parse_csv_rounds() - Riftbound
 
-File: `tanaleague2/import_riftbound.py`
+File: `leagueforge2/import_riftbound.py`
 
 Funzione chiave da consultare per:
 - Parsing CSV multi-round

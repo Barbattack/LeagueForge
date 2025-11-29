@@ -1,6 +1,6 @@
 # Guida Setup Nuovo Negozio
 
-Guida completa per configurare TanaLeague da zero per il tuo negozio.
+Guida completa per configurare LeagueForge da zero per il tuo negozio.
 
 **Tempo stimato: 30-45 minuti**
 
@@ -12,7 +12,7 @@ Guida completa per configurare TanaLeague da zero per il tuo negozio.
 2. [Creare Google Cloud Project](#2-creare-google-cloud-project)
 3. [Creare Service Account](#3-creare-service-account)
 4. [Creare Google Sheet](#4-creare-google-sheet)
-5. [Scaricare TanaLeague](#5-scaricare-tanaleague)
+5. [Scaricare LeagueForge](#5-scaricare-leagueforge)
 6. [Configurazione](#6-configurazione)
 7. [Inizializzazione Database](#7-inizializzazione-database)
 8. [Test con Dati Demo](#8-test-con-dati-demo)
@@ -53,7 +53,7 @@ Il Service Account permette all'app di accedere al Google Sheet.
 
 1. Click su **"Select a project"** (in alto)
 2. Click **"New Project"**
-3. Nome progetto: `TanaLeague` (o nome del tuo negozio)
+3. Nome progetto: `LeagueForge` (o nome del tuo negozio)
 4. Click **"Create"**
 5. Attendi creazione (30 secondi)
 
@@ -80,7 +80,7 @@ Il Service Account permette all'app di accedere al Google Sheet.
 1. Menu laterale: **APIs & Services** → **Credentials**
 2. Click **"+ Create Credentials"**
 3. Seleziona **"Service account"**
-4. Nome: `tanaleague-bot` (o simile)
+4. Nome: `leagueforge-bot` (o simile)
 5. Click **"Create and Continue"**
 6. Skip ruoli (click "Continue")
 7. Click **"Done"**
@@ -101,7 +101,7 @@ Il Service Account permette all'app di accedere al Google Sheet.
 
 Dalla pagina del Service Account, copia l'email tipo:
 ```
-tanaleague-bot@tuoprogetto.iam.gserviceaccount.com
+leagueforge-bot@tuoprogetto.iam.gserviceaccount.com
 ```
 
 Ti servirà nel prossimo step.
@@ -114,7 +114,7 @@ Ti servirà nel prossimo step.
 
 1. Vai su [sheets.google.com](https://sheets.google.com/)
 2. Click **"+ Blank"** (foglio vuoto)
-3. Rinomina: **"TanaLeague Database"** (o nome preferito)
+3. Rinomina: **"LeagueForge Database"** (o nome preferito)
 
 ### Step 4.2: Condividi con Service Account
 
@@ -137,18 +137,18 @@ Copialo, ti servirà nella configurazione.
 
 ---
 
-## 5. Scaricare TanaLeague
+## 5. Scaricare LeagueForge
 
 ### Opzione A: Con Git (consigliato)
 
 ```bash
-git clone https://github.com/TUOUSER/TanaLeague.git
-cd TanaLeague
+git clone https://github.com/TUOUSER/LeagueForge.git
+cd LeagueForge
 ```
 
 ### Opzione B: Download ZIP
 
-1. Vai su GitHub → Repository TanaLeague
+1. Vai su GitHub → Repository LeagueForge
 2. Click **"Code"** → **"Download ZIP"**
 3. Estrai lo ZIP
 4. Apri la cartella estratta
@@ -156,17 +156,17 @@ cd TanaLeague
 ### Step 5.1: Installa Dipendenze
 
 ```bash
-cd TanaLeague
+cd LeagueForge
 pip install -r requirements.txt
 ```
 
 ### Step 5.2: Copia File Credenziali
 
-Copia il file `service_account_credentials.json` nella cartella `tanaleague2/`:
+Copia il file `service_account_credentials.json` nella cartella `leagueforge2/`:
 
 ```
-TanaLeague/
-└── tanaleague2/
+LeagueForge/
+└── leagueforge2/
     ├── app.py
     ├── service_account_credentials.json  ← QUI
     └── ...
@@ -179,7 +179,7 @@ TanaLeague/
 ### Metodo Facile: Setup Wizard
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_wizard.py
 ```
 
@@ -223,13 +223,13 @@ python -c "from werkzeug.security import generate_password_hash; print(generate_
 Questo crea tutti i fogli necessari nel Google Sheet:
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python init_database.py
 ```
 
 Output atteso:
 ```
-🗄️  TANALEAGUE - DATABASE INITIALIZATION
+🗄️  LEAGUEFORGE - DATABASE INITIALIZATION
 
 📋 Creazione fogli...
   ✅ Config creato
@@ -352,7 +352,7 @@ Configura nginx come reverse proxy.
 ### Importa Primo Torneo
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # One Piece (da CSV)
 python import_onepiece.py --csv risultati.csv --season OP01
@@ -378,7 +378,7 @@ python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01
 - [ ] Google Cloud Project creato
 - [ ] Service Account con chiave JSON
 - [ ] Google Sheet creato e condiviso
-- [ ] TanaLeague scaricato
+- [ ] LeagueForge scaricato
 - [ ] config.py configurato
 - [ ] Database inizializzato (init_database.py)
 - [ ] check_setup.py tutto OK
@@ -434,4 +434,4 @@ Leggi gli errori e risolvi uno alla volta.
 
 ---
 
-**Buon divertimento con TanaLeague!** 🎮🏆
+**Buon divertimento con LeagueForge!** 🎮🏆

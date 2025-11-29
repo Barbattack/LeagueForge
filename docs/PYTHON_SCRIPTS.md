@@ -1,4 +1,4 @@
-# Script Python - TanaLeague
+# Script Python - LeagueForge
 
 Guida completa a tutti gli script Python eseguibili da terminale.
 
@@ -44,7 +44,7 @@ Guida completa a tutti gli script Python eseguibili da terminale.
 | `achievements.py` | Sistema achievement |
 | `cache.py` | Cache dati Google Sheets |
 
-**Posizione**: Tutti gli script sono in `tanaleague2/`
+**Posizione**: Tutti gli script sono in `leagueforge2/`
 
 ---
 
@@ -57,7 +57,7 @@ Crea backup completo del database Google Sheets in formato CSV.
 ### Comandi
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # Backup completo (tutti i fogli)
 python backup_sheets.py
@@ -122,13 +122,13 @@ Totale: 8 fogli, 1763 righe
 ```bash
 # Backup giornaliero alle 3:00
 crontab -e
-0 3 * * * cd /path/to/TanaLeague/tanaleague2 && python backup_sheets.py
+0 3 * * * cd /path/to/LeagueForge/leagueforge2 && python backup_sheets.py
 ```
 
 **PythonAnywhere:**
 1. Vai su Dashboard → Tab "Tasks"
 2. "Scheduled Tasks" → "Add new scheduled task"
-3. Command: `cd ~/TanaLeague/tanaleague2 && python backup_sheets.py`
+3. Command: `cd ~/LeagueForge/leagueforge2 && python backup_sheets.py`
 4. Time: 03:00 (o orario preferito)
 
 ---
@@ -142,7 +142,7 @@ Crea i fogli necessari per il sistema achievement nel Google Sheet.
 ### Comando
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_achievements.py
 ```
 
@@ -197,12 +197,12 @@ Gli script utilizzano il modulo `import_base.py` che centralizza:
 - Scrittura Results
 - Aggiornamento Players
 - Aggiornamento Seasonal_Standings
-- Calcolo punti TanaLeague
+- Calcolo punti LeagueForge
 
 ### Riferimento Rapido
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # One Piece (Multi-Round)
 python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
@@ -246,7 +246,7 @@ Avvia il server Flask per la webapp.
 ### Comando
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python app.py
 ```
 
@@ -311,7 +311,7 @@ pbkdf2:sha256:600000$abc123def456$789xyz...
 #### Test Connessione Google Sheets
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python -c "from cache import cache; print('Connesso!' if cache.connect_sheet() else 'Errore')"
 ```
 
@@ -331,7 +331,7 @@ pip list | grep -E "flask|gspread|pytest"
 #### Test Import Moduli
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python -c "import app; print('App OK')"
 python -c "import cache; print('Cache OK')"
 python -c "import achievements; print('Achievements OK')"
@@ -351,7 +351,7 @@ pip install -r requirements.txt
 ### Errore: FileNotFoundError config.py
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 cp config.example.py config.py
 # Poi modifica config.py con i tuoi valori
 ```
@@ -373,7 +373,7 @@ python script.py
 
 ```bash
 # Assicurati di essere nella cartella giusta
-cd tanaleague2
+cd leagueforge2
 python script.py
 
 # Oppure aggiungi al PYTHONPATH
@@ -387,7 +387,7 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 ### Uso Quotidiano
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # Avvia app
 python app.py
@@ -405,7 +405,7 @@ python backup_sheets.py
 ### Setup Iniziale
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # 1. Copia config
 cp config.example.py config.py
@@ -423,7 +423,7 @@ python app.py
 ### Manutenzione
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # Backup manuale
 python backup_sheets.py

@@ -1,6 +1,6 @@
 # 🚀 Guida Migrazione Server
 
-Guida passo-passo per migrare TanaLeague da PythonAnywhere a un nuovo server.
+Guida passo-passo per migrare LeagueForge da PythonAnywhere a un nuovo server.
 
 ---
 
@@ -20,9 +20,9 @@ Prima di iniziare, assicurati di avere:
 
 | File/Cartella | Descrizione | Note |
 |---------------|-------------|------|
-| `tanaleague2/` | Tutto il codice Python | Cartella principale |
-| `tanaleague2/config.py` | Configurazione con segreti | **NON è su GitHub!** |
-| `tanaleague2/service_account_credentials.json` | Credenziali Google | **NON è su GitHub!** |
+| `leagueforge2/` | Tutto il codice Python | Cartella principale |
+| `leagueforge2/config.py` | Configurazione con segreti | **NON è su GitHub!** |
+| `leagueforge2/service_account_credentials.json` | Credenziali Google | **NON è su GitHub!** |
 | `requirements.txt` | Dipendenze Python | Nella root |
 
 ### File Opzionali
@@ -41,7 +41,7 @@ Prima di iniziare, assicurati di avere:
 
 ```bash
 # Su PythonAnywhere, fai backup del Google Sheet
-cd ~/TanaLeague/tanaleague2
+cd ~/LeagueForge/leagueforge2
 python backup_sheets.py
 
 # Scarica la cartella backups/
@@ -49,7 +49,7 @@ python backup_sheets.py
 
 ### Step 2: Scarica File Segreti
 
-Da PythonAnywhere → Files → `~/TanaLeague/tanaleague2/`:
+Da PythonAnywhere → Files → `~/LeagueForge/leagueforge2/`:
 1. Scarica `config.py`
 2. Scarica `service_account_credentials.json`
 
@@ -59,11 +59,11 @@ Da PythonAnywhere → Files → `~/TanaLeague/tanaleague2/`:
 
 ```bash
 # 1. Crea cartella progetto
-mkdir -p ~/TanaLeague
-cd ~/TanaLeague
+mkdir -p ~/LeagueForge
+cd ~/LeagueForge
 
 # 2. Clona repository (se disponibile)
-git clone https://github.com/tuousername/TanaLeague.git .
+git clone https://github.com/tuousername/LeagueForge.git .
 
 # OPPURE: carica manualmente i file
 ```
@@ -71,7 +71,7 @@ git clone https://github.com/tuousername/TanaLeague.git .
 ### Step 4: Carica File Segreti
 
 ```bash
-# Carica i file segreti nella cartella tanaleague2/
+# Carica i file segreti nella cartella leagueforge2/
 # - config.py
 # - service_account_credentials.json
 ```
@@ -94,7 +94,7 @@ pip install -r requirements.txt
 ### Step 6: Verifica Configurazione
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # Verifica che config.py esista
 ls -la config.py
@@ -109,7 +109,7 @@ python -c "from cache import cache; print(cache.connect_sheet())"
 ### Step 7: Test Locale
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python app.py
 
 # Apri browser su http://localhost:5000
@@ -124,7 +124,7 @@ python app.py
 pip install gunicorn
 
 # Avvia con gunicorn
-cd tanaleague2
+cd leagueforge2
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
@@ -133,22 +133,22 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 Crea file `wsgi.py`:
 ```python
 import sys
-sys.path.insert(0, '/path/to/TanaLeague/tanaleague2')
+sys.path.insert(0, '/path/to/LeagueForge/leagueforge2')
 
 from app import app as application
 ```
 
 #### Opzione C: Systemd Service
 
-Crea `/etc/systemd/system/tanaleague.service`:
+Crea `/etc/systemd/system/leagueforge.service`:
 ```ini
 [Unit]
-Description=TanaLeague Flask App
+Description=LeagueForge Flask App
 After=network.target
 
 [Service]
 User=www-data
-WorkingDirectory=/path/to/TanaLeague/tanaleague2
+WorkingDirectory=/path/to/LeagueForge/leagueforge2
 ExecStart=/usr/bin/gunicorn -w 4 -b 127.0.0.1:5000 app:app
 Restart=always
 
@@ -157,8 +157,8 @@ WantedBy=multi-user.target
 ```
 
 ```bash
-sudo systemctl enable tanaleague
-sudo systemctl start tanaleague
+sudo systemctl enable leagueforge
+sudo systemctl start leagueforge
 ```
 
 ### Step 9: Configura Reverse Proxy (Opzionale)
@@ -251,9 +251,9 @@ pip install -r requirements.txt
 
 ```bash
 # Verifica permessi cartella
-chmod -R 755 ~/TanaLeague
-chmod 600 tanaleague2/config.py
-chmod 600 tanaleague2/service_account_credentials.json
+chmod -R 755 ~/LeagueForge
+chmod 600 leagueforge2/config.py
+chmod 600 leagueforge2/service_account_credentials.json
 ```
 
 ### Errore: Port already in use
@@ -270,7 +270,7 @@ gunicorn -w 4 -b 0.0.0.0:8080 app:app
 1. **Google Sheets**: Non serve migrare! I dati sono su Google Cloud
 2. **Service Account**: Le credenziali funzionano ovunque
 3. **Cache**: Si ricrea automaticamente al primo avvio
-4. **Logs**: Si creano automaticamente in `tanaleague2/logs/`
+4. **Logs**: Si creano automaticamente in `leagueforge2/logs/`
 
 ---
 

@@ -1,4 +1,4 @@
-# Quick Reference - TanaLeague
+# Quick Reference - LeagueForge
 
 Cheatsheet rapido per le operazioni comuni.
 
@@ -25,7 +25,7 @@ pytest -k "landing"
 pytest -x
 
 # Coverage report
-pytest --cov=tanaleague2
+pytest --cov=leagueforge2
 ```
 
 ### Git
@@ -50,7 +50,7 @@ git log --oneline -10
 
 ```bash
 # Naviga alla cartella
-cd tanaleague2
+cd leagueforge2
 
 # Avvia app Flask
 python app.py
@@ -82,30 +82,30 @@ python app.py
 
 | File | Scopo |
 |------|-------|
-| `tanaleague2/app.py` | Applicazione Flask principale |
-| `tanaleague2/cache.py` | Gestione cache Google Sheets |
-| `tanaleague2/achievements.py` | Logica achievement |
-| `tanaleague2/routes/admin.py` | Route admin panel |
-| `tanaleague2/routes/achievements.py` | Route achievement |
+| `leagueforge2/app.py` | Applicazione Flask principale |
+| `leagueforge2/cache.py` | Gestione cache Google Sheets |
+| `leagueforge2/achievements.py` | Logica achievement |
+| `leagueforge2/routes/admin.py` | Route admin panel |
+| `leagueforge2/routes/achievements.py` | Route achievement |
 
 ### Script Import
 
 | File | Scopo |
 |------|-------|
-| `tanaleague2/import_base.py` | Funzioni comuni import |
-| `tanaleague2/import_onepiece.py` | Import One Piece multi-round |
-| `tanaleague2/import_riftbound.py` | Import Riftbound multi-round |
-| `tanaleague2/import_pokemon.py` | Import Pokemon TDF |
-| `tanaleague2/sheet_utils.py` | Mappature colonne sheets |
-| `tanaleague2/player_stats.py` | CRUD Player_Stats |
+| `leagueforge2/import_base.py` | Funzioni comuni import |
+| `leagueforge2/import_onepiece.py` | Import One Piece multi-round |
+| `leagueforge2/import_riftbound.py` | Import Riftbound multi-round |
+| `leagueforge2/import_pokemon.py` | Import Pokemon TDF |
+| `leagueforge2/sheet_utils.py` | Mappature colonne sheets |
+| `leagueforge2/player_stats.py` | CRUD Player_Stats |
 
 ### Configurazione
 
 | File | Scopo |
 |------|-------|
-| `tanaleague2/config.py` | Credenziali e settings (NON su Git!) |
-| `tanaleague2/config.example.py` | Template config |
-| `tanaleague2/service_account_credentials.json` | Credenziali Google (NON su Git!) |
+| `leagueforge2/config.py` | Credenziali e settings (NON su Git!) |
+| `leagueforge2/config.example.py` | Template config |
+| `leagueforge2/service_account_credentials.json` | Credenziali Google (NON su Git!) |
 | `requirements.txt` | Dipendenze Python |
 
 ### Test
@@ -123,21 +123,21 @@ python app.py
 ### One Piece (Multi-Round)
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
 ```
 
 ### Riftbound (Multi-Round)
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 ```
 
 ### Pokemon (TDF)
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python import_pokemon.py --tdf file.tdf --season PKM01
 ```
 
@@ -172,8 +172,8 @@ Per forzare refresh: riavvia app o usa import admin.
 
 ```
 /home/Pulci/
-└── TanaLeague/
-    ├── tanaleague2/      # Codice Python
+└── LeagueForge/
+    ├── leagueforge2/      # Codice Python
     │   ├── app.py
     │   ├── config.py     # File segreto
     │   ├── routes/       # Blueprint routes
@@ -191,13 +191,13 @@ Per forzare refresh: riavvia app o usa import admin.
 
 1. Tab "Web"
 2. Click su "Error log" o "Server log"
-3. Oppure: Files → `tanaleague2/logs/`
+3. Oppure: Files → `leagueforge2/logs/`
 
 ### Aggiornare Codice
 
 ```bash
 # Da console PythonAnywhere
-cd ~/TanaLeague
+cd ~/LeagueForge
 git pull origin main
 # Poi reload webapp
 ```
@@ -225,7 +225,7 @@ python -c "from werkzeug.security import generate_password_hash; print(generate_
 ### Backup Google Sheets
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python backup_sheets.py
 # File salvati in backups/
 ```
@@ -233,8 +233,8 @@ python backup_sheets.py
 ### Backup Manuale Files
 
 Scarica da PythonAnywhere:
-- `tanaleague2/config.py`
-- `tanaleague2/service_account_credentials.json`
+- `leagueforge2/config.py`
+- `leagueforge2/service_account_credentials.json`
 
 ---
 
@@ -253,7 +253,7 @@ Scarica da PythonAnywhere:
 
 ## Links Utili
 
-- **Repository**: GitHub TanaLeague
+- **Repository**: GitHub LeagueForge
 - **PythonAnywhere**: pythonanywhere.com
 - **Google Sheet**: Link nel config.py (SHEET_ID)
 - **pytest docs**: docs.pytest.org
@@ -318,9 +318,9 @@ python rebuild_player_stats.py --test
 3: rank              | Tournament placement
 4: win_points        | Bandai win points (OP/RB)
 5: omw               | Opponent Match Win %
-6: points_victory    | TanaLeague victory points
-7: points_ranking    | TanaLeague ranking points
-8: points_total      | Total TanaLeague points
+6: points_victory    | LeagueForge victory points
+7: points_ranking    | LeagueForge ranking points
+8: points_total      | Total LeagueForge points
 9: name              | Player display name
 10: match_w          | Matches won
 11: match_t          | Matches tied

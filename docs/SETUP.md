@@ -1,6 +1,6 @@
-# 🔧 Setup e Installazione TanaLeague
+# 🔧 Setup e Installazione LeagueForge
 
-Guida completa per configurare TanaLeague da zero, sia in locale che su PythonAnywhere.
+Guida completa per configurare LeagueForge da zero, sia in locale che su PythonAnywhere.
 
 ---
 
@@ -39,7 +39,7 @@ Guida completa per configurare TanaLeague da zero, sia in locale che su PythonAn
 
 1. Vai su [Google Cloud Console](https://console.cloud.google.com/)
 2. Click su **Select a Project** → **New Project**
-3. Nome progetto: `TanaLeague` (o altro nome)
+3. Nome progetto: `LeagueForge` (o altro nome)
 4. Click **Create**
 
 ### 2. Abilita Google Sheets API
@@ -52,7 +52,7 @@ Guida completa per configurare TanaLeague da zero, sia in locale che su PythonAn
 
 1. Vai su **APIs & Services** → **Credentials**
 2. Click **Create Credentials** → **Service Account**
-3. Nome: `tanaleague-service`
+3. Nome: `leagueforge-service`
 4. Role: **Editor** (o **Owner** se hai permessi)
 5. Click **Done**
 
@@ -80,12 +80,12 @@ echo "service_account_credentials.json" >> .gitignore
 
 1. Vai su [Google Sheets](https://sheets.google.com/)
 2. Click **Blank** per creare nuovo foglio
-3. Rinomina: `TanaLeague_Database`
+3. Rinomina: `LeagueForge_Database`
 
 ### 2. Condividi con Service Account
 
 1. Apri il file `service_account_credentials.json` appena scaricato
-2. Copia il valore del campo `client_email` (es. `tanaleague-service@project-id.iam.gserviceaccount.com`)
+2. Copia il valore del campo `client_email` (es. `leagueforge-service@project-id.iam.gserviceaccount.com`)
 3. Nel Google Sheet, click **Share** in alto a destra
 4. Incolla l'email del service account
 5. Permessi: **Editor**
@@ -165,7 +165,7 @@ RFB01        RFB   Riftbound S1      1           ACTIVE    0          0         
 
 ```bash
 git clone <repository-url>
-cd TanaLeague
+cd LeagueForge
 ```
 
 Oppure download ZIP da GitHub e decomprimi.
@@ -199,16 +199,16 @@ pdfplumber==0.10.2
 
 ### 4. Configura Credenziali
 
-Copia il file `service_account_credentials.json` nella cartella `tanaleague2/`:
+Copia il file `service_account_credentials.json` nella cartella `leagueforge2/`:
 
 ```bash
-cp /path/to/service_account_credentials.json tanaleague2/
+cp /path/to/service_account_credentials.json leagueforge2/
 ```
 
 **Verifica posizione**:
 ```
-TanaLeague/
-├── tanaleague2/
+LeagueForge/
+├── leagueforge2/
 │   ├── service_account_credentials.json  ← QUI
 │   ├── app.py
 │   ├── ...
@@ -216,7 +216,7 @@ TanaLeague/
 
 ### 5. Configura SHEET_ID
 
-Apri `tanaleague2/config.py` e modifica:
+Apri `leagueforge2/config.py` e modifica:
 
 ```python
 # config.py
@@ -235,7 +235,7 @@ SHEET_ID = "1abc123def456ghi789"  # ← Inserisci il tuo
 Test rapido per verificare connessione Google Sheets:
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python3
 ```
 
@@ -248,7 +248,7 @@ python3
 >>> client = gspread.authorize(creds)
 >>> sheet = client.open_by_key('1abc123def456ghi789')  # Tuo SHEET_ID
 >>> print(sheet.title)
-TanaLeague_Database
+LeagueForge_Database
 >>> exit()
 ```
 
@@ -257,7 +257,7 @@ Se vedi il nome del foglio, **la connessione funziona!** ✅
 ### 7. Run App Locale
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python app.py
 ```
 
@@ -290,21 +290,21 @@ Nel Bash console di PythonAnywhere:
 ```bash
 cd ~
 git clone <repository-url>
-cd TanaLeague
+cd LeagueForge
 ```
 
 **Opzione B: Upload Manuale**
 
 1. Tab **Files**
 2. Naviga in `/home/yourusername/`
-3. Upload cartella `TanaLeague` (file by file o ZIP)
+3. Upload cartella `LeagueForge` (file by file o ZIP)
 
 ### 3. Upload Credenziali
 
 **IMPORTANTE**: Non caricare `service_account_credentials.json` tramite git!
 
 1. Tab **Files**
-2. Naviga in `/home/yourusername/TanaLeague/tanaleague2/`
+2. Naviga in `/home/yourusername/LeagueForge/leagueforge2/`
 3. Click **Upload a file**
 4. Seleziona `service_account_credentials.json` dal tuo computer
 
@@ -313,7 +313,7 @@ cd TanaLeague
 Apri **Bash console** in PythonAnywhere:
 
 ```bash
-cd ~/TanaLeague
+cd ~/LeagueForge
 pip install --user -r requirements.txt
 ```
 
@@ -328,7 +328,7 @@ pip install --user -r requirements.txt
 2. Click **Add a new web app**
 3. Framework: **Flask**
 4. Python version: **3.8** o superiore
-5. Path: `/home/yourusername/TanaLeague/tanaleague2/app.py`
+5. Path: `/home/yourusername/LeagueForge/leagueforge2/app.py`
 
 ### 6. Configura WSGI File
 
@@ -340,7 +340,7 @@ Sostituisci contenuto con:
 import sys
 
 # Aggiungi path progetto
-sys.path.insert(0, '/home/yourusername/TanaLeague/tanaleague2')
+sys.path.insert(0, '/home/yourusername/LeagueForge/leagueforge2')
 
 # Import app Flask
 from app import app as application
@@ -356,7 +356,7 @@ Nel tab **Web**, sezione **Static files**:
 
 | URL | Directory |
 |-----|-----------|
-| `/static/` | `/home/yourusername/TanaLeague/tanaleague2/static/` |
+| `/static/` | `/home/yourusername/LeagueForge/leagueforge2/static/` |
 
 ### 8. Reload Web App
 
@@ -381,14 +381,14 @@ Dopo aver configurato Google Sheets e app, setup achievement system.
 **In locale**:
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_achievements.py
 ```
 
 **Su PythonAnywhere** (Bash console):
 
 ```bash
-cd ~/TanaLeague/tanaleague2
+cd ~/LeagueForge/leagueforge2
 python setup_achievements.py
 ```
 
@@ -397,7 +397,7 @@ python setup_achievements.py
 ```
 🚀 SETUP ACHIEVEMENT SYSTEM
 📋 Connessione a Google Sheets...
-   ✅ Sheet: TanaLeague_Database
+   ✅ Sheet: LeagueForge_Database
 
 🔍 Check fogli esistenti...
    ⚠️  Foglio 'Achievement_Definitions' non trovato
@@ -497,7 +497,7 @@ Per nascondere stagioni vecchie dall'UI:
 - [ ] Config sheet popolato con almeno 1 stagione
 - [ ] Repository clonato o scaricato
 - [ ] Dipendenze Python installate
-- [ ] `service_account_credentials.json` copiato in `tanaleague2/`
+- [ ] `service_account_credentials.json` copiato in `leagueforge2/`
 - [ ] `SHEET_ID` configurato in `config.py` o import scripts
 - [ ] Test connessione Google Sheets riuscito
 - [ ] App Flask avviata e accessibile su localhost
@@ -511,7 +511,7 @@ Prova import di test per verificare tutto funzioni:
 **One Piece (CSV)**:
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python import_onepiece.py --csv test_tournament.csv --season OP12 --test
 ```
 
@@ -563,9 +563,9 @@ Se tutte le pagine caricano senza errori 500, **webapp OK!**
 **Soluzione**:
 ```bash
 # Verifica posizione file
-ls tanaleague2/service_account_credentials.json
+ls leagueforge2/service_account_credentials.json
 
-# Deve esistere in tanaleague2/, NON in root!
+# Deve esistere in leagueforge2/, NON in root!
 ```
 
 ### Errore: "ModuleNotFoundError: No module named 'gspread'"
@@ -586,7 +586,7 @@ pip install --user -r requirements.txt
 
 **Soluzione**:
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_achievements.py
 ```
 

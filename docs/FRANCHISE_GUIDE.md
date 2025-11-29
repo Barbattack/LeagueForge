@@ -1,6 +1,6 @@
-# TanaLeague - Guida Franchise
+# LeagueForge - Guida Franchise
 
-Guida completa per gestire il modello franchise di TanaLeague.
+Guida completa per gestire il modello franchise di LeagueForge.
 
 ## Panoramica
 
@@ -27,19 +27,19 @@ Il modello franchise ti permette di:
 ### 1. Crea il Service Account
 
 1. Vai su [Google Cloud Console](https://console.cloud.google.com/)
-2. Crea un nuovo progetto: "TanaLeague-Franchise"
+2. Crea un nuovo progetto: "LeagueForge-Franchise"
 3. Abilita le API:
    - Google Sheets API
    - Google Drive API
 4. Crea un Service Account:
-   - Nome: "tanaleague-franchise"
+   - Nome: "leagueforge-franchise"
    - Scarica il file JSON delle chiavi
-5. Salva il file come `credentials.json` nella cartella `tanaleague2/`
+5. Salva il file come `credentials.json` nella cartella `leagueforge2/`
 
 ### 2. Configura il Tuo Ambiente
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_wizard.py
 ```
 
@@ -59,7 +59,7 @@ Verifica che tutto funzioni sul tuo sistema.
 ### Comando Rapido
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python create_store_package.py
 ```
 
@@ -73,7 +73,7 @@ python create_store_package.py
 2. **Inserisci i dati**:
    - Nome negozio (es. "Game Corner Milano")
    - Email del negozio (per condividere il Google Sheet)
-   - Password admin (default: tanaleague123)
+   - Password admin (default: leagueforge123)
 
 3. **Lo script automaticamente**:
    - Crea un nuovo Google Sheet per il negozio
@@ -82,14 +82,14 @@ python create_store_package.py
    - Genera un pacchetto ZIP pre-configurato
 
 4. **Output**:
-   - File ZIP: `packages/TanaLeague_NomeNegozio.zip`
+   - File ZIP: `packages/LeagueForge_NomeNegozio.zip`
    - Link Google Sheet per condivisione
 
 ### Contenuto del Pacchetto ZIP
 
 ```
-TanaLeague_NomeNegozio/
-├── tanaleague2/
+LeagueForge_NomeNegozio/
+├── leagueforge2/
 │   ├── app.py
 │   ├── config.py          # Pre-configurato!
 │   ├── credentials.json   # Le TUE credenziali
@@ -132,11 +132,11 @@ Quando invii il pacchetto a un negozio, includi queste istruzioni:
 
 ```bash
 # Estrai lo ZIP
-unzip TanaLeague_NomeNegozio.zip
-cd TanaLeague_NomeNegozio
+unzip LeagueForge_NomeNegozio.zip
+cd LeagueForge_NomeNegozio
 
 # Installa (prima volta)
-cd tanaleague2
+cd leagueforge2
 pip3 install -r requirements.txt
 
 # Avvia

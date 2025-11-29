@@ -1,4 +1,4 @@
-# Struttura Google Sheets - TanaLeague
+# Struttura Google Sheets - LeagueForge
 
 Guida completa alla struttura del database Google Sheets.
 
@@ -21,7 +21,7 @@ Guida completa alla struttura del database Google Sheets.
 
 ## Panoramica
 
-Il database TanaLeague usa un singolo Google Sheet con piu fogli (worksheets).
+Il database LeagueForge usa un singolo Google Sheet con piu fogli (worksheets).
 
 ### Lista Fogli
 
@@ -123,9 +123,9 @@ Risultati individuali di ogni giocatore in ogni torneo.
 | Record | String | W-L o W-T-L | 4-0, 3-0-1 |
 | Win_Points | Number | Punti vittoria (W*3+T*1) | 12 |
 | OMW | Number | Opponent Match Win % | 65.5 |
-| Points_Victory | Number | Punti TanaLeague (vittorie) | 4 |
-| Points_Ranking | Number | Punti TanaLeague (posizione) | 16 |
-| Points_Total | Number | Totale punti TanaLeague | 20 |
+| Points_Victory | Number | Punti LeagueForge (vittorie) | 4 |
+| Points_Ranking | Number | Punti LeagueForge (posizione) | 16 |
+| Points_Total | Number | Totale punti LeagueForge | 20 |
 | Match_W | Number | Vittorie match | 4 |
 | Match_T | Number | Pareggi match | 0 |
 | Match_L | Number | Sconfitte match | 0 |
@@ -160,7 +160,7 @@ Anagrafica giocatori con statistiche lifetime.
 | Match_W | Number | Vittorie match lifetime | 82 |
 | Match_T | Number | Pareggi match lifetime | 3 |
 | Match_L | Number | Sconfitte match lifetime | 15 |
-| Total_Points | Number | Punti TanaLeague totali | 450 |
+| Total_Points | Number | Punti LeagueForge totali | 450 |
 
 ### Chiave Primaria
 
@@ -236,7 +236,7 @@ Viene utilizzato dalla route `/players` della webapp per mostrare le card dei gi
 | Last Date | Date | Data ultimo torneo | 2025-11-23 |
 | Seasons Count | Number | Stagioni diverse giocate | 4 |
 | Updated At | DateTime | Ultimo aggiornamento | 2025-11-23 14:30 |
-| Total Points | Number | Punti TanaLeague totali lifetime | 450.0 |
+| Total Points | Number | Punti LeagueForge totali lifetime | 450.0 |
 
 ### Chiave Primaria Composta
 
@@ -252,7 +252,7 @@ Un giocatore può avere più righe se gioca a TCG diversi (es. OP e PKM).
 
 **Completo (manuale):**
 ```bash
-cd tanaleague2
+cd leagueforge2
 python rebuild_player_stats.py
 ```
 

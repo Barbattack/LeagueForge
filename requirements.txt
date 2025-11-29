@@ -1,5 +1,5 @@
 # =============================================================================
-# TanaLeague - Requirements
+# LeagueForge - Requirements
 # =============================================================================
 # Installa con: pip install -r requirements.txt
 # Aggiorna con: pip install --upgrade -r requirements.txt

@@ -1,5 +1,5 @@
 """
-TanaLeague - App Tests
+LeagueForge - App Tests
 ======================
 
 Test delle route Flask principali.
@@ -23,7 +23,7 @@ class TestPublicPages:
         """Homepage deve caricare con status 200."""
         response = client.get('/')
         assert response.status_code == 200
-        assert b'TanaLeague' in response.data
+        assert b'LeagueForge' in response.data
 
     def test_classifiche_page_loads(self, client):
         """Pagina classifiche deve caricare."""

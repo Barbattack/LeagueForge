@@ -1,6 +1,6 @@
-# 🛠️ Guida Sviluppo - TanaLeague
+# 🛠️ Guida Sviluppo - LeagueForge
 
-Guida pratica per sviluppatori e manutentori di TanaLeague.
+Guida pratica per sviluppatori e manutentori di LeagueForge.
 
 ---
 
@@ -24,7 +24,7 @@ Guida pratica per sviluppatori e manutentori di TanaLeague.
 ```bash
 # 1. Clona il repository
 git clone <url-repository>
-cd TanaLeague
+cd LeagueForge
 
 # 2. Crea ambiente virtuale (opzionale ma consigliato)
 python -m venv venv
@@ -35,7 +35,7 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 
 # 4. Avvia l'app
-cd tanaleague2
+cd leagueforge2
 python app.py
 ```
 
@@ -43,7 +43,7 @@ python app.py
 
 ```bash
 # 1. Vai nella directory del progetto
-cd ~/TanaLeague
+cd ~/LeagueForge
 
 # 2. Installa/aggiorna dipendenze
 pip install --user -r requirements.txt
@@ -55,7 +55,7 @@ pip install --user -r requirements.txt
 
 ## 🖥️ Setup Locale Completo (Windows/Mac/Linux)
 
-Questa sezione spiega come configurare l'ambiente locale per testare TanaLeague sul tuo PC.
+Questa sezione spiega come configurare l'ambiente locale per testare LeagueForge sul tuo PC.
 
 ### Prerequisiti
 
@@ -67,8 +67,8 @@ Questa sezione spiega come configurare l'ambiente locale per testare TanaLeague 
 
 ```bash
 # Clona il repo
-git clone https://github.com/tuousername/TanaLeague.git
-cd TanaLeague
+git clone https://github.com/tuousername/LeagueForge.git
+cd LeagueForge
 
 # Installa dipendenze
 pip install -r requirements.txt
@@ -82,23 +82,23 @@ Questi file contengono credenziali e NON sono nel repository Git (sono in `.giti
 
 | File su PythonAnywhere | Copia in locale |
 |------------------------|-----------------|
-| `~/TanaLeague/tanaleague2/config.py` | `tanaleague2/config.py` |
-| `~/TanaLeague/tanaleague2/service_account_credentials.json` | `tanaleague2/service_account_credentials.json` |
+| `~/LeagueForge/leagueforge2/config.py` | `leagueforge2/config.py` |
+| `~/LeagueForge/leagueforge2/service_account_credentials.json` | `leagueforge2/service_account_credentials.json` |
 
 **Come copiare da PythonAnywhere:**
 
 1. Vai su PythonAnywhere → **Files**
-2. Naviga a `~/TanaLeague/tanaleague2/`
+2. Naviga a `~/LeagueForge/leagueforge2/`
 3. Clicca su `config.py` → **Download**
 4. Clicca su `service_account_credentials.json` → **Download**
-5. Metti i file scaricati nella cartella `tanaleague2/` del tuo PC
+5. Metti i file scaricati nella cartella `leagueforge2/` del tuo PC
 
 ### Step 3 (Alternativo): Crea config.py da zero
 
 Se non vuoi copiare il config.py esistente, puoi crearne uno nuovo:
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 cp config.example.py config.py
 ```
 
@@ -138,7 +138,7 @@ Copia l'output (inizia con `pbkdf2:`) e incollalo in `config.py` come valore di 
 ### Step 4: Avvia l'applicazione
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python app.py
 ```
 
@@ -175,7 +175,7 @@ pip install -r requirements.txt
 
 ```bash
 # Crea config.py dal template
-cd tanaleague2
+cd leagueforge2
 cp config.example.py config.py
 # Poi modifica config.py con i tuoi valori
 ```
@@ -190,7 +190,7 @@ cp config.example.py config.py
 
 ```bash
 # Verifica che il file credentials esista
-ls tanaleague2/service_account_credentials.json
+ls leagueforge2/service_account_credentials.json
 
 # Se non esiste, copialo da PythonAnywhere
 ```
@@ -205,7 +205,7 @@ python app.py --port 5001
 
 #### L'app parte ma le pagine mostrano errori
 
-1. Controlla i log: `tanaleague2/logs/tanaleague.log`
+1. Controlla i log: `leagueforge2/logs/leagueforge.log`
 2. Verifica connessione a Google Sheets
 3. Verifica che il Google Sheet abbia tutti i fogli necessari
 
@@ -213,8 +213,8 @@ python app.py --port 5001
 
 - [ ] Repository clonato
 - [ ] `pip install -r requirements.txt` eseguito
-- [ ] `config.py` presente in `tanaleague2/`
-- [ ] `service_account_credentials.json` presente in `tanaleague2/`
+- [ ] `config.py` presente in `leagueforge2/`
+- [ ] `service_account_credentials.json` presente in `leagueforge2/`
 - [ ] `SHEET_ID` configurato correttamente
 - [ ] `SECRET_KEY` configurato
 - [ ] `ADMIN_PASSWORD_HASH` configurato
@@ -229,7 +229,7 @@ python app.py --port 5001
 
 È un file che elenca tutte le librerie Python necessarie con le versioni esatte.
 
-**Posizione:** `/home/user/TanaLeague/requirements.txt`
+**Posizione:** `/home/user/LeagueForge/requirements.txt`
 
 ### Perché è importante?
 
@@ -279,7 +279,7 @@ pytest-cov>=4.1.0     # Coverage test (solo sviluppo)
 
 Un sistema per registrare cosa succede nell'applicazione, salvando i messaggi su file.
 
-**Posizione:** `/home/user/TanaLeague/tanaleague2/logger.py`
+**Posizione:** `/home/user/LeagueForge/leagueforge2/logger.py`
 
 ### Perché usare logging invece di print()?
 
@@ -315,20 +315,20 @@ logger.error("Errore durante import")
 ### Dove vanno i log
 
 ```
-tanaleague2/logs/
-├── tanaleague.log        # Log principale (INFO e superiori)
-└── tanaleague_debug.log  # Log dettagliato (solo in debug mode)
+leagueforge2/logs/
+├── leagueforge.log        # Log principale (INFO e superiori)
+└── leagueforge_debug.log  # Log dettagliato (solo in debug mode)
 ```
 
 ### Attivare modalità debug
 
 ```bash
 # Linux/Mac
-export TANALEAGUE_DEBUG=true
+export LEAGUEFORGE_DEBUG=true
 python app.py
 
 # Windows
-set TANALEAGUE_DEBUG=true
+set LEAGUEFORGE_DEBUG=true
 python app.py
 ```
 
@@ -336,13 +336,13 @@ python app.py
 
 ```bash
 # Ultimi 50 messaggi
-tail -50 tanaleague2/logs/tanaleague.log
+tail -50 leagueforge2/logs/leagueforge.log
 
 # Seguire in tempo reale
-tail -f tanaleague2/logs/tanaleague.log
+tail -f leagueforge2/logs/leagueforge.log
 
 # Cercare errori
-grep "ERROR" tanaleague2/logs/tanaleague.log
+grep "ERROR" leagueforge2/logs/leagueforge.log
 ```
 
 ---
@@ -353,7 +353,7 @@ grep "ERROR" tanaleague2/logs/tanaleague.log
 
 Codice che verifica automaticamente che l'applicazione funzioni correttamente.
 
-**Posizione:** `/home/user/TanaLeague/tests/`
+**Posizione:** `/home/user/LeagueForge/tests/`
 
 ### Perché sono importanti?
 
@@ -375,7 +375,7 @@ tests/
 
 **Tutti i test:**
 ```bash
-cd /home/user/TanaLeague
+cd /home/user/LeagueForge
 pytest
 ```
 
@@ -399,7 +399,7 @@ E       AssertionError: Expected 200, got 500
 pytest -v                      # Output dettagliato
 pytest tests/test_app.py       # Solo test specifici
 pytest -k "landing"            # Solo test con "landing" nel nome
-pytest --cov=tanaleague2       # Mostra quanto codice è testato
+pytest --cov=leagueforge2       # Mostra quanto codice è testato
 ```
 
 ### Quando eseguire i test
@@ -418,7 +418,7 @@ pytest --cov=tanaleague2       # Mostra quanto codice è testato
 **CI** = Continuous Integration: Test automatici ad ogni push
 **CD** = Continuous Deployment: Deploy automatico (non ancora attivo)
 
-**Posizione:** `/home/user/TanaLeague/.github/workflows/test.yml`
+**Posizione:** `/home/user/LeagueForge/.github/workflows/test.yml`
 
 ### Come funziona
 
@@ -462,15 +462,15 @@ pytest --cov=tanaleague2       # Mostra quanto codice è testato
 
 | File locale | Destinazione PythonAnywhere |
 |-------------|----------------------------|
-| `requirements.txt` | `~/TanaLeague/requirements.txt` |
-| `tanaleague2/logger.py` | `~/TanaLeague/tanaleague2/logger.py` |
-| `tests/` (cartella) | `~/TanaLeague/tests/` (opzionale, solo per test) |
+| `requirements.txt` | `~/LeagueForge/requirements.txt` |
+| `leagueforge2/logger.py` | `~/LeagueForge/leagueforge2/logger.py` |
+| `tests/` (cartella) | `~/LeagueForge/tests/` (opzionale, solo per test) |
 | `.github/` (cartella) | NON serve su PythonAnywhere (solo GitHub) |
 
 ### Struttura completa progetto
 
 ```
-TanaLeague/
+LeagueForge/
 ├── requirements.txt              # Dipendenze Python
 ├── pytest.ini                    # Config test
 ├── .gitignore                    # File esclusi da Git
@@ -485,7 +485,7 @@ TanaLeague/
 │   ├── test_app.py
 │   └── test_achievements.py
 │
-├── tanaleague2/
+├── leagueforge2/
 │   ├── app.py                    # App principale (route pubbliche)
 │   ├── routes/                   # ⬅️ NUOVO: Blueprint modulari
 │   │   ├── __init__.py           #   Registration blueprints
@@ -497,7 +497,7 @@ TanaLeague/
 │   ├── config.example.py         # Template per config.py
 │   ├── logger.py                 # Sistema logging
 │   ├── logs/                     # Cartella log (creata auto)
-│   │   └── tanaleague.log
+│   │   └── leagueforge.log
 │   ├── backup_sheets.py          # Script backup Google Sheets
 │   └── ... (altri file)
 │
@@ -517,12 +517,12 @@ TanaLeague/
 | Installare dipendenze | `pip install -r requirements.txt` |
 | Eseguire test | `pytest` |
 | Test con dettagli | `pytest -v` |
-| Test con coverage | `pytest --cov=tanaleague2` |
-| Vedere ultimi log | `tail -50 tanaleague2/logs/tanaleague.log` |
-| Seguire log live | `tail -f tanaleague2/logs/tanaleague.log` |
-| Cercare errori nei log | `grep "ERROR" tanaleague2/logs/tanaleague.log` |
-| Attivare debug | `export TANALEAGUE_DEBUG=true` |
-| Avviare app locale | `cd tanaleague2 && python app.py` |
+| Test con coverage | `pytest --cov=leagueforge2` |
+| Vedere ultimi log | `tail -50 leagueforge2/logs/leagueforge.log` |
+| Seguire log live | `tail -f leagueforge2/logs/leagueforge.log` |
+| Cercare errori nei log | `grep "ERROR" leagueforge2/logs/leagueforge.log` |
+| Attivare debug | `export LEAGUEFORGE_DEBUG=true` |
+| Avviare app locale | `cd leagueforge2 && python app.py` |
 
 ### Workflow tipico di sviluppo
 
@@ -555,8 +555,8 @@ git push
 
 ### I log non vengono creati
 
-1. Verifica che la cartella `tanaleague2/logs/` esista
-2. Se non esiste, creala: `mkdir tanaleague2/logs`
+1. Verifica che la cartella `leagueforge2/logs/` esista
+2. Se non esiste, creala: `mkdir leagueforge2/logs`
 3. Verifica permessi di scrittura
 
 ### GitHub Actions mostra errore
@@ -574,7 +574,7 @@ git push
 
 Script che scarica tutti i dati dal Google Sheet e li salva in locale come file CSV.
 
-**Posizione:** `/home/user/TanaLeague/tanaleague2/backup_sheets.py`
+**Posizione:** `/home/user/LeagueForge/leagueforge2/backup_sheets.py`
 
 ### Perché è importante?
 
@@ -586,13 +586,13 @@ Script che scarica tutti i dati dal Google Sheet e li salva in locale come file 
 
 **Backup completo (tutti i fogli):**
 ```bash
-cd tanaleague2
+cd leagueforge2
 python backup_sheets.py
 ```
 
 **Output:**
 ```
-🔄 BACKUP GOOGLE SHEETS - TanaLeague
+🔄 BACKUP GOOGLE SHEETS - LeagueForge
 📅 Data: 2025-11-23 14:30:00
 📁 Output: backups/2025-11-23_14-30-00
 
@@ -608,7 +608,7 @@ python backup_sheets.py
 
 **Dove vanno i backup:**
 ```
-tanaleague2/backups/
+leagueforge2/backups/
 ├── 2025-11-23_14-30-00/
 │   ├── backup_info.json
 │   ├── Config.csv
@@ -642,13 +642,13 @@ python backup_sheets.py --list
 crontab -e
 
 # Aggiungi questa riga per backup giornaliero alle 3:00
-0 3 * * * cd /path/to/TanaLeague/tanaleague2 && python backup_sheets.py
+0 3 * * * cd /path/to/LeagueForge/leagueforge2 && python backup_sheets.py
 ```
 
 **Su PythonAnywhere:**
 1. Vai al tab **Tasks**
 2. Aggiungi nuovo task schedulato
-3. Comando: `cd ~/TanaLeague/tanaleague2 && python backup_sheets.py`
+3. Comando: `cd ~/LeagueForge/leagueforge2 && python backup_sheets.py`
 4. Imposta orario (es. 03:00)
 
 ### Ripristino da backup

@@ -144,7 +144,7 @@ R4: 12 pts (delta +3 = Win)
 ### Import Command
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # Import completo
 python import_onepiece.py \
@@ -170,7 +170,7 @@ python import_onepiece.py \
 ### Cosa Fa
 
 1. ✅ Valida formato CSV e data nel filename
-2. ✅ Calcola punti TanaLeague (vittoria + ranking)
+2. ✅ Calcola punti LeagueForge (vittoria + ranking)
 3. ✅ Identifica X-0, X-1, Altri per buoni negozio
 4. ✅ Calcola distribuzione buoni
 5. ✅ Scrive in: Tournaments, Results, Vouchers, Players
@@ -235,7 +235,7 @@ python import_onepiece.py \
 ### Import Command
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 ```
 
@@ -250,7 +250,7 @@ python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 
 1. ✅ Parsa XML del file TDF
 2. ✅ Estrae standings con rank, W-L-D, tiebreakers
-3. ✅ Calcola punti TanaLeague
+3. ✅ Calcola punti LeagueForge
 4. ✅ Estrae match H2H (se disponibili)
 5. ✅ Scrive in: Tournaments, Results, Pokemon_Matches, Players
 6. ✅ Aggiorna Seasonal_Standings_PROV
@@ -263,7 +263,7 @@ python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 - Il parser conta automaticamente i BYE come vittorie nel record W-T-L
 - I BYE sono identificati nel TDF con `outcome="5"`
 
-**Formula Punti TanaLeague:**
+**Formula Punti LeagueForge:**
 ```
 Points_Victory = W (numero di vittorie, NON win_points)
 Points_Ranking = N_partecipanti - (rank - 1)
@@ -273,18 +273,18 @@ Points_Total = Points_Victory + Points_Ranking
 **Ranking:**
 - Il TDF fornisce già il ranking ufficiale Pokémon corretto
 - Ordine: win_points DESC (W×3 + T×1), poi OMW% DESC per tiebreak
-- TanaLeague usa direttamente questo ranking dal TDF
+- LeagueForge usa direttamente questo ranking dal TDF
 
 **Esempio Pratico:**
 Giocatore con 3W-0T-1L in torneo da 11 giocatori, classificato 1°:
 - `win_points` = 3×3 + 0×1 = **9 punti** (ranking ufficiale Pokémon)
 - `Points_Victory` = **3** (numero vittorie)
 - `Points_Ranking` = 11 - (1-1) = **11**
-- `Points_Total` = 3 + 11 = **14 punti TanaLeague**
+- `Points_Total` = 3 + 11 = **14 punti LeagueForge**
 
 **Nota Importante:**
 - `win_points` (W×3 + T×1) è usato SOLO per il ranking ufficiale Pokémon
-- `Points_Victory` per TanaLeague è il numero di vittorie W, NON win_points
+- `Points_Victory` per LeagueForge è il numero di vittorie W, NON win_points
 
 ### Output Esempio
 
@@ -296,7 +296,7 @@ Giocatore con 3W-0T-1L in torneo da 11 giocatori, classificato 1°:
    📅 Data: 2025-06-15
    👥 Partecipanti: 24
 
-🧮 Calcolo punti TanaLeague...
+🧮 Calcolo punti LeagueForge...
 📊 Importazione Pokemon TDF...
 
 ✅ Tournament: PKM-FS25_2025-06-15
@@ -359,7 +359,7 @@ Esempio:
 ### Import Command
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # Import Multi-Round (RACCOMANDATO)
 python import_riftbound.py \
@@ -533,7 +533,7 @@ Il sistema:
 
 **Soluzione**:
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_achievements.py
 ```
 
@@ -560,7 +560,7 @@ Questo crea i fogli necessari.
 **Soluzione**:
 1. Scarica l'ultima versione del parser:
    ```bash
-   cd tanaleague2
+   cd leagueforge2
    # Verifica che il file abbia questi fix:
    grep "points_victory = w" import_pokemon.py
    # Deve mostrare: points_victory = w  # Numero di vittorie

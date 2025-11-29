@@ -1,10 +1,10 @@
-# 🏆 TanaLeague
+# 🏆 LeagueForge
 
 **Sistema di gestione classifiche e statistiche per leghe competitive di Trading Card Games (TCG)**
 
 Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, profili giocatori e achievement per **One Piece TCG**, **Pokémon TCG** e **Riftbound TCG**.
 
-🌐 **Live:** [latanadellepulci.pythonanywhere.com](https://latanadellepulci.pythonanywhere.com)
+🌐 **Live Demo:** [your-store.pythonanywhere.com](https://your-store.pythonanywhere.com) (customize with your domain)
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
@@ -157,7 +157,7 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 
 ### 🏪 v2.3 - Franchise Model + Plug-and-Play
 
-- **Franchise Tools**: Strumenti per distribuire TanaLeague ad altri negozi
+- **Franchise Tools**: Strumenti per distribuire LeagueForge ad altri negozi
   - `create_store_package.py` - Crea pacchetti ZIP pre-configurati
   - `api_utils.py` - Retry automatico su rate limit API
   - `install.bat` / `install.sh` - Script installazione
@@ -234,21 +234,21 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 ```bash
 # 1. Clone repository
 git clone <repository-url>
-cd TanaLeague
+cd LeagueForge
 
 # 2. Installa dipendenze
 pip install -r requirements.txt
 
 # 3. Configura credenziali
 # - Scarica service_account_credentials.json da Google Cloud
-# - Metti in tanaleague2/
+# - Metti in leagueforge/
 
 # 4. Configura SHEET_ID
-# - Modifica SHEET_ID in tanaleague2/config.py
+# - Modifica SHEET_ID in leagueforge/config.py
 # - Oppure in ogni import script
 
 # 5. Setup Achievement System (UNA VOLTA!)
-cd tanaleague2
+cd leagueforge
 python setup_achievements.py
 # Questo crea i fogli Achievement_Definitions e Player_Achievements
 
@@ -306,14 +306,14 @@ Webapp disponibile su `http://localhost:5000`
 
 Gli script utilizzano il modulo `import_base.py` che centralizza tutte le funzioni comuni:
 - Connessione Google Sheets
-- Calcolo punti TanaLeague
+- Calcolo punti LeagueForge
 - Aggiornamento Players e Seasonal_Standings
 - Sblocco achievement
 
 ### One Piece TCG (Multi-Round)
 
 ```bash
-cd tanaleague2
+cd leagueforge
 python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
 ```
 
@@ -324,7 +324,7 @@ python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica Clas
 ### Pokémon TCG (TDF/XML)
 
 ```bash
-cd tanaleague2
+cd leagueforge
 python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 ```
 
@@ -333,7 +333,7 @@ python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 ### Riftbound TCG (Multi-Round)
 
 ```bash
-cd tanaleague2
+cd leagueforge
 python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 ```
 
@@ -366,7 +366,7 @@ python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica Fina
 ### Setup (Una volta sola)
 
 ```bash
-cd tanaleague2
+cd leagueforge
 python setup_achievements.py
 ```
 
@@ -427,12 +427,12 @@ git clone <repository-url>
 **Web tab → Add new web app:**
 - Python version: 3.8+
 - Framework: Flask
-- WSGI file: `/home/yourusername/TanaLeague/tanaleague2/wsgi.py`
+- WSGI file: `/home/yourusername/LeagueForge/leagueforge/wsgi.py`
 
 **Crea wsgi.py:**
 ```python
 import sys
-sys.path.insert(0, '/home/yourusername/TanaLeague/tanaleague2')
+sys.path.insert(0, '/home/yourusername/LeagueForge/leagueforge')
 
 from app import app as application
 ```
@@ -446,7 +446,7 @@ pip install --user gspread google-auth pandas pdfplumber flask
 ### 4. Setup Achievement
 
 ```bash
-cd ~/TanaLeague/tanaleague2
+cd ~/LeagueForge/leagueforge
 python setup_achievements.py
 ```
 
@@ -479,7 +479,7 @@ python setup_achievements.py
 
 ## 🏪 Franchise Model
 
-TanaLeague supporta un modello franchise per distribuire il sistema ad altri negozi.
+LeagueForge supporta un modello franchise per distribuire il sistema ad altri negozi.
 
 ### Come Funziona
 
@@ -497,7 +497,7 @@ TanaLeague supporta un modello franchise per distribuire il sistema ad altri neg
 ### Creare un Pacchetto per un Nuovo Negozio
 
 ```bash
-cd tanaleague2
+cd leagueforge
 python create_store_package.py
 ```
 
@@ -510,8 +510,8 @@ Lo script:
 ### Contenuto del Pacchetto ZIP
 
 ```
-TanaLeague_NomeNegozio/
-├── tanaleague2/
+LeagueForge_NomeNegozio/
+├── leagueforge/
 │   ├── app.py
 │   ├── config.py          # Pre-configurato!
 │   ├── credentials.json   # Credenziali condivise
@@ -535,7 +535,7 @@ Per dettagli completi: **[docs/FRANCHISE_GUIDE.md](docs/FRANCHISE_GUIDE.md)**
 ## 📁 Struttura Progetto
 
 ```
-TanaLeague/
+LeagueForge/
 ├── README.md                       # Questo file
 ├── requirements.txt                # Dipendenze Python
 ├── pytest.ini                      # Configurazione pytest
@@ -551,7 +551,7 @@ TanaLeague/
 │   ├── test_app.py                 # Test routes
 │   └── test_achievements.py        # Test achievement system
 │
-├── tanaleague2/                    # Codice principale
+├── leagueforge/                    # Codice principale
 │   ├── app.py                      # Flask app + routes pubbliche
 │   │
 │   ├── routes/                     # Flask Blueprints (modular routes)
@@ -590,7 +590,7 @@ TanaLeague/
 │   ├── api_utils.py                # Utility API con retry (NEW!)
 │   │
 │   ├── logs/                       # Log applicazione (auto-created)
-│   │   └── tanaleague.log
+│   │   └── leagueforge.log
 │   │
 │   ├── templates/                  # Template HTML Jinja2
 │   │   ├── base.html               # Layout base + menu
@@ -638,7 +638,7 @@ Il sistema crea backup automatici in `Backup_Log` sheet ogni import.
 
 **Backup manuale:**
 1. Google Sheets → File → Make a copy
-2. Salva con data: `TanaLeague_Backup_2024-11-17`
+2. Salva con data: `LeagueForge_Backup_2024-11-17`
 
 ### Cache Refresh
 
@@ -699,17 +699,25 @@ Cache si aggiorna automaticamente ogni 5 minuti.
 
 ## 📜 License
 
-Progetto privato - Tutti i diritti riservati © 2024 La Tana delle Pulci
+**LeagueForge** is proprietary software available for licensing to TCG stores and tournament organizers.
+
+For licensing inquiries and commercial use, please contact the development team.
+
+© 2024-2025 LeagueForge - All rights reserved
 
 ---
 
-## 🤝 Supporto
+## 🤝 Support & Contact
 
-**La Tana delle Pulci**
-Viale Adamello 1, Lecco
-Instagram: [@latanadellepulci](https://www.instagram.com/latanadellepulci/)
+**For Store Owners:**
+- 📧 Email: [your-email@example.com]
+- 📱 WhatsApp: [your-number] (optional)
+- 📸 Instagram: [@your_store] (optional)
 
-Per bug o feature request: Apri issue su GitHub
+**For Developers:**
+- 🐛 Bug reports: Open an issue on GitHub
+- 💡 Feature requests: Open an issue on GitHub
+- 📖 Documentation: Check `/docs` folder
 
 ---
 
