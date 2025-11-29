@@ -1005,8 +1005,9 @@ def player(membership):
         ws_results = sheet.worksheet("Results")
         all_results = ws_results.get_all_values()[3:]
 
-        # Filtra per membership
-        player_results = [r for r in all_results if r and len(r) >= 10 and r[2] == membership]
+        # Filtra per membership (trim spazi per sicurezza)
+        membership_clean = membership.strip()
+        player_results = [r for r in all_results if r and len(r) >= 10 and r[2].strip() == membership_clean]
 
         if not player_results:
             return render_template('error.html', error='Giocatore non trovato'), 404
@@ -1014,7 +1015,7 @@ def player(membership):
         # Leggi TCG dal foglio Players
         ws_players = sheet.worksheet("Players")
         players_data = ws_players.get_all_values()[3:]
-        player_row = next((p for p in players_data if safe_get(p, COL_PLAYERS, 'membership') == membership), None)
+        player_row = next((p for p in players_data if safe_get(p, COL_PLAYERS, 'membership', '').strip() == membership_clean), None)
         player_tcg = safe_get(player_row, COL_PLAYERS, 'tcg', 'OP') if player_row else 'OP'
 
         # Dati base
