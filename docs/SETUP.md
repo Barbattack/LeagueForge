@@ -103,39 +103,49 @@ https://docs.google.com/spreadsheets/d/1abc123def456ghi789/edit#gid=0
 
 **Annotalo**: Lo userai nella configurazione.
 
-### 4. Crea Fogli Base
+### 4. Inizializza Database Automaticamente
 
-Crea i seguenti fogli (tab) nel Google Sheet:
+**IMPORTANTE**: NON creare i fogli manualmente! Usa lo script automatico.
+
+Dopo aver configurato `config.py` (vedi step successivo), esegui:
+
+```bash
+cd leagueforge
+python init_database.py
+```
+
+**Lo script creerà automaticamente questi fogli**:
 
 | Nome Foglio | Descrizione |
 |-------------|-------------|
-| **Config** | Configurazione stagioni e parametri |
+| **Config** | Configurazione stagioni (con dati esempio) |
 | **Tournaments** | Lista tornei importati |
 | **Results** | Risultati individuali giocatori |
 | **Players** | Anagrafica giocatori |
+| **Player_Stats** | Statistiche lifetime aggregate (CQRS read model) |
 | **Seasonal_Standings_PROV** | Classifiche stagioni ACTIVE |
 | **Seasonal_Standings_FINAL** | Classifiche stagioni CLOSED |
-| **Vouchers** | Buoni negozio (solo One Piece) |
-| **Pokemon_Matches** | Match H2H Pokemon (opzionale) |
-| **Backup_Log** | Log backup automatici |
+| **Achievement_Definitions** | Definizioni achievement (40+ pre-popolati) |
+| **Player_Achievements** | Achievement sbloccati dai giocatori |
+| **Vouchers** | Buoni negozio (One Piece) |
+| **Pokemon_Matches** | Match H2H Pokemon |
+| **Riftbound_Matches** | Match H2H Riftbound |
+| **Backup_Log** | Log operazioni |
 
-**Achievement sheets** (creati automaticamente da `setup_achievements.py`):
-- `Achievement_Definitions`
-- `Player_Achievements`
+**Cosa fa lo script**:
+- ✅ Crea tutti i fogli con header corretti
+- ✅ Popola Config con 3 stagioni esempio (OP, PKM, RFB)
+- ✅ Popola Achievement_Definitions con 40+ achievement
+- ✅ Formatta header (grassetto, sfondo grigio)
+- ✅ Salta fogli già esistenti (non sovrascrive)
 
-### 5. Popola Config Sheet
+### 5. Personalizza Config Sheet (Opzionale)
 
-Nel foglio **Config**, crea header (riga 1-3) e aggiungi stagioni:
+Lo script `init_database.py` ha già creato il foglio **Config** con 3 stagioni esempio.
 
-**Header (righe 1-3)**:
-```
-Row 1: [Lasciare vuota - spazio intestazione]
-Row 2: season_id | tcg | name | season_num | status | ...
-Row 3: [Eventuali descrizioni]
-Row 4+: Dati stagioni
-```
+Puoi modificarle o aggiungerne di nuove:
 
-**Esempio stagioni (da riga 4)**:
+**Stagioni esempio create dallo script**:
 ```
 season_id    tcg   name              season_num  status    entry_fee  pack_cost  drop_logic  drop_threshold
 OP12         OP    OP12 - Lecco      12          ACTIVE    5          4          best_n_minus_2  8
