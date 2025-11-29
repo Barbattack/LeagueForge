@@ -1,6 +1,6 @@
-# 🧪 Guida ai Test - TanaLeague
+# 🧪 Guida ai Test - LeagueForge
 
-Guida completa al sistema di test automatici di TanaLeague.
+Guida completa al sistema di test automatici di LeagueForge.
 
 ---
 
@@ -29,7 +29,7 @@ I test automatici sono codice che verifica che l'applicazione funzioni correttam
 | Paura di modificare codice | Modifichi con sicurezza |
 | Nessuna documentazione | I test documentano il comportamento |
 
-### Tipi di Test in TanaLeague
+### Tipi di Test in LeagueForge
 
 1. **Unit Test**: Testano singole funzioni (es. `_is_valid_season_id`)
 2. **Integration Test**: Testano route Flask (es. homepage carica?)
@@ -110,10 +110,10 @@ pytest -x
 
 ```bash
 # Mostra quanto codice è testato
-pytest --cov=tanaleague2
+pytest --cov=leagueforge2
 
 # Report dettagliato HTML
-pytest --cov=tanaleague2 --cov-report=html
+pytest --cov=leagueforge2 --cov-report=html
 # Apri htmlcov/index.html nel browser
 ```
 
@@ -320,7 +320,7 @@ python --version  # Deve essere 3.10+
 
 ```bash
 # Aggiungi cartella al path
-export PYTHONPATH="${PYTHONPATH}:$(pwd)/tanaleague2"
+export PYTHONPATH="${PYTHONPATH}:$(pwd)/leagueforge2"
 pytest
 ```
 

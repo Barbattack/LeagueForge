@@ -1,0 +1,25 @@
+Round,ID Player 1,Nick Player 1,Winner,ID Player 2,Nick Player 2
+1,448187,Gallo,2,118859,Fidio
+1,203688,Lorbag99,1,207592,Matteviga
+1,453763,Iclaf,1,561448,Catta
+1,455271,Naffy,1,134640,Commo
+1,166660,Mellow,2,110798,Blund
+1,475097,Dige,1,127213,sArnautovic
+2,475097,Dige,1,455271,Naffy
+2,453763,Iclaf,1,110798,Blund
+2,203688,Lorbag99,1,118859,Fidio
+2,127213,sArnautovic,2,448187,Gallo
+2,166660,Mellow,1,561448,Catta
+2,207592,Matteviga,1,134640,Commo
+3,203688,Lorbag99,2,453763,Iclaf
+3,475097,Dige,2,207592,Matteviga
+3,455271,Naffy,1,448187,Gallo
+3,110798,Blund,1,118859,Fidio
+3,166660,Mellow,1,127213,sArnautovic
+3,561448,Catta,2,134640,Commo
+4,453763,Iclaf,1,455271,Naffy
+4,203688,Lorbag99,1,110798,Blund
+4,475097,Dige,1,166660,Mellow
+4,207592,Matteviga,1,448187,Gallo
+4,118859,Fidio,1,134640,Commo
+4,127213,sArnautovic,1,561448,Catta

@@ -1,8 +1,8 @@
-# 🔧 Technical Notes - TanaLeague
+# 🔧 Technical Notes - LeagueForge
 
 **Note tecniche di implementazione per sviluppatori**
 
-Questo documento contiene dettagli tecnici implementativi per la manutenzione e l'estensione del sistema TanaLeague. Per guide utente, vedere [IMPORT_GUIDE.md](IMPORT_GUIDE.md) e [SETUP.md](SETUP.md).
+Questo documento contiene dettagli tecnici implementativi per la manutenzione e l'estensione del sistema LeagueForge. Per guide utente, vedere [IMPORT_GUIDE.md](IMPORT_GUIDE.md) e [SETUP.md](SETUP.md).
 
 ---
 
@@ -12,9 +12,10 @@ Questo documento contiene dettagli tecnici implementativi per la manutenzione e 
 1. [Pokemon TCG](#-pokemon-tcg)
 2. [One Piece TCG](#️-one-piece-tcg)
 3. [Riftbound TCG](#-riftbound-tcg)
+4. [Architettura Import Unificata](#-architettura-import-unificata)
 
 ### Backend
-4. [Google Sheets - Dettagli Implementativi](#️-google-sheets---dettagli-implementativi)
+5. [Google Sheets - Dettagli Implementativi](#️-google-sheets---dettagli-implementativi)
 5. [Sistema Cache (cache.py)](#️-sistema-cache-cachepy)
 6. [Stats Builder (stats_builder.py)](#-stats-builder-stats_builderpy)
 7. [Admin Panel (auth.py)](#-admin-panel-authpy)
@@ -91,27 +92,70 @@ for round in rounds:
 
 ## 🏴‍☠️ One Piece TCG
 
-### Formato Input: CSV
+### Formato Input: Multi-Round CSV
 
+I file CSV sono esportati dal portale ufficiale Bandai, uno per ogni round più un file classifica finale.
+
+**File Round (R1.csv, R2.csv, etc.):**
 ```csv
-Ranking,Name,Points,OMW,Player ID,Deck
-1,Rossi Mario,9,65.5,OP123,Roronoa Zoro
+"Rank","Match Point","Status","Player Name - 1","Membership Number - 1"
+"1","6","joining","PlayerName","0000123456"
 ```
 
-**IMPORTANTE:** Non ha tracking W/T/L nel CSV. Le colonne 10-12 in Results rimangono vuote.
+**File Classifica Finale:**
+```csv
+"Rank","Match Point","Status","Player Name - 1","Membership Number - 1","OMW%"
+"1","9","joining","PlayerName","0000123456","65.5"
+```
 
-### Sistema Punti Semplificato
+**Utilizzo:**
+```bash
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
+```
+
+### Calcolo W/T/L dal Delta Punti
+
+Lo script calcola vittorie, pareggi e sconfitte dalla **progressione dei punti** tra round:
 
 ```python
-# One Piece non ha pareggi
-points_victory = points / 3  # Punti dal CSV diviso 3
+def calculate_wlt_from_progression(progression: List[Dict]) -> Tuple[int, int, int]:
+    """
+    Calcola W/T/L dal delta punti tra round consecutivi.
+    Sistema Swiss: Win=+3, Tie=+1, Loss=+0
+    """
+    wins, ties, losses = 0, 0, 0
+
+    for i in range(1, len(progression)):
+        prev_points = progression[i-1]['match_point']
+        curr_points = progression[i]['match_point']
+        delta = curr_points - prev_points
+
+        if delta == 3:
+            wins += 1
+        elif delta == 1:
+            ties += 1
+        elif delta == 0:
+            losses += 1
+
+    return wins, ties, losses
+```
+
+**NOTA:** Il primo round si deduce dai punti iniziali (es. 3 = Win, 0 = Loss).
+
+### OMW% dal CSV
+
+Il file ClassificaFinale contiene l'OMW% calcolato dal software Bandai, letto direttamente.
+
+### Sistema Punti LeagueForge
+
+```python
+# Punti vittoria = numero vittorie (W), NON win_points
+points_victory = wins
 points_ranking = n_participants - (rank - 1)
 points_total = points_victory + points_ranking
 ```
 
-### OMW% dal CSV
-
-A differenza di Pokemon (calcolato da match), One Piece legge OMW% direttamente dal CSV.
+**IMPORTANTE:** `points_victory` è il numero di vittorie (W), coerente con Pokemon e Riftbound.
 
 ---
 
@@ -130,12 +174,14 @@ RFB_2025_11_17_R3.csv   ← Round 3
 
 **Utilizzo:**
 ```bash
-# Import multi-round (RACCOMANDATO)
-python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01
+# Import multi-round
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 
 # Test mode
-python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01 --test
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
 ```
+
+**NOTA:** Lo script usa `import_base.py` per condividere logica comune con One Piece.
 
 ### Struttura CSV (22 colonne)
 
@@ -240,13 +286,13 @@ def parse_wld_record(record_str: str) -> tuple:
 # Match points (Swiss system) - usato per ranking
 win_points = w * 3 + d * 1 + l * 0
 
-# TanaLeague points (UGUALE a Pokemon e One Piece!)
+# LeagueForge points (UGUALE a Pokemon e One Piece!)
 points_victory = w  # Numero di vittorie (NON win_points!)
 points_ranking = n_participants - (rank - 1)
 points_total = points_victory + points_ranking
 ```
 
-**IMPORTANTE:** `points_victory` per TUTTI i TCG è il numero di vittorie (W), NON win_points. Il sistema punti TanaLeague è uniforme tra Pokemon, One Piece e Riftbound.
+**IMPORTANTE:** `points_victory` per TUTTI i TCG è il numero di vittorie (W), NON win_points. Il sistema punti LeagueForge è uniforme tra Pokemon, One Piece e Riftbound.
 
 ### Ranking Calculation
 
@@ -295,6 +341,140 @@ Col 13 (row[12]): L (sconfitte match)
 - **Sintomo:** `winner_membership` vuoto
 - **Causa:** Nome vincitore nel Match Result non corrisponde esattamente ai nomi giocatori
 - **Soluzione:** Lo script ha fallback che cerca parti del nome (cognome/nome)
+
+---
+
+## 🏗️ Architettura Import Unificata
+
+### import_base.py
+
+Modulo centrale che fornisce funzioni comuni a tutti gli script di import:
+
+```python
+# Funzioni principali
+connect_sheet()              # Connessione Google Sheets
+check_duplicate_tournament() # Verifica torneo già importato
+write_results_to_sheet()     # Scrittura batch Results
+update_players()             # Aggiorna/crea record Players
+update_seasonal_standings()  # Aggiorna classifica stagione
+finalize_import()            # Pipeline completa post-parsing
+```
+
+### Strutture Dati Standard
+
+```python
+# Partecipante singolo
+def create_participant(membership, name, rank, wins=0, ties=0, losses=0,
+                       win_points=0, omw=0.0) -> Dict:
+    return {
+        'membership': membership,
+        'name': name,
+        'rank': rank,
+        'wins': wins,
+        'ties': ties,
+        'losses': losses,
+        'win_points': win_points,
+        'omw': omw
+    }
+
+# Dati torneo completi
+def create_tournament_data(tournament_id, season_id, date, participants,
+                           tcg, source_files=None, winner_name=None) -> Dict:
+    return {
+        'tournament_id': tournament_id,
+        'season_id': season_id,
+        'date': date,
+        'participants': participants,
+        'tcg': tcg,
+        'source_files': source_files or [],
+        'winner_name': winner_name or participants[0]['name'] if participants else ''
+    }
+```
+
+### Calcolo Punti LeagueForge
+
+```python
+def calculate_leagueforge_points(rank: int, wins: int, n_participants: int) -> Dict:
+    """
+    Sistema punti uniforme per tutti i TCG:
+    - points_victory = numero vittorie (W)
+    - points_ranking = n_participants - (rank - 1)
+    - points_total = points_victory + points_ranking
+    """
+    points_victory = wins
+    points_ranking = n_participants - (rank - 1)
+    return {
+        'points_victory': points_victory,
+        'points_ranking': points_ranking,
+        'points_total': points_victory + points_ranking
+    }
+```
+
+### sheet_utils.py - Column Mappings
+
+Mappature colonne centralizzate per evitare indici hard-coded fragili:
+
+```python
+# Results sheet columns
+RESULTS_COLS = {
+    'result_id': 0,
+    'tournament_id': 1,
+    'membership': 2,
+    'rank': 3,
+    'win_points': 4,
+    'omw': 5,
+    'pts_victory': 6,
+    'pts_ranking': 7,
+    'pts_total': 8,
+    'name': 9,
+    'w': 10,
+    't': 11,
+    'l': 12
+}
+
+# Helper functions
+def get_result_value(row: List, col_name: str) -> Any
+def build_result_row(data: Dict) -> List
+```
+
+### player_stats.py - CQRS Pattern
+
+Sistema di statistiche pre-calcolate per query veloci:
+
+```python
+# Struttura Player_Stats sheet (13 colonne)
+# Colonne: Membership, Name, TCG, Total_Tournaments, Total_Wins,
+#          Current_Streak, Best_Streak, Top8_Count, Last_Rank,
+#          Last_Date, Seasons_Count, Updated_At, Total_Points
+
+# Ricostruzione completa
+python rebuild_player_stats.py
+
+# Aggiornamento incrementale (chiamato da import)
+from player_stats import batch_update_player_stats
+batch_update_player_stats(ws_stats, updates_list)
+```
+
+**Pattern CQRS-like:**
+- **Write side**: Results sheet (append-only durante import)
+- **Read side**: Player_Stats sheet (materializzato, per query veloci)
+
+**Header Validation (Nov 2025):**
+```python
+from sheet_utils import validate_sheet_headers, COL_PLAYER_STATS
+
+expected = ["Membership", "Name", "TCG", "Total Tournaments", "Total Wins",
+            "Current Streak", "Best Streak", "Top8 Count", "Last Rank",
+            "Last Date", "Seasons Count", "Updated At", "Total Points"]
+
+validation = validate_sheet_headers(ws_stats, COL_PLAYER_STATS, expected, header_row_index=2)
+if not validation['valid']:
+    raise ValueError("Struttura Player_Stats non valida")
+```
+
+**Inclusione ARCHIVED seasons (Nov 2025):**
+- Player_Stats include TUTTI i tornei storici (ACTIVE, CLOSED, ARCHIVED)
+- ARCHIVED seasons contano SOLO per stats lifetime, NON per achievement/classifiche
 
 ---
 
@@ -568,7 +748,7 @@ else:
 
 ### parse_csv_rounds() - Riftbound
 
-File: `tanaleague2/import_riftbound.py`
+File: `leagueforge2/import_riftbound.py`
 
 Funzione chiave da consultare per:
 - Parsing CSV multi-round
@@ -1225,4 +1405,159 @@ unlocks = [
 
 **Fine Technical Notes**
 
-Ultimo aggiornamento: 22 Novembre 2025 (v2.1 - Achievement Detail + Landing Refresh)
+Ultimo aggiornamento: 24 Novembre 2025 (v2.2 - Unified Import Architecture + Multi-Round CSV)
+
+---
+
+## 🚀 Recent Optimizations & Fixes (Nov 2024)
+
+### API Rate Limiting Optimization
+
+**Problem:** Import scripts exceeded Google Sheets API limits (60 req/min), causing 429 errors.
+
+**Root Cause:**
+- `update_player_stats_after_tournament()` called per player: 12 players × 2 API calls = 24 calls
+- `check_and_unlock_achievements()` called per player: 12 players × 4 API calls = 48 calls
+- Total: ~80-90 API calls in 30 seconds = ~160 calls/min ❌
+
+**Solution (Nov 24, 2024):**
+1. **Batch Operations:**
+   - `batch_update_player_stats()`: 1 read + 1-2 writes = 3 calls total (was 24)
+   - `batch_load_player_achievements()`: 1 read for all players (was 12)
+   - `batch_calculate_player_stats()`: 2 reads (Config + Results) for all players (was 24)
+
+2. **API Delay:** Increased `API_DELAY_MS` from 300ms to 1200ms (respects 60 req/min limit)
+
+3. **Wrapped API Calls:** All `get_all_values()`, `append_rows()`, `batch_update()` now use `safe_api_call()` from `api_utils.py`
+
+**Result:** Reduced to ~15-20 API calls per import (75% reduction) ✅
+
+**Modified Files:**
+- `import_base.py`: Batch calls, API delay 1200ms
+- `achievements.py`: Batch functions added
+- `player_stats.py`: True batch update implementation
+
+---
+
+### COL_RESULTS Mapping Fix
+
+**Problem:** Player names showing as numbers, Total_Points always 0, Match stats incorrect.
+
+**Root Cause:** `COL_RESULTS` in `sheet_utils.py` had obsolete/incorrect column indices:
+```python
+# OLD (WRONG):
+COL_RESULTS = {
+    'name': 5,      # WRONG! Should be 9
+    'match_w': 7,   # WRONG! Should be 10
+    'match_t': 9,   # WRONG! Should be 11
+    'match_l': 8,   # WRONG! Should be 12
+    'points': 4,    # win_points, NOT points_total!
+}
+```
+
+**Actual Results Sheet Structure (13 columns):**
+```
+0: result_id
+1: tournament_id
+2: membership
+3: rank
+4: win_points
+5: omw
+6: points_victory
+7: points_ranking
+8: points_total     ← Correct index!
+9: name             ← Correct index!
+10: match_w         ← Correct index!
+11: match_t         ← Correct index!
+12: match_l         ← Correct index!
+```
+
+**Solution (Nov 24, 2024):**
+1. Updated `COL_RESULTS` in `sheet_utils.py` with correct indices
+2. Created `rebuild_players.py` to reconstruct Players sheet from Results
+3. Fixed `rebuild_player_stats.py` to extract `season_id` from `tournament_id` (was trying to read non-existent 'season_id' field)
+4. Added support for both date formats: `OP11_20250619` and `OP11_2025-06-19`
+
+**Modified Files:**
+- `sheet_utils.py`: Corrected COL_RESULTS mapping
+- `rebuild_players.py`: Created (reads Results → writes Players)
+- `rebuild_player_stats.py`: Fixed to use correct mapping + dual date format support
+
+---
+
+### Players Sheet Column Order Fix
+
+**Problem:** Players sheet had columns in wrong order (first_seen/last_seen at end instead of beginning).
+
+**Solution (Nov 24, 2024):**
+Fixed `player_row` order in `import_base.py` (line ~498):
+```python
+# CORRECT ORDER:
+player_row = [
+    membership,          # A
+    p['name'],          # B
+    tcg,                # C
+    stats.get('first_seen', tournament_date),   # D (was at J)
+    stats.get('last_seen', tournament_date),    # E (was at K)
+    stats['total_tournaments'],  # F (was at D)
+    stats['tournament_wins'],    # G (was at E)
+    stats['match_w'],           # H (was at F)
+    stats['match_t'],           # I (was at G)
+    stats['match_l'],           # J (was at H)
+    stats['total_points']       # K (was at I)
+]
+```
+
+**Recovery:** Run `rebuild_players.py` to reconstruct from Results.
+
+---
+
+### Rebuild Scripts
+
+Two utility scripts for data recovery:
+
+**`rebuild_players.py`:**
+- Reads all Results
+- Recalculates lifetime stats per (membership, TCG)
+- Rewrites Players sheet with correct data
+- Usage: `python rebuild_players.py`
+
+**`rebuild_player_stats.py`:**
+- Reads all Results
+- Calculates aggregated stats per (membership, TCG)
+- Rewrites Player_Stats sheet
+- Excludes ARCHIVED seasons
+- Supports both date formats in tournament_id
+- Usage: `python rebuild_player_stats.py [--test]`
+
+---
+
+### Player_Stats Sheet
+
+**Purpose:** Pre-calculated aggregates for faster dashboard queries (CQRS pattern).
+
+**Columns:**
+- Membership, Name, TCG
+- Total Tournaments, Total Wins
+- Current Streak, Best Streak, Top8 Count
+- Last Rank, Last Date, Seasons Count, Updated At
+
+**Key Points:**
+- TCG is lifetime aggregation (OP, PKM, PKMFS) - NOT per-season
+- For per-season stats, use Seasonal_Standings_PROV
+- Updated automatically by import scripts via `batch_update_player_stats()`
+
+---
+
+### Known Issues & TODOs
+
+1. **Seasonal_Standings_PROV naming:** Should rename to `Seasonal_Standings` (remove "_PROV" suffix)
+   - Requires: Manual sheet rename + code updates in ~5-10 files
+   - Status: Deferred to future session
+
+2. **Date Format Inconsistency:** Some tournaments use `YYYYMMDD`, others use `YYYY-MM-DD`
+   - Current: Both formats supported in rebuild scripts
+   - TODO: Standardize to single format in future imports
+
+---
+

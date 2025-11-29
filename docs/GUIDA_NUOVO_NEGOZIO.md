@@ -1,6 +1,6 @@
-# Guida: Aggiungere un Nuovo Negozio a TanaLeague
+# Guida: Aggiungere un Nuovo Negozio a LeagueForge
 
-Questa guida ti accompagna passo-passo quando un negozio ti chiede di usare TanaLeague.
+Questa guida ti accompagna passo-passo quando un negozio ti chiede di usare LeagueForge.
 
 ---
 
@@ -9,14 +9,14 @@ Questa guida ti accompagna passo-passo quando un negozio ti chiede di usare Tana
 ### Requisiti (da verificare UNA VOLTA, la prima volta)
 
 - [ ] Python 3.8+ installato sul TUO computer
-- [ ] File `credentials.json` del Service Account nella cartella `tanaleague2/`
+- [ ] File `credentials.json` del Service Account nella cartella `leagueforge2/`
 - [ ] `config.py` configurato con le tue credenziali master
-- [ ] Repository TanaLeague aggiornato
+- [ ] Repository LeagueForge aggiornato
 
 ### Verifica Rapida
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python check_setup.py
 ```
 
@@ -43,7 +43,7 @@ Chiedi al negozio:
 ### 2. Crea il Pacchetto
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python create_store_package.py
 ```
 
@@ -51,20 +51,20 @@ python create_store_package.py
 ```
 Nome del negozio: Game Corner Milano
 Email del negozio: gamecorner@email.com
-Password admin [default: tanaleague123]: GameCorner2025!
+Password admin [default: leagueforge123]: GameCorner2025!
 
 Procedere? (y/n): y
 ```
 
 **Cosa succede:**
-1. Crea un nuovo Google Sheet "TanaLeague - Game Corner Milano"
+1. Crea un nuovo Google Sheet "LeagueForge - Game Corner Milano"
 2. Inizializza tutti i fogli (Config, Tournaments, Results, ecc.)
 3. Condivide automaticamente con l'email del negozio
-4. Genera `packages/TanaLeague_Game_Corner_Milano.zip`
+4. Genera `packages/LeagueForge_Game_Corner_Milano.zip`
 
 **Output finale:**
 ```
-📦 File: packages/TanaLeague_Game_Corner_Milano.zip
+📦 File: packages/LeagueForge_Game_Corner_Milano.zip
 📊 Google Sheet: https://docs.google.com/spreadsheets/d/ABC123...
 🔑 Password admin: GameCorner2025!
 ```
@@ -99,9 +99,9 @@ Copia e personalizza questo messaggio:
 ```
 Ciao! 🎮
 
-Ecco TanaLeague pronto per [NOME NEGOZIO]!
+Ecco LeagueForge pronto per [NOME NEGOZIO]!
 
-📦 FILE: [allega TanaLeague_NomeNegozio.zip]
+📦 FILE: [allega LeagueForge_NomeNegozio.zip]
 
 📋 ISTRUZIONI:
 
@@ -217,7 +217,7 @@ Se rilasci una nuova versione:
 
 ```bash
 # Crea pacchetto per nuovo negozio
-cd tanaleague2
+cd leagueforge2
 python create_store_package.py
 
 # Verifica il tuo setup

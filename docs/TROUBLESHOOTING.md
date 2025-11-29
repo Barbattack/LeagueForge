@@ -1,6 +1,6 @@
-# 🔧 Troubleshooting - TanaLeague
+# 🔧 Troubleshooting - LeagueForge
 
-Guida completa alla risoluzione dei problemi comuni in TanaLeague.
+Guida completa alla risoluzione dei problemi comuni in LeagueForge.
 
 ---
 
@@ -39,7 +39,7 @@ gspread.exceptions.APIError: {
 2. Trova e copia il valore di `client_email`:
    ```json
    {
-     "client_email": "tanaleague-service@project-123456.iam.gserviceaccount.com"
+     "client_email": "leagueforge-service@project-123456.iam.gserviceaccount.com"
    }
    ```
 3. Apri Google Sheet in browser
@@ -70,7 +70,7 @@ gspread.exceptions.SpreadsheetNotFound: Spreadsheet not found
                                          ^^^^^^^^^^^^^^^^^^^^
                                          SHEET_ID corretto
    ```
-2. Apri `tanaleague2/config.py` (o script import) e verifica:
+2. Apri `leagueforge2/config.py` (o script import) e verifica:
    ```python
    SHEET_ID = "1abc123def456ghi789"  # Deve corrispondere!
    ```
@@ -89,7 +89,7 @@ gspread.exceptions.WorksheetNotFound: Achievement_Definitions
 
 **Soluzione per Achievement sheets**:
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_achievements.py
 ```
 
@@ -222,7 +222,7 @@ FileNotFoundError: [Errno 2] No such file or directory: 'path/to/file.csv'
 3. Controlla current working directory:
    ```bash
    pwd
-   # Deve essere: .../TanaLeague/tanaleague2
+   # Deve essere: .../LeagueForge/leagueforge2
    ```
 
 ---
@@ -401,7 +401,7 @@ mv 2025_06_12_OP12.csv 2025_06_13_OP12.csv
 
 Verifica struttura directory:
 ```
-tanaleague2/
+leagueforge2/
 ├── app.py
 ├── templates/         ← Cartella templates DEVE esistere
 │   ├── base.html
@@ -412,7 +412,7 @@ tanaleague2/
 
 Se manca, crea cartella:
 ```bash
-mkdir -p tanaleague2/templates
+mkdir -p leagueforge2/templates
 ```
 
 Su PythonAnywhere, verifica file uploadati correttamente.
@@ -434,7 +434,7 @@ Su PythonAnywhere, verifica file uploadati correttamente.
 
 **Debug cache**:
 ```bash
-cd tanaleague2
+cd leagueforge2
 ls -la *.pkl  # File cache
 
 # Elimina cache manualmente
@@ -491,7 +491,7 @@ rm *.pkl
 
 **1. Verifica sheet esiste**:
 ```bash
-cd tanaleague2
+cd leagueforge2
 python3
 >>> import gspread
 >>> from google.oauth2.service_account import Credentials
@@ -551,7 +551,7 @@ Ri-esegui import e leggi output.
 
 **Soluzione**:
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_achievements.py
 ```
 
@@ -618,7 +618,7 @@ for ach_unlocked in unlocked_achievements:
 
 Apri **Bash console** in PythonAnywhere:
 ```bash
-cd ~/TanaLeague
+cd ~/LeagueForge
 pip install --user -r requirements.txt
 ```
 
@@ -633,13 +633,13 @@ Attendi 2-5 minuti, poi **Reload** webapp.
 **Soluzione**:
 
 1. Tab **Files** in PythonAnywhere
-2. Naviga in `/home/yourusername/TanaLeague/tanaleague2/`
+2. Naviga in `/home/yourusername/LeagueForge/leagueforge2/`
 3. Verifica presenza di `service_account_credentials.json`
 4. Se mancante, upload manuale (NO git, per sicurezza!)
 
 **Path atteso**:
 ```
-/home/yourusername/TanaLeague/tanaleague2/service_account_credentials.json
+/home/yourusername/LeagueForge/leagueforge2/service_account_credentials.json
 ```
 
 ---
@@ -657,7 +657,7 @@ Verifica contenuto:
 import sys
 
 # Path DEVE essere assoluto e corretto!
-sys.path.insert(0, '/home/yourusername/TanaLeague/tanaleague2')
+sys.path.insert(0, '/home/yourusername/LeagueForge/leagueforge2')
 
 from app import app as application
 ```
@@ -816,7 +816,7 @@ print("\n✅ Test superato!")
 
 Run:
 ```bash
-cd tanaleague2
+cd leagueforge2
 python test_connection.py
 ```
 
@@ -903,7 +903,7 @@ Output:
 | `500 Internal Server Error` | Errore Python backend | Check error log, correggi codice |
 | `TemplateNotFound` | Template HTML mancante | Verifica cartella templates/ |
 | `No module named X` | Dipendenze non installate | pip install -r requirements.txt |
-| `service_account_credentials.json not found` | File credenziali mancante | Upload in tanaleague2/ |
+| `service_account_credentials.json not found` | File credenziali mancante | Upload in leagueforge2/ |
 | Season non appare in /classifiche | Regex season ID non valido | Usa formato OP12, PKM-FS25, etc. |
 | Achievement conteggiano ARCHIVED | Vecchia versione achievements.py | Aggiorna file achievements.py |
 

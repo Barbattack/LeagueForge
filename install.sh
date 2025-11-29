@@ -1,8 +1,8 @@
 #!/bin/bash
-# TanaLeague - Installation Script for Mac/Linux
+# LeagueForge - Installation Script for Mac/Linux
 
 echo "========================================"
-echo "   TanaLeague - Installazione Mac/Linux"
+echo "   LeagueForge - Installazione Mac/Linux"
 echo "========================================"
 echo
 
@@ -43,11 +43,11 @@ echo "[OK] Dipendenze installate"
 echo
 
 # Check config.py
-if [ ! -f "tanaleague2/config.py" ]; then
+if [ ! -f "leagueforge2/config.py" ]; then
     echo "[INFO] config.py non trovato"
     echo
     echo "Prossimi passi:"
-    echo "  1. cd tanaleague2"
+    echo "  1. cd leagueforge2"
     echo "  2. python3 setup_wizard.py"
     echo "  3. python3 init_database.py"
     echo "  4. python3 check_setup.py"
@@ -56,7 +56,7 @@ else
     echo "[OK] config.py trovato"
     echo
     echo "Per avviare l'applicazione:"
-    echo "  cd tanaleague2"
+    echo "  cd leagueforge2"
     echo "  python3 app.py"
     echo
     echo "Poi apri: http://localhost:5000"

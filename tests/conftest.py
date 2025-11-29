@@ -1,5 +1,5 @@
 """
-TanaLeague - Test Configuration
+LeagueForge - Test Configuration
 ===============================
 
 Fixtures condivise per tutti i test.
@@ -8,7 +8,7 @@ USO:
     pytest                      # Esegui tutti i test
     pytest tests/test_app.py    # Esegui test specifici
     pytest -v                   # Output verboso
-    pytest --cov=tanaleague2    # Con coverage report
+    pytest --cov=leagueforge2    # Con coverage report
 """
 
 import pytest
@@ -16,8 +16,8 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-# Aggiungi tanaleague2 al path
-sys.path.insert(0, str(Path(__file__).parent.parent / "tanaleague2"))
+# Aggiungi leagueforge2 al path
+sys.path.insert(0, str(Path(__file__).parent.parent / "leagueforge2"))
 
 
 # =============================================================================

@@ -1,5 +1,5 @@
 # =============================================================================
-# TanaLeague - CI/CD Pipeline
+# LeagueForge - CI/CD Pipeline
 # =============================================================================
 # Questo file dice a GitHub cosa fare automaticamente quando fai push.
 #
@@ -82,5 +82,5 @@ jobs:
       # ----------------------------------------------------------------------
       - name: Run tests with coverage
         run: |
-          pytest tests/ --cov=tanaleague2 --cov-report=term-missing
+          pytest tests/ --cov=leagueforge2 --cov-report=term-missing
         continue-on-error: true  # Non fallisce se coverage è basso

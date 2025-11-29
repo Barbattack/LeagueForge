@@ -1,0 +1,74 @@
+# POKEMON IMPORT - GUIDA COMPLETA
+
+## SETUP (una volta sola)
+
+1. Upload script su PythonAnywhere:
+   - Files → Upload `import_pokemon.py`
+
+2. Modifica config (righe 13-14):
+   ```python
+   SHEET_ID = "il_tuo_google_sheet_id"
+   CREDENTIALS_FILE = "/home/your_store/credentials.json"
+   ```
+
+3. Crea stagione in Config sheet:
+   - Season_ID: PKM-FS25
+   - TCG: PKM
+   - Season_Name: Pokemon Fiamme Spettrali 2025
+   - Start_Date: 2025-11-13
+   - Status: ACTIVE
+
+## USO
+
+### TEST (consigliato prima volta):
+```bash
+python import_pokemon.py --tdf 12novembre.tdf --season PKM-FS25 --test
+```
+
+### IMPORT REALE:
+```bash
+python import_pokemon.py --tdf 12novembre.tdf --season PKM-FS25
+```
+
+## NOMENCLATURA STAGIONI
+
+Formato: PKM-XXAA
+
+- PKM = Pokemon
+- XX = Codice espansione (2 lettere)
+- AA = Anno (2 cifre)
+
+**Esempi:**
+- PKM-FS25 = Fiamme Spettrali 2025
+- PKM-SR25 = Scarlatto Rombo 2025
+- PKM-TE26 = Tempesta Elettrica 2026
+
+## OUTPUT
+
+✅ Tournament_ID: PKM-FS25_2025-11-12
+✅ Results: 17 giocatori
+✅ Matches: 34 match (H2H disponibile!)
+✅ Players: nuovi giocatori aggiunti
+
+## API CALLS: 4 (efficiente!)
+
+- 1 call: Tournaments
+- 1 call: Results (batch)
+- 1 call: Pokemon_Matches (batch)
+- 1 call: Players (batch)
+
+## DIFFERENZE vs ONE PIECE
+
+Pokemon:
+- Sistema punti con pareggi (W=3, T=1, L=0)
+- Match-by-match tracking (H2H!)
+- OMW% calcolato da match reali
+- File .TDF (XML) vs CSV
+
+One Piece:
+- Sistema punti semplice (W=3)
+- Solo risultati finali
+- OMW% da CSV
+- File CSV
+
+🚀 Pronto per stats PRO!

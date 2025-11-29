@@ -1,10 +1,10 @@
-# 🏆 TanaLeague
+# 🏆 LeagueForge
 
 **Sistema di gestione classifiche e statistiche per leghe competitive di Trading Card Games (TCG)**
 
 Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, profili giocatori e achievement per **One Piece TCG**, **Pokémon TCG** e **Riftbound TCG**.
 
-🌐 **Live:** [latanadellepulci.pythonanywhere.com](https://latanadellepulci.pythonanywhere.com)
+🌐 **Live Demo:** [your-store.pythonanywhere.com](https://your-store.pythonanywhere.com) (customize with your domain)
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
@@ -24,6 +24,27 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 - [Documentazione](#-documentazione)
 - [Franchise Model](#-franchise-model)
 - [Struttura Progetto](#-struttura-progetto)
+
+---
+
+---
+
+## 🔄 Recent Updates (Nov 2024)
+
+### Performance & Reliability
+- ✅ **API Rate Limiting Fixed:** Reduced API calls by 75% (batch operations)
+- ✅ **COL_RESULTS Mapping Fixed:** Corrected all column indices for accurate data
+- ✅ **Players Sheet Schema Fixed:** Correct column order for first_seen/last_seen
+- ✅ **Rebuild Scripts:** Added `rebuild_players.py` and `rebuild_player_stats.py` for data recovery
+- ✅ **Dual Date Format Support:** Handles both `YYYYMMDD` and `YYYY-MM-DD` formats
+
+### Technical Improvements
+- Batch operations in `player_stats.py` and `achievements.py`
+- API delay increased to 1200ms (respects 60 req/min limit)
+- All API calls wrapped with retry logic and exponential backoff
+- Comprehensive error handling for corrupted data scenarios
+
+**See:** [TECHNICAL_NOTES.md](docs/TECHNICAL_NOTES.md#-recent-optimizations--fixes-nov-2024) for details.
 
 ---
 
@@ -107,9 +128,36 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 
 ## 🆕 Recent Updates (Nov 2025)
 
-### 🏪 v2.3 - Franchise Model + Plug-and-Play (Latest)
+### 🎯 v2.4 - Player Cards Fix + Data Integrity (Latest)
 
-- **Franchise Tools**: Strumenti per distribuire TanaLeague ad altri negozi
+- **Fix Duplicate Player Cards**: Eliminati duplicati nella pagina `/players`
+  - Problema: Giocatori con stesso membership ma TCG diversi (es. PKM99 ARCHIVED + PKM-FS25 ACTIVE) apparivano come schede separate
+  - Soluzione: Route `/players` ora legge da `Player_Stats` invece di `Players`
+  - Risultato: **Una card per giocatore** con stats lifetime aggregate
+
+- **ARCHIVED Seasons in Lifetime Stats**: Player_Stats ora include dati storici completi
+  - `rebuild_player_stats.py` include TUTTI i tornei (ACTIVE, CLOSED, ARCHIVED)
+  - ARCHIVED seasons contano per stats lifetime personali (Total Tournaments, Total Points)
+  - ARCHIVED seasons NON contano per achievement/classifiche competitive
+  - Esempio: 10 tornei PKM99 (ARCHIVED) + 5 PKM-FS25 (ACTIVE) = 15 tornei totali visualizzati
+
+- **Header Validation**: Nuova protezione contro errori di configurazione
+  - Funzione `validate_sheet_headers()` in `sheet_utils.py`
+  - Valida ordine e nomi colonne prima di operazioni critiche
+  - Mostra errore chiaro se qualcuno sposta una colonna per sbaglio
+  - Implementata in route `/players` come primo livello di protezione
+
+- **Player_Stats Enhancement**: Aggiunta colonna `total_points`
+  - Calcolo punti medi accurato: `avg_points = total_points / total_tournaments`
+  - Batch update incrementale durante import tornei
+  - Rebuild manuale con `python rebuild_player_stats.py`
+
+**Breaking Changes**: Nessuno (retrocompatibile)
+**Migration Required**: Esegui `python rebuild_player_stats.py` una volta per popolare `total_points`
+
+### 🏪 v2.3 - Franchise Model + Plug-and-Play
+
+- **Franchise Tools**: Strumenti per distribuire LeagueForge ad altri negozi
   - `create_store_package.py` - Crea pacchetti ZIP pre-configurati
   - `api_utils.py` - Retry automatico su rate limit API
   - `install.bat` / `install.sh` - Script installazione
@@ -186,21 +234,21 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 ```bash
 # 1. Clone repository
 git clone <repository-url>
-cd TanaLeague
+cd LeagueForge
 
 # 2. Installa dipendenze
 pip install -r requirements.txt
 
 # 3. Configura credenziali
 # - Scarica service_account_credentials.json da Google Cloud
-# - Metti in tanaleague2/
+# - Metti in leagueforge/
 
 # 4. Configura SHEET_ID
-# - Modifica SHEET_ID in tanaleague2/config.py
+# - Modifica SHEET_ID in leagueforge/config.py
 # - Oppure in ogni import script
 
 # 5. Setup Achievement System (UNA VOLTA!)
-cd tanaleague2
+cd leagueforge
 python setup_achievements.py
 # Questo crea i fogli Achievement_Definitions e Player_Achievements
 
@@ -242,6 +290,7 @@ Webapp disponibile su `http://localhost:5000`
 | **Tournaments** | Lista tornei (ID, data, partecipanti, vincitore) |
 | **Results** | Risultati individuali (giocatore, rank, punti, W-L-D) |
 | **Players** | Anagrafica giocatori (membership, nome, TCG, stats lifetime) |
+| **Player_Stats** | Statistiche aggregate pre-calcolate (CQRS read model, include ARCHIVED) |
 | **Seasonal_Standings_PROV** | Classifiche provvisorie (stagioni ACTIVE) |
 | **Seasonal_Standings_FINAL** | Classifiche finali (stagioni CLOSED) |
 | **Achievement_Definitions** | Definizioni 40 achievement (NEW!) |
@@ -253,37 +302,39 @@ Webapp disponibile su `http://localhost:5000`
 
 ## 📥 Import Tornei
 
-### One Piece TCG (CSV)
+### Architettura Unificata
+
+Gli script utilizzano il modulo `import_base.py` che centralizza tutte le funzioni comuni:
+- Connessione Google Sheets
+- Calcolo punti LeagueForge
+- Aggiornamento Players e Seasonal_Standings
+- Sblocco achievement
+
+### One Piece TCG (Multi-Round)
 
 ```bash
-cd tanaleague2
-python import_onepiece.py --csv path/to/tournament.csv --season OP12
+cd leagueforge
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
 ```
 
-**Formato CSV richiesto**: Export da Limitlesstcg
-- Columns: Ranking, User Name, Membership Number, Win Points, OMW %, Record, etc.
+**Formato CSV richiesto**: Export dal portale ufficiale Bandai (uno per round + classifica finale)
+- Calcola automaticamente W/T/L dal delta punti tra round (+3=Win, +1=Tie, +0=Loss)
+- Legge OMW% dal file ClassificaFinale
 
 ### Pokémon TCG (TDF/XML)
 
 ```bash
-cd tanaleague2
+cd leagueforge
 python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 ```
 
 **Formato TDF richiesto**: Export da Play! Pokémon Tournament software
 
-### Riftbound TCG (CSV Multi-Round)
+### Riftbound TCG (Multi-Round)
 
-**Import Singolo Round:**
 ```bash
-cd tanaleague2
-python import_riftbound.py --csv RFB_2025_11_17_R1.csv --season RFB01
-```
-
-**Import Multi-Round (RACCOMANDATO):**
-```bash
-cd tanaleague2
-python import_riftbound.py --csv RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB_2025_11_17_R3.csv --season RFB01
+cd leagueforge
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 ```
 
 **Formato CSV richiesto**: Export CSV dal software gestione tornei (uno per round)
@@ -295,11 +346,17 @@ python import_riftbound.py --csv RFB_2025_11_17_R1.csv,RFB_2025_11_17_R2.csv,RFB
 Tutti gli import supportano `--test` per verificare senza scrivere:
 
 ```bash
-python import_onepiece.py --csv file.csv --season OP12 --test
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica Finale.csv --season OP12 --test
 python import_pokemon.py --tdf file.tdf --season PKM-FS25 --test
-python import_riftbound.py --csv file.csv --season RFB01 --test
-# Multi-round test
-python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01 --test
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
+```
+
+### Reimport (Sovrascrittura)
+
+Per correggere un torneo già importato, usa `--reimport`:
+
+```bash
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica Finale.csv --season OP12 --reimport
 ```
 
 ---
@@ -309,7 +366,7 @@ python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01 --test
 ### Setup (Una volta sola)
 
 ```bash
-cd tanaleague2
+cd leagueforge
 python setup_achievements.py
 ```
 
@@ -370,12 +427,12 @@ git clone <repository-url>
 **Web tab → Add new web app:**
 - Python version: 3.8+
 - Framework: Flask
-- WSGI file: `/home/yourusername/TanaLeague/tanaleague2/wsgi.py`
+- WSGI file: `/home/yourusername/LeagueForge/leagueforge/wsgi.py`
 
 **Crea wsgi.py:**
 ```python
 import sys
-sys.path.insert(0, '/home/yourusername/TanaLeague/tanaleague2')
+sys.path.insert(0, '/home/yourusername/LeagueForge/leagueforge')
 
 from app import app as application
 ```
@@ -389,7 +446,7 @@ pip install --user gspread google-auth pandas pdfplumber flask
 ### 4. Setup Achievement
 
 ```bash
-cd ~/TanaLeague/tanaleague2
+cd ~/LeagueForge/leagueforge
 python setup_achievements.py
 ```
 
@@ -422,7 +479,7 @@ python setup_achievements.py
 
 ## 🏪 Franchise Model
 
-TanaLeague supporta un modello franchise per distribuire il sistema ad altri negozi.
+LeagueForge supporta un modello franchise per distribuire il sistema ad altri negozi.
 
 ### Come Funziona
 
@@ -440,7 +497,7 @@ TanaLeague supporta un modello franchise per distribuire il sistema ad altri neg
 ### Creare un Pacchetto per un Nuovo Negozio
 
 ```bash
-cd tanaleague2
+cd leagueforge
 python create_store_package.py
 ```
 
@@ -453,8 +510,8 @@ Lo script:
 ### Contenuto del Pacchetto ZIP
 
 ```
-TanaLeague_NomeNegozio/
-├── tanaleague2/
+LeagueForge_NomeNegozio/
+├── leagueforge/
 │   ├── app.py
 │   ├── config.py          # Pre-configurato!
 │   ├── credentials.json   # Credenziali condivise
@@ -478,7 +535,7 @@ Per dettagli completi: **[docs/FRANCHISE_GUIDE.md](docs/FRANCHISE_GUIDE.md)**
 ## 📁 Struttura Progetto
 
 ```
-TanaLeague/
+LeagueForge/
 ├── README.md                       # Questo file
 ├── requirements.txt                # Dipendenze Python
 ├── pytest.ini                      # Configurazione pytest
@@ -494,7 +551,7 @@ TanaLeague/
 │   ├── test_app.py                 # Test routes
 │   └── test_achievements.py        # Test achievement system
 │
-├── tanaleague2/                    # Codice principale
+├── leagueforge/                    # Codice principale
 │   ├── app.py                      # Flask app + routes pubbliche
 │   │
 │   ├── routes/                     # Flask Blueprints (modular routes)
@@ -510,9 +567,14 @@ TanaLeague/
 │   ├── achievements.py             # Logica unlock achievement
 │   ├── setup_achievements.py       # Script setup sheets achievement
 │   │
-│   ├── import_onepiece.py          # Import One Piece (CSV)
+│   ├── import_base.py              # Funzioni comuni import
+│   ├── import_onepiece.py          # Import One Piece Multi-Round
+│   ├── import_riftbound.py         # Import Riftbound Multi-Round
 │   ├── import_pokemon.py           # Import Pokémon (TDF/XML)
-│   ├── import_riftbound.py         # Import Riftbound (CSV Multi-Round)
+│   │
+│   ├── sheet_utils.py              # Mappature colonne sheets
+│   ├── player_stats.py             # CRUD Player_Stats sheet
+│   ├── rebuild_player_stats.py     # Rebuild Player_Stats da Results
 │   │
 │   ├── stats_builder.py            # Builder statistiche avanzate
 │   ├── stats_cache.py              # Cache file stats
@@ -528,7 +590,7 @@ TanaLeague/
 │   ├── api_utils.py                # Utility API con retry (NEW!)
 │   │
 │   ├── logs/                       # Log applicazione (auto-created)
-│   │   └── tanaleague.log
+│   │   └── leagueforge.log
 │   │
 │   ├── templates/                  # Template HTML Jinja2
 │   │   ├── base.html               # Layout base + menu
@@ -576,7 +638,7 @@ Il sistema crea backup automatici in `Backup_Log` sheet ogni import.
 
 **Backup manuale:**
 1. Google Sheets → File → Make a copy
-2. Salva con data: `TanaLeague_Backup_2024-11-17`
+2. Salva con data: `LeagueForge_Backup_2024-11-17`
 
 ### Cache Refresh
 
@@ -637,20 +699,28 @@ Cache si aggiorna automaticamente ogni 5 minuti.
 
 ## 📜 License
 
-Progetto privato - Tutti i diritti riservati © 2024 La Tana delle Pulci
+**LeagueForge** is proprietary software available for licensing to TCG stores and tournament organizers.
+
+For licensing inquiries and commercial use, please contact the development team.
+
+© 2024-2025 LeagueForge - All rights reserved
 
 ---
 
-## 🤝 Supporto
+## 🤝 Support & Contact
 
-**La Tana delle Pulci**
-Viale Adamello 1, Lecco
-Instagram: [@latanadellepulci](https://www.instagram.com/latanadellepulci/)
+**For Store Owners:**
+- 📧 Email: [your-email@example.com]
+- 📱 WhatsApp: [your-number] (optional)
+- 📸 Instagram: [@your_store] (optional)
 
-Per bug o feature request: Apri issue su GitHub
+**For Developers:**
+- 🐛 Bug reports: Open an issue on GitHub
+- 💡 Feature requests: Open an issue on GitHub
+- 📖 Documentation: Check `/docs` folder
 
 ---
 
 **Made with ❤️ for the TCG community**
 
-*Last updated: November 2025 (v2.3 - Franchise Model + Plug-and-Play)*
+*Last updated: November 2025 (v2.4 - Player Cards Fix + Data Integrity)*

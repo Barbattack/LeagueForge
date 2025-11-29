@@ -1,4 +1,4 @@
-# Script Python - TanaLeague
+# Script Python - LeagueForge
 
 Guida completa a tutti gli script Python eseguibili da terminale.
 
@@ -17,16 +17,34 @@ Guida completa a tutti gli script Python eseguibili da terminale.
 
 ## Panoramica Script
 
+### Script Principali
+
 | Script | Scopo | Comando |
 |--------|-------|---------|
 | `app.py` | Avvia webapp Flask | `python app.py` |
 | `backup_sheets.py` | Backup Google Sheets → CSV | `python backup_sheets.py` |
 | `setup_achievements.py` | Crea fogli achievement | `python setup_achievements.py` |
-| `import_onepiece.py` | Import tornei One Piece | `python import_onepiece.py --csv file.csv --season OP12` |
-| `import_pokemon.py` | Import tornei Pokemon | `python import_pokemon.py --tdf file.tdf --season PKM01` |
-| `import_riftbound.py` | Import tornei Riftbound | `python import_riftbound.py --csv file.csv --season RFB01` |
+| `rebuild_player_stats.py` | Ricostruisce Player_Stats | `python rebuild_player_stats.py` |
 
-**Posizione**: Tutti gli script sono in `tanaleague2/`
+### Script Import (v2 - Raccomandati)
+
+| Script | Scopo | Comando |
+|--------|-------|---------|
+| `import_onepiece_v2.py` | Import One Piece (multi-round) | `python import_onepiece_v2.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica Finale.csv --season OP12` |
+| `import_riftbound_v2.py` | Import Riftbound (multi-round) | `python import_riftbound_v2.py --rounds R1.csv,R2.csv,R3.csv --season RFB01` |
+| `import_pokemon.py` | Import Pokemon (TDF) | `python import_pokemon.py --tdf file.tdf --season PKM01` |
+
+### Moduli Condivisi
+
+| Modulo | Scopo |
+|--------|-------|
+| `import_base.py` | Funzioni comuni per tutti gli import |
+| `sheet_utils.py` | Mappature colonne + helper functions |
+| `player_stats.py` | CRUD per Player_Stats sheet |
+| `achievements.py` | Sistema achievement |
+| `cache.py` | Cache dati Google Sheets |
+
+**Posizione**: Tutti gli script sono in `leagueforge2/`
 
 ---
 
@@ -39,7 +57,7 @@ Crea backup completo del database Google Sheets in formato CSV.
 ### Comandi
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # Backup completo (tutti i fogli)
 python backup_sheets.py
@@ -104,13 +122,13 @@ Totale: 8 fogli, 1763 righe
 ```bash
 # Backup giornaliero alle 3:00
 crontab -e
-0 3 * * * cd /path/to/TanaLeague/tanaleague2 && python backup_sheets.py
+0 3 * * * cd /path/to/LeagueForge/leagueforge2 && python backup_sheets.py
 ```
 
 **PythonAnywhere:**
 1. Vai su Dashboard → Tab "Tasks"
 2. "Scheduled Tasks" → "Add new scheduled task"
-3. Command: `cd ~/TanaLeague/tanaleague2 && python backup_sheets.py`
+3. Command: `cd ~/LeagueForge/leagueforge2 && python backup_sheets.py`
 4. Time: 03:00 (o orario preferito)
 
 ---
@@ -124,7 +142,7 @@ Crea i fogli necessari per il sistema achievement nel Google Sheet.
 ### Comando
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_achievements.py
 ```
 
@@ -172,31 +190,50 @@ Setup completato!
 
 Gli script di import sono documentati in dettaglio in [IMPORT_GUIDE.md](IMPORT_GUIDE.md).
 
+### Architettura Unificata
+
+Gli script utilizzano il modulo `import_base.py` che centralizza:
+- Connessione Google Sheets
+- Scrittura Results
+- Aggiornamento Players
+- Aggiornamento Seasonal_Standings
+- Calcolo punti LeagueForge
+
 ### Riferimento Rapido
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
-# One Piece (CSV)
-python import_onepiece.py --csv file.csv --season OP12
-python import_onepiece.py --csv file.csv --season OP12 --test      # Dry run
-python import_onepiece.py --csv file.csv --season OP12 --reimport  # Sovrascrivi
+# One Piece (Multi-Round)
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12 --test
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12 --reimport
+
+# Riftbound (Multi-Round)
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01 --test
 
 # Pokemon (TDF/XML)
 python import_pokemon.py --tdf file.tdf --season PKM-FS25
 python import_pokemon.py --tdf file.tdf --season PKM-FS25 --test
-
-# Riftbound (CSV Multi-Round)
-python import_riftbound.py --csv R1.csv,R2.csv,R3.csv --season RFB01
-python import_riftbound.py --csv R1.csv --season RFB01 --test
 ```
 
-### Parametri Comuni
+### Parametri Script
 
-| Parametro | Descrizione |
-|-----------|-------------|
-| `--test` | Dry run: verifica senza scrivere |
-| `--reimport` | Permette sovrascrittura torneo esistente |
+| Parametro | Script | Descrizione |
+|-----------|--------|-------------|
+| `--rounds` | OP, RFB | File CSV round separati da virgola |
+| `--classifica` | OP | File classifica finale con OMW% |
+| `--season` | Tutti | ID stagione (es. OP12, RFB01) |
+| `--test` | Tutti | Dry run: verifica senza scrivere |
+| `--reimport` | Tutti | Permette sovrascrittura torneo esistente |
+
+### Calcolo W/T/L (One Piece)
+
+Lo script calcola vittorie, pareggi e sconfitte dal delta punti tra round:
+- **+3 punti** = Vittoria
+- **+1 punto** = Pareggio
+- **+0 punti** = Sconfitta
 
 ---
 
@@ -209,7 +246,7 @@ Avvia il server Flask per la webapp.
 ### Comando
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python app.py
 ```
 
@@ -274,7 +311,7 @@ pbkdf2:sha256:600000$abc123def456$789xyz...
 #### Test Connessione Google Sheets
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python -c "from cache import cache; print('Connesso!' if cache.connect_sheet() else 'Errore')"
 ```
 
@@ -294,7 +331,7 @@ pip list | grep -E "flask|gspread|pytest"
 #### Test Import Moduli
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python -c "import app; print('App OK')"
 python -c "import cache; print('Cache OK')"
 python -c "import achievements; print('Achievements OK')"
@@ -314,7 +351,7 @@ pip install -r requirements.txt
 ### Errore: FileNotFoundError config.py
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 cp config.example.py config.py
 # Poi modifica config.py con i tuoi valori
 ```
@@ -336,7 +373,7 @@ python script.py
 
 ```bash
 # Assicurati di essere nella cartella giusta
-cd tanaleague2
+cd leagueforge2
 python script.py
 
 # Oppure aggiungi al PYTHONPATH
@@ -350,13 +387,16 @@ export PYTHONPATH="${PYTHONPATH}:$(pwd)"
 ### Uso Quotidiano
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # Avvia app
 python app.py
 
-# Import torneo
-python import_onepiece.py --csv file.csv --season OP12
+# Import torneo One Piece
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
+
+# Import torneo Riftbound
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
 
 # Backup
 python backup_sheets.py
@@ -365,7 +405,7 @@ python backup_sheets.py
 ### Setup Iniziale
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # 1. Copia config
 cp config.example.py config.py
@@ -383,10 +423,13 @@ python app.py
 ### Manutenzione
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 
 # Backup manuale
 python backup_sheets.py
+
+# Ricostruire Player_Stats (se necessario)
+python rebuild_player_stats.py
 
 # Aggiorna dipendenze
 pip install -r requirements.txt --upgrade
@@ -395,3 +438,114 @@ pip install -r requirements.txt --upgrade
 ---
 
 **Ultimo aggiornamento:** Novembre 2025
+
+---
+
+## 🔧 Utility Scripts - Data Recovery
+
+### rebuild_players.py
+
+**Purpose:** Reconstructs Players sheet from Results (use after data corruption or schema changes).
+
+**Usage:**
+```bash
+python rebuild_players.py
+```
+
+**What it does:**
+1. Reads all rows from Results sheet
+2. Groups by (membership, TCG)
+3. Calculates lifetime stats:
+   - Total tournaments, wins
+   - Match W/T/L totals
+   - Total points lifetime
+   - First/last seen dates
+4. Clears Players sheet (rows 4+)
+5. Writes recalculated data
+
+**When to use:**
+- After fixing COL_RESULTS mapping
+- After Players sheet corruption
+- After manual Results edits
+- Migration/schema changes
+
+**Note:** Uses correct COL_RESULTS mapping (name: 9, match_w: 10, points_total: 8).
+
+---
+
+### rebuild_player_stats.py
+
+**Purpose:** Reconstructs Player_Stats sheet from Results with aggregated statistics.
+
+**Usage:**
+```bash
+python rebuild_player_stats.py          # Full rebuild
+python rebuild_player_stats.py --test   # Dry run (no write)
+```
+
+**What it does:**
+1. Reads Results sheet (all tournament data)
+2. **Includes ALL seasons** (ACTIVE, CLOSED, and ARCHIVED) for lifetime stats
+3. Groups by (membership, TCG)
+4. Calculates:
+   - Total tournaments, wins, top8 count
+   - Total points (sum of all points_total from Results)
+   - Current streak, best streak (based on top8 finishes)
+   - Last tournament rank & date
+   - Seasons played count
+5. Clears Player_Stats sheet
+6. Writes aggregated data (13 columns including total_points)
+
+**Key Features:**
+- Supports both date formats: `OP11_20250619` and `OP11_2025-06-19`
+- Extracts season_id from tournament_id (e.g., "OP12_20251113" → "OP12")
+- **Includes ARCHIVED seasons** for complete lifetime statistics
+- Calculates streaks based on top8 finishes
+- Writes total_points column for average points calculation
+
+**When to use:**
+- After fixing COL_RESULTS mapping
+- After multiple tournament imports
+- To fix TCG = "UNK" issues
+- To fix incorrect Last_Date values
+- **After adding ARCHIVED seasons to include historical data**
+
+---
+
+## 🚀 API Optimization (Nov 2024)
+
+### Batch Operations
+
+Import scripts now use batch operations to reduce API calls by 75%:
+
+**Before:**
+- `update_player_stats_after_tournament()` per player: 2 calls × 12 = 24 calls
+- `check_and_unlock_achievements()` per player: 4 calls × 12 = 48 calls
+- **Total: ~80-90 API calls** → Exceeded 60 req/min limit ❌
+
+**After:**
+- `batch_update_player_stats()`: 3 calls total for all players
+- `batch_load_player_achievements()`: 1 call
+- `batch_calculate_player_stats()`: 2 calls
+- **Total: ~15-20 API calls** → Within limits ✅
+
+**Implementation:** All import scripts (`import_onepiece.py`, `import_pokemon.py`, `import_riftbound.py`) automatically use batch operations via `import_base.py`.
+
+### API Rate Limiting
+
+**Configuration:** `API_DELAY_MS = 1200` (1.2 seconds between calls)
+
+**Why 1200ms?**
+- Google Sheets limit: 60 requests/minute = 1 request/second
+- 1200ms = 0.83 requests/second (safe margin)
+
+**Implementation:**
+- All API calls wrapped with `safe_api_call()` from `api_utils.py`
+- Automatic retry with exponential backoff (60s, 120s, 240s)
+- Only retries on RESOURCE_EXHAUSTED errors
+
+**Files using batch operations:**
+- `import_base.py`: Main import logic
+- `achievements.py`: Batch achievement checks
+- `player_stats.py`: Batch stats updates
+

@@ -1,4 +1,4 @@
-# 🏅 Achievement System - TanaLeague
+# 🏅 Achievement System - LeagueForge
 
 Documentazione completa del sistema achievement: architettura, categorie, unlock automatico, e customizzazione.
 
@@ -19,7 +19,7 @@ Documentazione completa del sistema achievement: architettura, categorie, unlock
 
 ## 🎯 Overview
 
-Il **TanaLeague Achievement System** è un sistema di gamification completo che:
+Il **LeagueForge Achievement System** è un sistema di gamification completo che:
 
 - ✅ **Sblocca automaticamente** achievement durante import tornei
 - ✅ **Traccia 40+ achievement** organizzati in 7 categorie
@@ -85,7 +85,7 @@ membership | achievement_id | unlocked_date | tournament_id | progress
 ### File Structure
 
 ```
-tanaleague2/
+leagueforge2/
 ├── setup_achievements.py       # Script setup iniziale (run once)
 ├── achievements.py             # Core logic + unlock functions
 ├── import_onepiece.py          # One Piece import (con achievement unlock)
@@ -410,7 +410,7 @@ ACH_WIL_005 | Perfectionist | Vinci con 100% game win rate | Wildcards | Epic | 
 
 Se `requirement_type = "special"`, aggiungi logica in `achievements.py`:
 
-**File**: `tanaleague2/achievements.py`
+**File**: `leagueforge2/achievements.py`
 
 **Funzione**: `check_special_achievements()`
 
@@ -446,7 +446,7 @@ def check_special_achievements(stats, achievements, unlocked, current_tournament
 Esegui import di test:
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python import_onepiece.py --csv test.csv --season OP12 --test
 ```
 
@@ -616,7 +616,7 @@ In `achievements.html`, ogni card è ora un link:
 
 1. Verifica sheet esiste:
 ```bash
-cd tanaleague2
+cd leagueforge2
 python3
 >>> import gspread
 >>> # ... connetti a sheet
@@ -653,7 +653,7 @@ if req_value == 'streak_top8_4':
 
 **Soluzione**:
 ```bash
-cd tanaleague2
+cd leagueforge2
 python setup_achievements.py
 ```
 

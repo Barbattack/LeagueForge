@@ -1,4 +1,4 @@
-# Guida Admin - TanaLeague
+# Guida Admin - LeagueForge
 
 Guida completa per le operazioni di amministrazione della webapp.
 
@@ -21,7 +21,7 @@ Guida completa per le operazioni di amministrazione della webapp.
 ### URL Login
 
 ```
-https://latanadellepulci.pythonanywhere.com/admin/login
+https://your-store.pythonanywhere.com/admin/login
 ```
 
 Oppure in locale:
@@ -270,7 +270,7 @@ La cache si aggiorna automaticamente ogni 5 minuti.
 ### Backup Manuale
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python backup_sheets.py
 ```
 
@@ -281,11 +281,11 @@ I file vengono salvati in `backups/YYYY-MM-DD_HH-MM-SS/`
 **PythonAnywhere:**
 1. Tab Web → Error log
 2. Tab Web → Server log
-3. Files → `tanaleague2/logs/tanaleague.log`
+3. Files → `leagueforge2/logs/leagueforge.log`
 
 **Locale:**
 ```bash
-cat tanaleague2/logs/tanaleague.log
+cat leagueforge2/logs/leagueforge.log
 ```
 
 ### Verificare Stato App
@@ -303,16 +303,16 @@ Testa queste URL:
 
 **PythonAnywhere:**
 ```bash
-cd ~/TanaLeague
+cd ~/LeagueForge
 git pull origin main
 # Tab Web → Reload
 ```
 
 **Locale:**
 ```bash
-cd TanaLeague
+cd LeagueForge
 git pull origin main
-python tanaleague2/app.py
+python leagueforge2/app.py
 ```
 
 ---

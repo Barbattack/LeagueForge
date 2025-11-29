@@ -1,4 +1,4 @@
-# Quick Reference - TanaLeague
+# Quick Reference - LeagueForge
 
 Cheatsheet rapido per le operazioni comuni.
 
@@ -25,7 +25,7 @@ pytest -k "landing"
 pytest -x
 
 # Coverage report
-pytest --cov=tanaleague2
+pytest --cov=leagueforge2
 ```
 
 ### Git
@@ -50,7 +50,7 @@ git log --oneline -10
 
 ```bash
 # Naviga alla cartella
-cd tanaleague2
+cd leagueforge2
 
 # Avvia app Flask
 python app.py
@@ -82,19 +82,30 @@ python app.py
 
 | File | Scopo |
 |------|-------|
-| `tanaleague2/app.py` | Applicazione Flask principale |
-| `tanaleague2/cache.py` | Gestione cache Google Sheets |
-| `tanaleague2/achievements.py` | Logica achievement |
-| `tanaleague2/routes/admin.py` | Route admin panel |
-| `tanaleague2/routes/achievements.py` | Route achievement |
+| `leagueforge2/app.py` | Applicazione Flask principale |
+| `leagueforge2/cache.py` | Gestione cache Google Sheets |
+| `leagueforge2/achievements.py` | Logica achievement |
+| `leagueforge2/routes/admin.py` | Route admin panel |
+| `leagueforge2/routes/achievements.py` | Route achievement |
+
+### Script Import
+
+| File | Scopo |
+|------|-------|
+| `leagueforge2/import_base.py` | Funzioni comuni import |
+| `leagueforge2/import_onepiece.py` | Import One Piece multi-round |
+| `leagueforge2/import_riftbound.py` | Import Riftbound multi-round |
+| `leagueforge2/import_pokemon.py` | Import Pokemon TDF |
+| `leagueforge2/sheet_utils.py` | Mappature colonne sheets |
+| `leagueforge2/player_stats.py` | CRUD Player_Stats |
 
 ### Configurazione
 
 | File | Scopo |
 |------|-------|
-| `tanaleague2/config.py` | Credenziali e settings (NON su Git!) |
-| `tanaleague2/config.example.py` | Template config |
-| `tanaleague2/service_account_credentials.json` | Credenziali Google (NON su Git!) |
+| `leagueforge2/config.py` | Credenziali e settings (NON su Git!) |
+| `leagueforge2/config.example.py` | Template config |
+| `leagueforge2/service_account_credentials.json` | Credenziali Google (NON su Git!) |
 | `requirements.txt` | Dipendenze Python |
 
 ### Test
@@ -104,6 +115,35 @@ python app.py
 | `tests/conftest.py` | Fixtures e mock data |
 | `tests/test_app.py` | Test route Flask |
 | `tests/test_achievements.py` | Test achievement |
+
+---
+
+## Import Tornei
+
+### One Piece (Multi-Round)
+
+```bash
+cd leagueforge2
+python import_onepiece.py --rounds R1.csv,R2.csv,R3.csv,R4.csv --classifica ClassificaFinale.csv --season OP12
+```
+
+### Riftbound (Multi-Round)
+
+```bash
+cd leagueforge2
+python import_riftbound.py --rounds R1.csv,R2.csv,R3.csv --season RFB01
+```
+
+### Pokemon (TDF)
+
+```bash
+cd leagueforge2
+python import_pokemon.py --tdf file.tdf --season PKM01
+```
+
+### Parametri comuni
+- `--test`: Dry run senza scrittura
+- `--reimport`: Sovrascrivi torneo esistente
 
 ---
 
@@ -132,8 +172,8 @@ Per forzare refresh: riavvia app o usa import admin.
 
 ```
 /home/Pulci/
-└── TanaLeague/
-    ├── tanaleague2/      # Codice Python
+└── LeagueForge/
+    ├── leagueforge2/      # Codice Python
     │   ├── app.py
     │   ├── config.py     # File segreto
     │   ├── routes/       # Blueprint routes
@@ -151,13 +191,13 @@ Per forzare refresh: riavvia app o usa import admin.
 
 1. Tab "Web"
 2. Click su "Error log" o "Server log"
-3. Oppure: Files → `tanaleague2/logs/`
+3. Oppure: Files → `leagueforge2/logs/`
 
 ### Aggiornare Codice
 
 ```bash
 # Da console PythonAnywhere
-cd ~/TanaLeague
+cd ~/LeagueForge
 git pull origin main
 # Poi reload webapp
 ```
@@ -185,7 +225,7 @@ python -c "from werkzeug.security import generate_password_hash; print(generate_
 ### Backup Google Sheets
 
 ```bash
-cd tanaleague2
+cd leagueforge2
 python backup_sheets.py
 # File salvati in backups/
 ```
@@ -193,8 +233,8 @@ python backup_sheets.py
 ### Backup Manuale Files
 
 Scarica da PythonAnywhere:
-- `tanaleague2/config.py`
-- `tanaleague2/service_account_credentials.json`
+- `leagueforge2/config.py`
+- `leagueforge2/service_account_credentials.json`
 
 ---
 
@@ -213,7 +253,7 @@ Scarica da PythonAnywhere:
 
 ## Links Utili
 
-- **Repository**: GitHub TanaLeague
+- **Repository**: GitHub LeagueForge
 - **PythonAnywhere**: pythonanywhere.com
 - **Google Sheet**: Link nel config.py (SHEET_ID)
 - **pytest docs**: docs.pytest.org
@@ -222,3 +262,117 @@ Scarica da PythonAnywhere:
 ---
 
 **Ultimo aggiornamento:** Novembre 2025
+
+---
+
+## 🔧 Data Recovery & Maintenance
+
+### Rebuild Players Sheet
+```bash
+# Reconstruct Players from Results (after corruption/schema changes)
+python rebuild_players.py
+```
+
+**When to use:**
+- After COL_RESULTS mapping fixes
+- After Players sheet corruption
+- After manual Results edits
+
+**What it does:**
+- Reads all Results rows
+- Recalculates lifetime stats per (membership, TCG)
+- Rewrites Players sheet with correct data
+
+---
+
+### Rebuild Player_Stats Sheet
+```bash
+# Full rebuild
+python rebuild_player_stats.py
+
+# Dry run (no write)
+python rebuild_player_stats.py --test
+```
+
+**When to use:**
+- After fixing COL_RESULTS mapping
+- To fix TCG = "UNK" issues
+- To fix incorrect Last_Date values
+- After multiple tournament imports
+
+**What it does:**
+- Reads Results + Config (excludes ARCHIVED seasons)
+- Calculates aggregated stats per (membership, TCG)
+- Supports both date formats: `YYYYMMDD` and `YYYY-MM-DD`
+- Rewrites Player_Stats sheet
+
+---
+
+## 📊 Google Sheets Structure
+
+### Results Sheet (13 columns)
+```
+0: result_id         | Unique ID (tournament_id_membership)
+1: tournament_id     | Season_Date format (e.g., OP12_20251113)
+2: membership        | Player membership number
+3: rank              | Tournament placement
+4: win_points        | Bandai win points (OP/RB)
+5: omw               | Opponent Match Win %
+6: points_victory    | LeagueForge victory points
+7: points_ranking    | LeagueForge ranking points
+8: points_total      | Total LeagueForge points
+9: name              | Player display name
+10: match_w          | Matches won
+11: match_t          | Matches tied
+12: match_l          | Matches lost
+```
+
+**Important:** `COL_RESULTS` mapping in `sheet_utils.py` must match these indices exactly!
+
+---
+
+### Player_Stats Sheet (12 columns)
+```
+Membership | Name | TCG | Total Tournaments | Total Wins | 
+Current Streak | Best Streak | Top8 Count | Last Rank | 
+Last Date | Seasons Count | Updated At
+```
+
+**Key Points:**
+- TCG is lifetime aggregation (OP, PKM, PKMFS) - NOT per-season
+- For per-season stats, use Seasonal_Standings_PROV
+- Updated automatically by import scripts
+
+---
+
+## 🚀 API Optimization (Nov 2024)
+
+### Rate Limiting Configuration
+```python
+# api_utils.py / import_base.py
+API_DELAY_MS = 1200  # 1.2 seconds between calls
+```
+
+**Google Sheets Limit:** 60 requests/minute = 1 request/second  
+**Our Rate:** 1200ms delay = 0.83 requests/second ✅
+
+### Batch Operations
+All import scripts now use batch operations:
+- `batch_update_player_stats()`: 3 calls (was 24)
+- `batch_load_player_achievements()`: 1 call (was 12)
+- `batch_calculate_player_stats()`: 2 calls (was 24)
+
+**Result:** Reduced from ~80-90 to ~15-20 API calls per import (75% reduction)
+
+---
+
+## ⚠️ Known Issues & TODOs
+
+1. **Seasonal_Standings_PROV:** Should rename to `Seasonal_Standings` (remove "_PROV")
+   - Requires manual Google Sheets rename + code updates
+   - Status: Deferred to future session
+
+2. **Date Format:** Some tournaments use `YYYYMMDD`, others `YYYY-MM-DD`
+   - Current: Both formats supported
+   - TODO: Standardize in future imports
+
