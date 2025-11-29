@@ -42,7 +42,7 @@ def clear_screen():
 def print_header():
     """Stampa header wizard."""
     print("=" * 60)
-    print("🎮 TANALEAGUE - SETUP WIZARD")
+    print("🎮 LEAGUEFORGE - SETUP WIZARD")
     print("=" * 60)
     print()
 
