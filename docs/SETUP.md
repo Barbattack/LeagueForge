@@ -130,7 +130,6 @@ python init_database.py
 | **Vouchers** | Buoni negozio (One Piece) |
 | **Pokemon_Matches** | Match H2H Pokemon |
 | **Riftbound_Matches** | Match H2H Riftbound |
-| **Backup_Log** | Log operazioni |
 
 **Cosa fa lo script**:
 - ✅ Crea tutti i fogli con header corretti

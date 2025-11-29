@@ -101,10 +101,6 @@ SHEETS_STRUCTURE = {
     "Riftbound_Matches": {
         "headers": ["Tournament_ID", "Round", "Table", "Player1_Membership", "Player1_Name", "Player2_Membership", "Player2_Name", "Winner", "Result"],
         "description": "Match H2H Riftbound"
-    },
-    "Backup_Log": {
-        "headers": ["Timestamp", "Operation", "Tournament_ID", "Status", "Details"],
-        "description": "Log operazioni"
     }
 }
 
