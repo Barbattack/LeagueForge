@@ -1,0 +1,81 @@
+# =============================================================================
+# Render.com - Blueprint Configuration
+# =============================================================================
+# Questo file configura automaticamente il deploy su Render.com
+# Documentazione: https://render.com/docs/blueprint-spec
+# =============================================================================
+
+services:
+  - type: web
+    name: leagueforge
+    runtime: python
+    plan: free  # Free tier (upgrade a 'starter' per $7/mese - sempre attivo)
+
+    # Build settings
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd leagueforge && gunicorn app:app --bind 0.0.0.0:$PORT
+
+    # Environment
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+
+      - key: SHEET_ID
+        sync: false  # Configurare manualmente nella dashboard Render
+
+      - key: GOOGLE_CREDENTIALS_FILE
+        value: /etc/secrets/credentials.json
+
+      # Flask settings
+      - key: FLASK_ENV
+        value: production
+
+      - key: DEBUG
+        value: False
+
+# =============================================================================
+# ISTRUZIONI SETUP RENDER
+# =============================================================================
+#
+# 1. Crea account su https://render.com (usa GitHub login)
+#
+# 2. Click "New +" → "Web Service"
+#
+# 3. Connetti repository GitHub: Barbattack/LeagueForge
+#    - Branch: main (o il branch che vuoi deployare)
+#
+# 4. Render rileverà automaticamente questo file render.yaml
+#    OPPURE configura manualmente:
+#    - Name: leagueforge
+#    - Runtime: Python 3
+#    - Build Command: pip install -r requirements.txt
+#    - Start Command: cd leagueforge && gunicorn app:app --bind 0.0.0.0:$PORT
+#
+# 5. Environment Variables (sezione "Environment"):
+#    - SHEET_ID: [il tuo Google Sheet ID]
+#    - GOOGLE_CREDENTIALS_JSON: [contenuto del file JSON - vedi sotto]
+#
+# 6. Deploy!
+#
+# =============================================================================
+# CREDENZIALI GOOGLE (IMPORTANTE!)
+# =============================================================================
+#
+# Render non può accedere a file locali. Due opzioni:
+#
+# OPZIONE A (Più Semplice): Environment Variable
+# -----------------------------------------------
+# 1. Apri il file leagueforge-479711-ec2cd4c0b4a7.json
+# 2. Copia TUTTO il contenuto (è un JSON)
+# 3. In Render, crea variabile: GOOGLE_CREDENTIALS_JSON
+# 4. Incolla il JSON come valore
+# 5. Modifica config.py per usare questa variabile
+#
+# OPZIONE B (Più Sicura): Secret Files
+# -------------------------------------
+# 1. In Render Dashboard → "Secret Files"
+# 2. Filename: /etc/secrets/credentials.json
+# 3. Contents: [incolla contenuto del JSON]
+# 4. Render monterà il file all'avvio
+#
+# =============================================================================
