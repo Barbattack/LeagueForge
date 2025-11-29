@@ -36,7 +36,7 @@ from stats_builder import build_stats
 from datetime import timedelta
 from sheet_utils import (
     COL_PLAYERS, COL_PLAYER_STATS, COL_ACHIEVEMENT_DEF, COL_PLAYER_ACH,
-    validate_sheet_headers
+    validate_sheet_headers, safe_get
 )
 # Note: safe_int, safe_float sono definiti localmente in questo file (signature diversa da sheet_utils)
 
