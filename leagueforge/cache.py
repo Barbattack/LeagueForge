@@ -80,47 +80,29 @@ class SheetCache:
                     })
             
             # Leggi Seasonal_Standings per ogni stagione
-            
-            # Leggi Standings PROV e FINAL (se esistono)
-            standings_by_season = { }
-            prov_rows = []
-            final_rows = []
-            try:
-                ws_prov = sheet.worksheet("Seasonal_Standings_PROV")
-                prov_rows = ws_prov.get_all_values()[3:]  # Skip header
-            except Exception:
-                prov_rows = []
-            try:
-                ws_final = sheet.worksheet("Seasonal_Standings_FINAL")
-                final_rows = ws_final.get_all_values()[3:]
-            except Exception:
-                final_rows = []
 
-            # Crea mappe per season_id
-            prov_map = {}
-            for row in prov_rows:
+            # Leggi Standings (usato per tutte le stagioni: ACTIVE, CLOSED, ARCHIVED)
+            standings_by_season = {}
+            standings_rows = []
+            try:
+                ws_standings = sheet.worksheet("Seasonal_Standings_PROV")
+                standings_rows = ws_standings.get_all_values()[3:]  # Skip header
+            except Exception:
+                standings_rows = []
+
+            # Crea mappa per season_id
+            standings_map = {}
+            for row in standings_rows:
                 sid = safe_get(row, COL_STANDINGS, 'season_id')
                 if not sid:
                     continue
-                prov_map.setdefault(sid, []).append(row)
-            final_map = {}
-            for row in final_rows:
-                sid = safe_get(row, COL_STANDINGS, 'season_id')
-                if not sid:
-                    continue
-                final_map.setdefault(sid, []).append(row)
+                standings_map.setdefault(sid, []).append(row)
 
-            # Scegli sheet giusto in base allo status stagione
+            # Popola standings_by_season
             standings_by_season = {}
             for s in seasons:
                 sid = s.get('id')
-                status = (s.get('status') or '').upper()
-                rows = prov_map.get(sid, []) if status == 'ACTIVE' else final_map.get(sid, [])
-                # Fallback: se FINAL vuota, usa PROV; se PROV vuota, usa FINAL
-                if status == 'CLOSED' and not rows:
-                    rows = final_map.get(sid, []) or prov_map.get(sid, [])
-                if status != 'CLOSED' and not rows:
-                    rows = prov_map.get(sid, []) or final_map.get(sid, [])
+                rows = standings_map.get(sid, [])
                 standings_by_season[sid] = []
                 for row in rows:
                     standings_by_season[sid].append({

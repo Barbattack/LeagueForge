@@ -123,8 +123,7 @@ python init_database.py
 | **Results** | Risultati individuali giocatori |
 | **Players** | Anagrafica giocatori |
 | **Player_Stats** | Statistiche lifetime aggregate (CQRS read model) |
-| **Seasonal_Standings_PROV** | Classifiche stagioni ACTIVE |
-| **Seasonal_Standings_FINAL** | Classifiche stagioni CLOSED |
+| **Seasonal_Standings_PROV** | Classifiche stagionali (tutte le stagioni) |
 | **Achievement_Definitions** | Definizioni achievement (40+ pre-popolati) |
 | **Player_Achievements** | Achievement sbloccati dai giocatori |
 | **Vouchers** | Buoni negozio (One Piece) |

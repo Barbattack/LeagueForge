@@ -74,14 +74,13 @@ SHEETS_TO_BACKUP = [
     "Tournaments",
     "Results",
     "Players",
+    "Player_Stats",
     "Seasonal_Standings_PROV",
-    "Seasonal_Standings_FINAL",
     "Achievement_Definitions",
     "Player_Achievements",
     "Vouchers",
     "Pokemon_Matches",
     "Riftbound_Matches",
-    "Backup_Log",
 ]
 
 # Numero massimo di backup da mantenere (i più vecchi vengono eliminati)

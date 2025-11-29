@@ -74,12 +74,8 @@ SHEETS_STRUCTURE = {
         "description": "Statistiche lifetime aggregate (CQRS read model)"
     },
     "Seasonal_Standings_PROV": {
-        "headers": ["Season_ID", "Rank", "Membership_Number", "Player_Name", "Tournaments_Played", "Best_Results", "Total_Points", "Avg_Points"],
-        "description": "Classifiche provvisorie stagioni attive"
-    },
-    "Seasonal_Standings_FINAL": {
-        "headers": ["Season_ID", "Rank", "Membership_Number", "Player_Name", "Tournaments_Played", "Best_Results", "Total_Points", "Avg_Points"],
-        "description": "Classifiche finali stagioni chiuse"
+        "headers": ["Season_ID", "Membership_Number", "Player_Name", "Total_Points", "Tournaments_Played", "Tournaments_Counted", "Tournament_Wins", "Match_Wins", "Best_Rank", "Top8_Count", "Position"],
+        "description": "Classifiche stagionali (usato per tutte le stagioni)"
     },
     "Achievement_Definitions": {
         "headers": ["achievement_id", "name", "description", "category", "rarity", "emoji", "points", "requirement_type", "requirement_value"],
