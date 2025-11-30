@@ -940,7 +940,9 @@ def players_list():
             if not row or len(row) <= COL_PLAYER_STATS['membership']:
                 continue
 
-            membership = row[COL_PLAYER_STATS['membership']].strip() if len(row) > COL_PLAYER_STATS['membership'] else ''
+            membership_raw = row[COL_PLAYER_STATS['membership']].strip() if len(row) > COL_PLAYER_STATS['membership'] else ''
+            # Forza membership a 10 cifre con padding zeri (fix per Google Sheets che rimuove zeri iniziali)
+            membership = str(membership_raw).zfill(10) if membership_raw else ''
             if membership:
                 # Estrai valori usando indici del mapping
                 total_tournaments = safe_int(

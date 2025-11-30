@@ -105,9 +105,13 @@ class SheetCache:
                 rows = standings_map.get(sid, [])
                 standings_by_season[sid] = []
                 for row in rows:
+                    # Forza membership a 10 cifre con padding zeri (fix per Google Sheets che rimuove zeri iniziali)
+                    membership_raw = safe_get(row, COL_STANDINGS, 'membership', '')
+                    membership_padded = str(membership_raw).zfill(10) if membership_raw else ''
+
                     standings_by_season[sid].append({
                         'position': safe_get(row, COL_STANDINGS, 'position', ''),
-                        'membership': safe_get(row, COL_STANDINGS, 'membership'),
+                        'membership': membership_padded,
                         'name': safe_get(row, COL_STANDINGS, 'name'),
                         'points': safe_float(row, COL_STANDINGS, 'points', 0),
                         'tournaments_played': safe_int(row, COL_STANDINGS, 'tournaments_played', 0),
