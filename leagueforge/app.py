@@ -1155,41 +1155,30 @@ def player(membership):
             'consistency': round(consistency, 1)
         }
 
-        # Achievement data
+        # Achievement data (from cache)
         achievements_unlocked = []
         achievement_points = 0
         try:
-            ws_achievements = sheet.worksheet("Achievement_Definitions")
-            achievement_defs = {}
-            for row in ws_achievements.get_all_values()[4:]:
-                ach_id = safe_get(row, COL_ACHIEVEMENT_DEF, 'achievement_id')
-                if ach_id:
-                    achievement_defs[ach_id] = {
-                        'name': safe_get(row, COL_ACHIEVEMENT_DEF, 'name'),
-                        'description': safe_get(row, COL_ACHIEVEMENT_DEF, 'description'),
-                        'category': safe_get(row, COL_ACHIEVEMENT_DEF, 'category'),
-                        'rarity': safe_get(row, COL_ACHIEVEMENT_DEF, 'rarity'),
-                        'emoji': safe_get(row, COL_ACHIEVEMENT_DEF, 'emoji'),
-                        'points': safe_int(row, COL_ACHIEVEMENT_DEF, 'points', 0)
-                    }
+            achievement_defs = data.get('achievement_defs', {})
+            player_achievements = data.get('player_achievements', [])
 
-            ws_player_ach = sheet.worksheet("Player_Achievements")
-            for row in ws_player_ach.get_all_values()[4:]:
-                if safe_get(row, COL_PLAYER_ACH, 'membership') == membership:
-                    ach_id = safe_get(row, COL_PLAYER_ACH, 'achievement_id')
+            # Find achievements unlocked by this player
+            for player_ach in player_achievements:
+                if player_ach.get('membership') == membership_clean:
+                    ach_id = player_ach.get('achievement_id')
                     if ach_id in achievement_defs:
                         ach_info = achievement_defs[ach_id]
                         achievements_unlocked.append({
                             'id': ach_id,
-                            'name': ach_info['name'],
-                            'description': ach_info['description'],
-                            'category': ach_info['category'],
-                            'rarity': ach_info['rarity'],
-                            'emoji': ach_info['emoji'],
-                            'points': ach_info['points'],
-                            'unlocked_date': safe_get(row, COL_PLAYER_ACH, 'unlocked_date', '')
+                            'name': ach_info.get('name'),
+                            'description': ach_info.get('description'),
+                            'category': ach_info.get('category'),
+                            'rarity': ach_info.get('rarity'),
+                            'emoji': ach_info.get('emoji'),
+                            'points': ach_info.get('points', 0),
+                            'unlocked_date': player_ach.get('unlocked_date', '')
                         })
-                        achievement_points += ach_info['points']
+                        achievement_points += ach_info.get('points', 0)
         except Exception as e:
             print(f"Achievement load error: {e}")
             # Se achievement non esistono ancora, continua senza

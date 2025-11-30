@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from config import SHEET_ID, CACHE_REFRESH_MINUTES, CACHE_FILE
 from utils_credentials import get_google_credentials
 from sheet_utils import (
-    COL_CONFIG, COL_STANDINGS, COL_TOURNAMENTS,
+    COL_CONFIG, COL_STANDINGS, COL_TOURNAMENTS, COL_ACHIEVEMENT_DEF, COL_PLAYER_ACH, COL_PLAYERS,
     safe_get, safe_int, safe_float
 )
 
@@ -142,12 +142,76 @@ class SheetCache:
                     'participants': safe_int(row, COL_TOURNAMENTS, 'participants', 0),
                     'winner': safe_get(row, COL_TOURNAMENTS, 'winner', '')
                 })
-            
+
+            # Leggi Achievement_Definitions
+            achievement_defs = {}
+            try:
+                ws_achievements = sheet.worksheet("Achievement_Definitions")
+                achievement_rows = ws_achievements.get_all_values()[4:]
+                for row in achievement_rows:
+                    ach_id = safe_get(row, COL_ACHIEVEMENT_DEF, 'achievement_id')
+                    if ach_id:
+                        achievement_defs[ach_id] = {
+                            'id': ach_id,
+                            'name': safe_get(row, COL_ACHIEVEMENT_DEF, 'name'),
+                            'description': safe_get(row, COL_ACHIEVEMENT_DEF, 'description'),
+                            'category': safe_get(row, COL_ACHIEVEMENT_DEF, 'category', 'Other'),
+                            'rarity': safe_get(row, COL_ACHIEVEMENT_DEF, 'rarity', 'Common'),
+                            'emoji': safe_get(row, COL_ACHIEVEMENT_DEF, 'emoji', ''),
+                            'points': safe_int(row, COL_ACHIEVEMENT_DEF, 'points', 0)
+                        }
+            except Exception as e:
+                print(f"Warning: Could not load Achievement_Definitions: {e}")
+
+            # Leggi Player_Achievements
+            player_achievements = []
+            try:
+                ws_player_ach = sheet.worksheet("Player_Achievements")
+                player_ach_rows = ws_player_ach.get_all_values()[4:]
+                for row in player_ach_rows:
+                    membership = safe_get(row, COL_PLAYER_ACH, 'membership')
+                    ach_id = safe_get(row, COL_PLAYER_ACH, 'achievement_id')
+                    if membership and ach_id:
+                        # Padding membership number to 10 digits
+                        membership_padded = str(membership).zfill(10) if membership else ''
+                        player_achievements.append({
+                            'membership': membership_padded,
+                            'achievement_id': ach_id,
+                            'unlocked_date': safe_get(row, COL_PLAYER_ACH, 'unlocked_date', ''),
+                            'tournament_id': safe_get(row, COL_PLAYER_ACH, 'tournament_id', '')
+                        })
+            except Exception as e:
+                print(f"Warning: Could not load Player_Achievements: {e}")
+
+            # Leggi Players (per nomi e conteggio totale)
+            players = {}
+            total_players = 0
+            try:
+                ws_players = sheet.worksheet("Players")
+                players_data = ws_players.get_all_values()[3:]
+                for row in players_data:
+                    membership = safe_get(row, COL_PLAYERS, 'membership')
+                    if membership:
+                        # Padding membership number to 10 digits
+                        membership_padded = str(membership).zfill(10) if membership else ''
+                        players[membership_padded] = {
+                            'membership': membership_padded,
+                            'name': safe_get(row, COL_PLAYERS, 'name', membership_padded),
+                            'tcg': safe_get(row, COL_PLAYERS, 'tcg', '')
+                        }
+                        total_players += 1
+            except Exception as e:
+                print(f"Warning: Could not load Players: {e}")
+
             self.cache_data = {
             'schema_version': 2,
             'seasons': seasons,
             'standings_by_season': standings_by_season,
             'tournaments_by_season': tournaments_by_season,
+            'achievement_defs': achievement_defs,
+            'player_achievements': player_achievements,
+            'players': players,
+            'total_players': total_players,
             # legacy aliases (back-compat)
             'standings': standings_by_season,
             'tournaments': tournaments_by_season

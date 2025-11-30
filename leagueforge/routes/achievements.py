@@ -54,67 +54,50 @@ def achievements_list():
         Template: achievements.html con catalogo completo
     """
     try:
-        sheet = cache.connect_sheet()
+        # Get data from cache (refreshes automatically if needed)
+        data, err, meta = cache.get_data()
+        if not data:
+            return render_template('error.html', error=err or 'Cache non disponibile'), 500
 
-        # Carica achievement definitions
-        ws_achievements = sheet.worksheet("Achievement_Definitions")
-        achievement_rows = ws_achievements.get_all_values()[4:]
+        achievement_defs = data.get('achievement_defs', {})
+        player_achievements = data.get('player_achievements', [])
+        total_players = data.get('total_players', 0)
 
+        # Organize achievements by category
         achievements_by_category = {}
         total_achievements = 0
         total_points = 0
 
-        for row in achievement_rows:
-            ach_id = safe_get(row, COL_ACHIEVEMENT_DEF, 'achievement_id')
-            if not ach_id:
-                continue
-
-            category = safe_get(row, COL_ACHIEVEMENT_DEF, 'category', 'Other')
+        for ach_id, ach in achievement_defs.items():
+            category = ach.get('category', 'Other')
             if category not in achievements_by_category:
                 achievements_by_category[category] = []
 
-            ach = {
-                'id': ach_id,
-                'name': safe_get(row, COL_ACHIEVEMENT_DEF, 'name'),
-                'description': safe_get(row, COL_ACHIEVEMENT_DEF, 'description'),
-                'category': category,
-                'rarity': safe_get(row, COL_ACHIEVEMENT_DEF, 'rarity', 'Common'),
-                'emoji': safe_get(row, COL_ACHIEVEMENT_DEF, 'emoji', ''),
-                'points': safe_int(row, COL_ACHIEVEMENT_DEF, 'points', 0)
-            }
-
             achievements_by_category[category].append(ach)
             total_achievements += 1
-            total_points += ach['points']
+            total_points += ach.get('points', 0)
 
-        # Calcola % di unlock per ogni achievement
-        ws_player_ach = sheet.worksheet("Player_Achievements")
-        player_ach_rows = ws_player_ach.get_all_values()[4:]
-
+        # Calculate unlock percentage for each achievement
         unlock_counts = {}
-        for row in player_ach_rows:
-            ach_id = safe_get(row, COL_PLAYER_ACH, 'achievement_id')
+        for player_ach in player_achievements:
+            ach_id = player_ach.get('achievement_id')
             if ach_id:
                 unlock_counts[ach_id] = unlock_counts.get(ach_id, 0) + 1
 
-        # Conta giocatori totali
-        ws_players = sheet.worksheet("Players")
-        total_players = len([r for r in ws_players.get_all_values()[3:] if safe_get(r, COL_PLAYERS, 'membership')])
-
-        # Aggiungi % unlock agli achievement
+        # Add unlock percentage to achievements
         for category in achievements_by_category:
             for ach in achievements_by_category[category]:
                 unlocks = unlock_counts.get(ach['id'], 0)
                 ach['unlock_count'] = unlocks
                 ach['unlock_percentage'] = (unlocks / total_players * 100) if total_players > 0 else 0
 
-        # Ordina categorie per priorità
+        # Sort categories by priority
         category_order = ['Glory', 'Giant Slayer', 'Consistency', 'Legacy', 'Wildcards', 'Seasonal', 'Heartbreak']
         ordered_categories = []
         for cat in category_order:
             if cat in achievements_by_category:
                 ordered_categories.append((cat, achievements_by_category[cat]))
-        # Aggiungi eventuali categorie rimanenti
+        # Add remaining categories
         for cat, achs in achievements_by_category.items():
             if cat not in category_order:
                 ordered_categories.append((cat, achs))
@@ -150,65 +133,35 @@ def achievement_detail(ach_id):
         404: Se achievement non trovato
     """
     try:
-        sheet = cache.connect_sheet()
+        # Get data from cache (refreshes automatically if needed)
+        data, err, meta = cache.get_data()
+        if not data:
+            return render_template('error.html', error=err or 'Cache non disponibile'), 500
 
-        # 1. Carica info achievement da Achievement_Definitions
-        ws_achievements = sheet.worksheet("Achievement_Definitions")
-        achievement_rows = ws_achievements.get_all_values()[4:]
+        achievement_defs = data.get('achievement_defs', {})
+        player_achievements = data.get('player_achievements', [])
+        players = data.get('players', {})
+        total_players = data.get('total_players', 0)
 
-        achievement = None
-        for row in achievement_rows:
-            if safe_get(row, COL_ACHIEVEMENT_DEF, 'achievement_id') == ach_id:
-                achievement = {
-                    'id': ach_id,
-                    'name': safe_get(row, COL_ACHIEVEMENT_DEF, 'name'),
-                    'description': safe_get(row, COL_ACHIEVEMENT_DEF, 'description'),
-                    'category': safe_get(row, COL_ACHIEVEMENT_DEF, 'category', 'Other'),
-                    'rarity': safe_get(row, COL_ACHIEVEMENT_DEF, 'rarity', 'Common'),
-                    'emoji': safe_get(row, COL_ACHIEVEMENT_DEF, 'emoji', ''),
-                    'points': safe_int(row, COL_ACHIEVEMENT_DEF, 'points', 0)
-                }
-                break
-
+        # 1. Get achievement info
+        achievement = achievement_defs.get(ach_id)
         if not achievement:
             return render_template('error.html', error='Achievement non trovato'), 404
 
-        # 2. Carica tutti i player che hanno sbloccato questo achievement
-        ws_player_ach = sheet.worksheet("Player_Achievements")
-        player_ach_rows = ws_player_ach.get_all_values()[4:]
-
-        unlocks_raw = []
-        for row in player_ach_rows:
-            if safe_get(row, COL_PLAYER_ACH, 'achievement_id') == ach_id:
-                unlocks_raw.append({
-                    'membership': safe_get(row, COL_PLAYER_ACH, 'membership'),
-                    'unlocked_date': safe_get(row, COL_PLAYER_ACH, 'unlocked_date', ''),
-                    'tournament_id': safe_get(row, COL_PLAYER_ACH, 'tournament_id', '')
+        # 2. Get all players who unlocked this achievement
+        unlocks = []
+        for player_ach in player_achievements:
+            if player_ach.get('achievement_id') == ach_id:
+                membership = player_ach.get('membership', '')
+                player_info = players.get(membership, {})
+                unlocks.append({
+                    'membership': membership,
+                    'name': player_info.get('name', membership),
+                    'unlocked_date': player_ach.get('unlocked_date', ''),
+                    'tournament_id': player_ach.get('tournament_id', '')
                 })
 
-        # 3. Carica nomi giocatori da Players sheet
-        ws_players = sheet.worksheet("Players")
-        players_data = ws_players.get_all_values()[3:]
-
-        player_names = {}
-        for row in players_data:
-            membership = safe_get(row, COL_PLAYERS, 'membership')
-            if membership:
-                player_names[membership] = safe_get(row, COL_PLAYERS, 'name', membership)
-
-        total_players = len([r for r in players_data if safe_get(r, COL_PLAYERS, 'membership')])
-
-        # 4. Arricchisci unlocks con nomi e ordina per data
-        unlocks = []
-        for u in unlocks_raw:
-            unlocks.append({
-                'membership': u['membership'],
-                'name': player_names.get(u['membership'], u['membership']),
-                'unlocked_date': u['unlocked_date'],
-                'tournament_id': u['tournament_id']
-            })
-
-        # Ordina per data (piu vecchi prima = primi a sbloccare)
+        # 3. Sort by date (oldest first = first to unlock)
         def parse_date(d):
             try:
                 from datetime import datetime
@@ -219,7 +172,7 @@ def achievement_detail(ach_id):
 
         unlocks.sort(key=lambda x: parse_date(x['unlocked_date']))
 
-        # 5. Calcola statistiche
+        # 4. Calculate statistics
         unlock_count = len(unlocks)
         unlock_percentage = (unlock_count / total_players * 100) if total_players > 0 else 0
 
