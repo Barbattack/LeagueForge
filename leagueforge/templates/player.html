@@ -276,7 +276,9 @@
         <h5 class="mb-0"><i class="fas fa-chart-area"></i> Evoluzione Punti</h5>
     </div>
     <div class="card-body">
-        <canvas id="pointsChart" height="80"></canvas>
+        <div style="position: relative; height: 300px;">
+            <canvas id="pointsChart"></canvas>
+        </div>
     </div>
 </div>
 
@@ -355,6 +357,7 @@ new Chart(ctx, {
     },
     options: {
         responsive: true,
+        maintainAspectRatio: false,
         animation: { duration: 300 },
         plugins: {
             legend: { display: false }
