@@ -8,6 +8,7 @@ Legge Google Sheet ogni N minuti e mantiene cache locale
 import gspread
 import json
 import os
+import re
 from datetime import datetime, timedelta
 from config import SHEET_ID, CACHE_REFRESH_MINUTES, CACHE_FILE
 from utils_credentials import get_google_credentials
@@ -72,6 +73,12 @@ class SheetCache:
             for row in config_data:
                 if row and safe_get(row, COL_CONFIG, 'season_id'):
                     season_id = safe_get(row, COL_CONFIG, 'season_id')
+
+                    # Filtra solo season_id validi (formato stagione reale: OP12, PKM-FS25, RFB01, etc.)
+                    # Pattern: 2+ lettere maiuscole, opzionalmente seguite da "-" e altre lettere, poi cifre
+                    if not re.match(r'^[A-Z]{2,}(?:-[A-Z]+)?\d+$', season_id, re.IGNORECASE):
+                        continue  # Skip righe Config che non sono stagioni reali
+
                     season_name = safe_get(row, COL_CONFIG, 'name')
                     # Usa season_id come fallback se name è vuoto
                     if not season_name or season_name.strip() == '':
