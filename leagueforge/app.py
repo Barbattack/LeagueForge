@@ -870,9 +870,13 @@ def stats(scope):
             return render_template('error.html', error='Scope non valido o nessun dato'), 404
         set_cached(scope, stats_obj)
 
+    # Extract TCG from scope for name formatting
+    scope_tcg = _tcg_code(scope) if not scope.startswith('ALL-') else scope.split('-')[1]
+
     return render_template(
         'stats.html',
         scope=scope,
+        tcg=scope_tcg,
         stats=stats_obj,
         default_season=default_season,
         available_scopes=available_scopes
