@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeagueForge - Design Preview</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ============================================
+           LEAGUEFORGE MODERN DESIGN - PREVIEW
+           ============================================ */
+
+        :root {
+            /* Palette moderna */
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --dark-gradient: linear-gradient(135deg, #434343 0%, #000000 100%);
+
+            /* Colori base potenziati */
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #00d4ff;
+            --warning-color: #ffc837;
+            --danger-color: #ff6b6b;
+            --info-color: #4facfe;
+
+            /* Shadows */
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.16);
+            --shadow-xl: 0 12px 48px rgba(0,0,0,0.2);
+
+            /* Glass effect */
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.18);
+        }
+
+        /* ============================================
+           BODY & LAYOUT
+           ============================================ */
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to bottom right, #f8f9fa, #e9ecef);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        /* ============================================
+           NAVBAR MODERNA
+           ============================================ */
+
+        .navbar-modern {
+            background: var(--dark-gradient) !important;
+            box-shadow: var(--shadow-lg);
+            padding: 1rem 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            filter: brightness(1.2);
+        }
+
+        .navbar-brand i {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            position: relative;
+            transition: all 0.3s ease;
+            margin: 0 0.5rem;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .nav-link i {
+            margin-right: 0.4rem;
+        }
+
+        /* ============================================
+           CARDS MODERNE
+           ============================================ */
+
+        .card-modern {
+            border: none;
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            background: white;
+        }
+
+        .card-modern:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .card-modern .card-header {
+            border: none;
+            font-weight: 700;
+            padding: 1.25rem 1.5rem;
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .card-modern .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Card varianti colore */
+        .card-danger .card-header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        .card-warning .card-header {
+            background: linear-gradient(135deg, #ffd93d 0%, #f6c23e 100%);
+            color: #333;
+        }
+
+        .card-info .card-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .card-success .card-header {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        /* Glass card effect */
+        .card-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+        }
+
+        /* ============================================
+           HOVER CARDS (per grid navigazione)
+           ============================================ */
+
+        .hover-card-modern {
+            border: none;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hover-card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .hover-card-modern:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .hover-card-modern:hover::before {
+            opacity: 1;
+        }
+
+        /* ============================================
+           TABELLE MODERNE
+           ============================================ */
+
+        .table-modern {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table-modern thead th {
+            background: var(--primary-gradient);
+            color: white;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            border: none;
+            padding: 1rem;
+        }
+
+        .table-modern thead th:first-child {
+            border-top-left-radius: 12px;
+        }
+
+        .table-modern thead th:last-child {
+            border-top-right-radius: 12px;
+        }
+
+        .table-modern tbody tr {
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .table-modern tbody tr:hover {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            transform: scale(1.01);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-modern tbody td {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        /* Podio highlights */
+        .table-modern tbody tr.position-1 {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 215, 0, 0.05) 100%);
+            font-weight: 600;
+        }
+
+        .table-modern tbody tr.position-2 {
+            background: linear-gradient(90deg, rgba(192, 192, 192, 0.15) 0%, rgba(192, 192, 192, 0.05) 100%);
+            font-weight: 600;
+        }
+
+        .table-modern tbody tr.position-3 {
+            background: linear-gradient(90deg, rgba(205, 127, 50, 0.15) 0%, rgba(205, 127, 50, 0.05) 100%);
+            font-weight: 600;
+        }
+
+        /* ============================================
+           BADGES MODERNI
+           ============================================ */
+
+        .badge-modern {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .badge-legendary {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #333;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: glow-pulse 2s infinite;
+        }
+
+        .badge-epic {
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            color: white;
+        }
+
+        .badge-rare {
+            background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+            color: white;
+        }
+
+        .badge-common {
+            background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%);
+            color: white;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
+        }
+
+        /* ============================================
+           BUTTONS MODERNI
+           ============================================ */
+
+        .btn-modern {
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-modern:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary-modern {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-danger-modern {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .btn-success-modern {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        /* ============================================
+           FOOTER MODERNO
+           ============================================ */
+
+        .footer-modern {
+            background: var(--dark-gradient);
+            color: white;
+            padding: 3rem 0 1.5rem;
+            margin-top: auto;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
+        }
+
+        .footer-modern h5 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-modern a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .footer-modern a:hover {
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .footer-modern .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            margin: 0 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .footer-modern .social-link:hover {
+            background: var(--primary-gradient);
+            transform: translateY(-5px) scale(1.1);
+        }
+
+        /* ============================================
+           STATS CARDS
+           ============================================ */
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-gradient);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            background: var(--primary-gradient);
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fade-in-up 0.6s ease-out;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+
+            .card-modern {
+                margin-bottom: 1rem;
+            }
+
+            .stat-card {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar Preview -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-modern">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-trophy"></i> LeagueForge
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-home"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-ranking-star"></i> Classifiche</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-users"></i> Giocatori</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-trophy"></i> Achievement</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-chart-line"></i> Stats</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content Preview -->
+    <main class="container my-5">
+        <div class="text-center mb-5 animate-fade-in-up">
+            <h1 class="display-4 fw-bold mb-3">LeagueForge Design Preview</h1>
+            <p class="lead text-muted">Anteprima del nuovo design moderno e accattivante</p>
+        </div>
+
+        <!-- Stats Cards Row -->
+        <div class="row mb-5 animate-fade-in-up">
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value">1,247</div>
+                    <div class="stat-label">Giocatori Totali</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-value">342</div>
+                    <div class="stat-label">Tornei Disputati</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="stat-value">15</div>
+                    <div class="stat-label">Striscia Vincente</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hover Cards Grid -->
+        <div class="row mb-5">
+            <div class="col-12 mb-3">
+                <h3 class="h5 text-muted">Navigation Cards (con hover effect)</h3>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card hover-card-modern border-danger">
+                        <div class="card-body text-center py-4">
+                            <div class="fs-2 mb-2">🏴‍☠️</div>
+                            <h6 class="card-title text-danger mb-0 fw-bold">One Piece</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card hover-card-modern border-warning">
+                        <div class="card-body text-center py-4">
+                            <div class="fs-2 mb-2">⚡</div>
+                            <h6 class="card-title text-warning mb-0 fw-bold">Pokémon</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card hover-card-modern border-info">
+                        <div class="card-body text-center py-4">
+                            <div class="fs-2 mb-2">🌌</div>
+                            <h6 class="card-title text-info mb-0 fw-bold">Riftbound</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card hover-card-modern border-primary">
+                        <div class="card-body text-center py-4">
+                            <div class="fs-2 mb-2">📊</div>
+                            <h6 class="card-title text-primary mb-0 fw-bold">Classifiche</h6>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Modern Cards Examples -->
+        <div class="row mb-5">
+            <div class="col-md-6 mb-4">
+                <div class="card card-modern card-danger">
+                    <div class="card-header">
+                        <i class="fas fa-fire"></i> Classifica One Piece OP12
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3 text-muted">Visualizza i migliori giocatori della stagione corrente</p>
+                        <button class="btn btn-danger-modern btn-modern">
+                            <i class="fas fa-eye"></i> Vedi Classifica
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card card-modern card-warning">
+                    <div class="card-header">
+                        <i class="fas fa-bolt"></i> Stats Pokémon
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3 text-muted">Analizza statistiche dettagliate e record personali</p>
+                        <button class="btn btn-success-modern btn-modern">
+                            <i class="fas fa-chart-bar"></i> Esplora Stats
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Glass Card Example -->
+        <div class="row mb-5">
+            <div class="col-12 mb-3">
+                <h3 class="h5 text-muted">Glass Effect Card</h3>
+            </div>
+            <div class="col-md-12">
+                <div class="card card-glass">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="fw-bold mb-2">🎮 Prossimo Torneo</h5>
+                                <p class="mb-2 text-muted">One Piece TCG - Sabato 15 Dicembre ore 15:00</p>
+                                <p class="mb-0 small text-muted">Registrazioni aperte! Contattaci per iscriverti.</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-primary-modern btn-modern">
+                                    <i class="fab fa-whatsapp"></i> Iscriviti
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Badges Examples -->
+        <div class="row mb-5">
+            <div class="col-12 mb-3">
+                <h3 class="h5 text-muted">Badge Moderni (Achievement Rarity)</h3>
+            </div>
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-body">
+                        <span class="badge badge-modern badge-legendary me-2 mb-2">
+                            <i class="fas fa-crown"></i> Legendary
+                        </span>
+                        <span class="badge badge-modern badge-epic me-2 mb-2">
+                            <i class="fas fa-star"></i> Epic
+                        </span>
+                        <span class="badge badge-modern badge-rare me-2 mb-2">
+                            <i class="fas fa-gem"></i> Rare
+                        </span>
+                        <span class="badge badge-modern badge-common me-2 mb-2">
+                            <i class="fas fa-circle"></i> Common
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Example -->
+        <div class="row mb-5">
+            <div class="col-12 mb-3">
+                <h3 class="h5 text-muted">Tabella Classifica Moderna</h3>
+            </div>
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-header">
+                        <i class="fas fa-ranking-star"></i> Top 10 Giocatori
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-modern mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Pos</th>
+                                    <th>Giocatore</th>
+                                    <th>Punti</th>
+                                    <th>Tornei</th>
+                                    <th>Vittorie</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="position-1">
+                                    <td><span class="badge bg-warning text-dark"><i class="fas fa-crown"></i> 1°</span></td>
+                                    <td><strong>Mario Rossi</strong></td>
+                                    <td><strong>245 pts</strong></td>
+                                    <td>12</td>
+                                    <td>28</td>
+                                </tr>
+                                <tr class="position-2">
+                                    <td><span class="badge bg-secondary"><i class="fas fa-medal"></i> 2°</span></td>
+                                    <td><strong>Luigi Verdi</strong></td>
+                                    <td><strong>220 pts</strong></td>
+                                    <td>11</td>
+                                    <td>24</td>
+                                </tr>
+                                <tr class="position-3">
+                                    <td><span class="badge" style="background: #cd7f32; color: white;"><i class="fas fa-medal"></i> 3°</span></td>
+                                    <td><strong>Giovanni Bianchi</strong></td>
+                                    <td><strong>198 pts</strong></td>
+                                    <td>10</td>
+                                    <td>22</td>
+                                </tr>
+                                <tr>
+                                    <td>4°</td>
+                                    <td>Anna Neri</td>
+                                    <td>187 pts</td>
+                                    <td>9</td>
+                                    <td>19</td>
+                                </tr>
+                                <tr>
+                                    <td>5°</td>
+                                    <td>Paolo Gialli</td>
+                                    <td>175 pts</td>
+                                    <td>10</td>
+                                    <td>18</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons Examples -->
+        <div class="row mb-5">
+            <div class="col-12 mb-3">
+                <h3 class="h5 text-muted">Button Moderni (con ripple effect)</h3>
+            </div>
+            <div class="col-12">
+                <div class="card card-modern">
+                    <div class="card-body">
+                        <button class="btn btn-primary-modern btn-modern me-2 mb-2">
+                            <i class="fas fa-search"></i> Cerca Giocatore
+                        </button>
+                        <button class="btn btn-danger-modern btn-modern me-2 mb-2">
+                            <i class="fas fa-fire"></i> Top Players
+                        </button>
+                        <button class="btn btn-success-modern btn-modern me-2 mb-2">
+                            <i class="fas fa-check"></i> Iscriviti Ora
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer Preview -->
+    <footer class="footer-modern">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-md-4 mb-4">
+                    <h5><i class="fas fa-trophy"></i> LeagueForge</h5>
+                    <p class="text-white-50">Il sistema di gestione leghe TCG più completo per il tuo negozio.</p>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Link Veloci</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#"><i class="fas fa-angle-right"></i> Classifiche</a></li>
+                        <li class="mb-2"><a href="#"><i class="fas fa-angle-right"></i> Giocatori</a></li>
+                        <li class="mb-2"><a href="#"><i class="fas fa-angle-right"></i> Achievement</a></li>
+                        <li class="mb-2"><a href="#"><i class="fas fa-angle-right"></i> Statistiche</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Seguici</h5>
+                    <div class="d-flex">
+                        <a href="#" class="social-link">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.1);">
+            <div class="text-center text-white-50 py-3">
+                <p class="mb-0">&copy; 2024 Your Store Name - Powered by <strong>LeagueForge</strong></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
