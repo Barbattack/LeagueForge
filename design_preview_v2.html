@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeagueForge - Design Preview V2 (Bold & Modern)</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============================================
+           LEAGUEFORGE V2 - BOLD & MODERN DESIGN
+           Dark Mode + Neon Accents + Gaming Vibes
+           ============================================ */
+
+        :root {
+            /* Neon Palette */
+            --neon-purple: #a855f7;
+            --neon-blue: #3b82f6;
+            --neon-cyan: #06b6d4;
+            --neon-pink: #ec4899;
+            --neon-green: #10b981;
+            --neon-orange: #f59e0b;
+            --neon-red: #ef4444;
+
+            /* Dark backgrounds */
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --bg-card: #1e293b;
+
+            /* Text */
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+
+            /* Shadows with glow */
+            --glow-purple: 0 0 20px rgba(168, 85, 247, 0.5);
+            --glow-blue: 0 0 20px rgba(59, 130, 246, 0.5);
+            --glow-cyan: 0 0 20px rgba(6, 182, 212, 0.5);
+            --glow-pink: 0 0 20px rgba(236, 72, 153, 0.5);
+            --glow-green: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        /* ============================================
+           BODY & LAYOUT
+           ============================================ */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(168, 85, 247, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 90%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: background-shift 20s ease infinite;
+        }
+
+        @keyframes background-shift {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        main {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============================================
+           NAVBAR FUTURISTICA
+           ============================================ */
+
+        .navbar-futuristic {
+            background: rgba(15, 23, 42, 0.8) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid transparent;
+            border-image: linear-gradient(90deg, var(--neon-purple), var(--neon-blue), var(--neon-cyan)) 1;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            padding: 1.2rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 900;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .navbar-brand::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
+            transition: width 0.4s ease;
+            box-shadow: var(--glow-purple);
+        }
+
+        .navbar-brand:hover::after {
+            width: 100%;
+        }
+
+        .nav-link {
+            font-weight: 600;
+            font-size: 0.95rem;
+            position: relative;
+            transition: all 0.3s ease;
+            margin: 0 0.5rem;
+            padding: 0.6rem 1.2rem !important;
+            border-radius: 10px;
+            color: var(--text-secondary) !important;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary) !important;
+            transform: translateY(-3px);
+        }
+
+        .nav-link:hover::before {
+            opacity: 1;
+        }
+
+        /* ============================================
+           NEON CARDS
+           ============================================ */
+
+        .neon-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 0;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .neon-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .neon-card:hover::before {
+            left: 100%;
+        }
+
+        .neon-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            border-color: var(--neon-purple);
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                var(--glow-purple);
+        }
+
+        /* Neon card header */
+        .neon-card-header {
+            padding: 1.5rem;
+            font-weight: 800;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .neon-card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+        }
+
+        .neon-card-body {
+            padding: 1.5rem;
+        }
+
+        /* Color variants */
+        .neon-card-purple .neon-card-header {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.05));
+            color: var(--neon-purple);
+        }
+
+        .neon-card-purple:hover {
+            border-color: var(--neon-purple);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), var(--glow-purple);
+        }
+
+        .neon-card-blue .neon-card-header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05));
+            color: var(--neon-blue);
+        }
+
+        .neon-card-blue:hover {
+            border-color: var(--neon-blue);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), var(--glow-blue);
+        }
+
+        .neon-card-pink .neon-card-header {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.05));
+            color: var(--neon-pink);
+        }
+
+        .neon-card-pink:hover {
+            border-color: var(--neon-pink);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), var(--glow-pink);
+        }
+
+        .neon-card-cyan .neon-card-header {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(6, 182, 212, 0.05));
+            color: var(--neon-cyan);
+        }
+
+        .neon-card-cyan:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), var(--glow-cyan);
+        }
+
+        /* ============================================
+           STATS CARDS NEON
+           ============================================ */
+
+        .stat-card-neon {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stat-card-neon::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
+            border-radius: 20px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .stat-card-neon:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--glow-purple);
+        }
+
+        .stat-card-neon:hover::before {
+            opacity: 1;
+        }
+
+        .stat-icon-neon {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
+            color: white;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--glow-purple);
+            animation: icon-float 3s ease-in-out infinite;
+        }
+
+        @keyframes icon-float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .stat-value-neon {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+
+        .stat-label-neon {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ============================================
+           TCG NAVIGATION CARDS
+           ============================================ */
+
+        .tcg-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem 1rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+
+        .tcg-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, currentColor 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .tcg-card:hover {
+            transform: translateY(-15px) rotateY(5deg);
+            border-color: currentColor;
+        }
+
+        .tcg-card:hover::after {
+            opacity: 0.1;
+        }
+
+        .tcg-card .emoji {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            display: block;
+            transition: all 0.4s ease;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        .tcg-card:hover .emoji {
+            transform: scale(1.2) rotateZ(10deg);
+        }
+
+        .tcg-card .title {
+            font-weight: 800;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tcg-card-onepiece {
+            color: var(--neon-red);
+        }
+
+        .tcg-card-pokemon {
+            color: var(--neon-orange);
+        }
+
+        .tcg-card-riftbound {
+            color: var(--neon-cyan);
+        }
+
+        /* ============================================
+           TABLE CYBERPUNK
+           ============================================ */
+
+        .table-cyber {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.5rem;
+        }
+
+        .table-cyber thead th {
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
+            color: white;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            padding: 1.2rem 1rem;
+            border: none;
+            text-align: left;
+        }
+
+        .table-cyber thead th:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+
+        .table-cyber thead th:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+
+        .table-cyber tbody tr {
+            background: var(--bg-card);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .table-cyber tbody tr::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--neon-purple), var(--neon-cyan));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .table-cyber tbody tr:hover {
+            transform: translateX(10px);
+            box-shadow: -4px 0 0 var(--neon-purple), var(--glow-purple);
+        }
+
+        .table-cyber tbody tr:hover::before {
+            opacity: 1;
+        }
+
+        .table-cyber tbody td {
+            padding: 1.2rem 1rem;
+            border: none;
+            color: var(--text-secondary);
+        }
+
+        .table-cyber tbody td:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+
+        .table-cyber tbody td:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+
+        /* Podio con glow */
+        .table-cyber .rank-1 {
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.15), var(--bg-card));
+            box-shadow: inset 4px 0 0 gold, 0 0 30px rgba(255, 215, 0, 0.2);
+        }
+
+        .table-cyber .rank-2 {
+            background: linear-gradient(90deg, rgba(192, 192, 192, 0.15), var(--bg-card));
+            box-shadow: inset 4px 0 0 silver, 0 0 30px rgba(192, 192, 192, 0.2);
+        }
+
+        .table-cyber .rank-3 {
+            background: linear-gradient(90deg, rgba(205, 127, 50, 0.15), var(--bg-card));
+            box-shadow: inset 4px 0 0 #cd7f32, 0 0 30px rgba(205, 127, 50, 0.2);
+        }
+
+        /* ============================================
+           BADGES FUTURISTICI
+           ============================================ */
+
+        .badge-futuristic {
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border: 2px solid currentColor;
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .badge-futuristic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .badge-futuristic:hover::before {
+            left: 100%;
+        }
+
+        .badge-legendary {
+            background: rgba(255, 215, 0, 0.1);
+            color: gold;
+            border-color: gold;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: legendary-pulse 2s infinite;
+        }
+
+        @keyframes legendary-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4); }
+        }
+
+        .badge-epic {
+            background: rgba(168, 85, 247, 0.1);
+            color: var(--neon-purple);
+            border-color: var(--neon-purple);
+            box-shadow: var(--glow-purple);
+        }
+
+        .badge-rare {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--neon-blue);
+            border-color: var(--neon-blue);
+            box-shadow: var(--glow-blue);
+        }
+
+        .badge-common {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--text-muted);
+            border-color: var(--text-muted);
+        }
+
+        /* ============================================
+           BUTTONS NEON
+           ============================================ */
+
+        .btn-neon {
+            border: 2px solid currentColor;
+            border-radius: 12px;
+            padding: 0.9rem 2rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .btn-neon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: currentColor;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+            opacity: 0.2;
+        }
+
+        .btn-neon:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .btn-neon:hover {
+            box-shadow: 0 0 30px currentColor;
+            transform: translateY(-3px);
+        }
+
+        .btn-neon span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-neon-purple {
+            color: var(--neon-purple);
+        }
+
+        .btn-neon-cyan {
+            color: var(--neon-cyan);
+        }
+
+        .btn-neon-pink {
+            color: var(--neon-pink);
+        }
+
+        .btn-neon-green {
+            color: var(--neon-green);
+        }
+
+        /* ============================================
+           FOOTER DARK
+           ============================================ */
+
+        .footer-dark {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding: 4rem 0 2rem;
+            margin-top: auto;
+            border-top: 2px solid transparent;
+            border-image: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan)) 1;
+            position: relative;
+        }
+
+        .footer-dark h5 {
+            font-weight: 800;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-dark a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+            position: relative;
+        }
+
+        .footer-dark a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
+            transition: width 0.3s ease;
+        }
+
+        .footer-dark a:hover {
+            color: var(--text-primary);
+            transform: translateX(5px);
+        }
+
+        .footer-dark a:hover::after {
+            width: 100%;
+        }
+
+        .social-neon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-purple);
+            color: var(--neon-purple);
+            margin: 0 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .social-neon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--neon-purple);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .social-neon i {
+            position: relative;
+            z-index: 1;
+        }
+
+        .social-neon:hover {
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: var(--glow-purple);
+        }
+
+        .social-neon:hover::before {
+            opacity: 0.2;
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+
+        @keyframes slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-slide-up {
+            animation: slide-up 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.4rem;
+            }
+
+            .stat-value-neon {
+                font-size: 2rem;
+            }
+
+            .tcg-card .emoji {
+                font-size: 2.5rem;
+            }
+
+            .neon-card,
+            .stat-card-neon,
+            .tcg-card {
+                margin-bottom: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar Futuristica -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-futuristic">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-trophy"></i> LeagueForge
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-home"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-ranking-star"></i> Classifiche</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-users"></i> Giocatori</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-trophy"></i> Achievement</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-chart-line"></i> Stats</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content Preview -->
+    <main class="container my-5">
+        <div class="text-center mb-5 animate-slide-up">
+            <h1 class="display-4 fw-bold mb-3" style="background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                LeagueForge V2
+            </h1>
+            <p class="lead" style="color: var(--text-muted);">Bold • Modern • Gaming-Oriented Design</p>
+        </div>
+
+        <!-- Stats Cards Neon -->
+        <div class="row mb-5">
+            <div class="col-md-4 mb-3 animate-slide-up stagger-1">
+                <div class="stat-card-neon">
+                    <div class="stat-icon-neon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value-neon">1,247</div>
+                    <div class="stat-label-neon">Giocatori Totali</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 animate-slide-up stagger-2">
+                <div class="stat-card-neon">
+                    <div class="stat-icon-neon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-value-neon">342</div>
+                    <div class="stat-label-neon">Tornei Disputati</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 animate-slide-up stagger-3">
+                <div class="stat-card-neon">
+                    <div class="stat-icon-neon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="stat-value-neon">15</div>
+                    <div class="stat-label-neon">Striscia Vincente</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TCG Navigation Cards -->
+        <div class="row mb-5">
+            <div class="col-12 mb-4">
+                <h3 class="h5" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                    Seleziona il tuo TCG
+                </h3>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="tcg-card tcg-card-onepiece">
+                        <span class="emoji">🏴‍☠️</span>
+                        <div class="title">One Piece</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="tcg-card tcg-card-pokemon">
+                        <span class="emoji">⚡</span>
+                        <div class="title">Pokémon</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="tcg-card tcg-card-riftbound">
+                        <span class="emoji">🌌</span>
+                        <div class="title">Riftbound</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Neon Cards Grid -->
+        <div class="row mb-5">
+            <div class="col-md-6 mb-4">
+                <div class="neon-card neon-card-purple">
+                    <div class="neon-card-header">
+                        <i class="fas fa-fire"></i> Classifica One Piece
+                    </div>
+                    <div class="neon-card-body">
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                            Scala la classifica e conquista il titolo di Re dei Pirati!
+                        </p>
+                        <button class="btn-neon btn-neon-purple">
+                            <span><i class="fas fa-eye"></i> Vedi Classifica</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="neon-card neon-card-cyan">
+                    <div class="neon-card-header">
+                        <i class="fas fa-chart-bar"></i> Statistiche Avanzate
+                    </div>
+                    <div class="neon-card-body">
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                            Analizza le tue performance e scopri i tuoi punti di forza.
+                        </p>
+                        <button class="btn-neon btn-neon-cyan">
+                            <span><i class="fas fa-chart-line"></i> Esplora Stats</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievement Badges -->
+        <div class="row mb-5">
+            <div class="col-12 mb-4">
+                <h3 class="h5" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                    Achievement Rarity
+                </h3>
+            </div>
+            <div class="col-12">
+                <div class="neon-card neon-card-pink">
+                    <div class="neon-card-body">
+                        <span class="badge-futuristic badge-legendary me-2 mb-3">
+                            <i class="fas fa-crown"></i> Legendary
+                        </span>
+                        <span class="badge-futuristic badge-epic me-2 mb-3">
+                            <i class="fas fa-star"></i> Epic
+                        </span>
+                        <span class="badge-futuristic badge-rare me-2 mb-3">
+                            <i class="fas fa-gem"></i> Rare
+                        </span>
+                        <span class="badge-futuristic badge-common me-2 mb-3">
+                            <i class="fas fa-circle"></i> Common
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cyberpunk Table -->
+        <div class="row mb-5">
+            <div class="col-12 mb-4">
+                <h3 class="h5" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                    Classifica Top 10
+                </h3>
+            </div>
+            <div class="col-12">
+                <div class="neon-card neon-card-blue">
+                    <div class="neon-card-header">
+                        <i class="fas fa-ranking-star"></i> Leaderboard
+                    </div>
+                    <div class="neon-card-body p-0">
+                        <div style="overflow-x: auto;">
+                            <table class="table-cyber">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Player</th>
+                                        <th>Points</th>
+                                        <th>Tournaments</th>
+                                        <th>Wins</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="rank-1">
+                                        <td>
+                                            <span class="badge-futuristic badge-legendary">
+                                                <i class="fas fa-crown"></i> 1
+                                            </span>
+                                        </td>
+                                        <td><strong style="color: var(--text-primary);">Mario Rossi</strong></td>
+                                        <td><strong style="color: gold;">245 pts</strong></td>
+                                        <td>12</td>
+                                        <td>28</td>
+                                    </tr>
+                                    <tr class="rank-2">
+                                        <td>
+                                            <span class="badge-futuristic badge-epic">
+                                                <i class="fas fa-medal"></i> 2
+                                            </span>
+                                        </td>
+                                        <td><strong style="color: var(--text-primary);">Luigi Verdi</strong></td>
+                                        <td><strong style="color: silver;">220 pts</strong></td>
+                                        <td>11</td>
+                                        <td>24</td>
+                                    </tr>
+                                    <tr class="rank-3">
+                                        <td>
+                                            <span class="badge-futuristic badge-rare">
+                                                <i class="fas fa-medal"></i> 3
+                                            </span>
+                                        </td>
+                                        <td><strong style="color: var(--text-primary);">Giovanni Bianchi</strong></td>
+                                        <td><strong style="color: #cd7f32;">198 pts</strong></td>
+                                        <td>10</td>
+                                        <td>22</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4</td>
+                                        <td>Anna Neri</td>
+                                        <td>187 pts</td>
+                                        <td>9</td>
+                                        <td>19</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5</td>
+                                        <td>Paolo Gialli</td>
+                                        <td>175 pts</td>
+                                        <td>10</td>
+                                        <td>18</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mb-5">
+            <div class="col-12 mb-4">
+                <h3 class="h5" style="color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                    Call to Actions
+                </h3>
+            </div>
+            <div class="col-12 text-center">
+                <button class="btn-neon btn-neon-purple me-3 mb-3">
+                    <span><i class="fas fa-search"></i> Cerca Giocatore</span>
+                </button>
+                <button class="btn-neon btn-neon-pink me-3 mb-3">
+                    <span><i class="fas fa-fire"></i> Top Players</span>
+                </button>
+                <button class="btn-neon btn-neon-green mb-3">
+                    <span><i class="fas fa-trophy"></i> Achievements</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Dark -->
+    <footer class="footer-dark">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-md-4 mb-4">
+                    <h5><i class="fas fa-trophy"></i> LeagueForge</h5>
+                    <p style="color: var(--text-muted);">
+                        Il sistema di gestione leghe TCG più avanzato. Powered by next-gen technology.
+                    </p>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#"><i class="fas fa-angle-right"></i> Classifiche</a></li>
+                        <li class="mb-2"><a href="#"><i class="fas fa-angle-right"></i> Giocatori</a></li>
+                        <li class="mb-2"><a href="#"><i class="fas fa-angle-right"></i> Achievement</a></li>
+                        <li class="mb-2"><a href="#"><i class="fas fa-angle-right"></i> Statistiche</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Connect With Us</h5>
+                    <div class="d-flex">
+                        <a href="#" class="social-neon">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-neon">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="#" class="social-neon">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.05); margin: 2rem 0;">
+            <div class="text-center" style="color: var(--text-muted); padding: 1.5rem 0;">
+                <p class="mb-0">&copy; 2024 Your Store Name - Powered by <strong style="background: linear-gradient(135deg, var(--neon-purple), var(--neon-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">LeagueForge</strong></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
