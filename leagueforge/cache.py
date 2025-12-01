@@ -71,10 +71,15 @@ class SheetCache:
             seasons = []
             for row in config_data:
                 if row and safe_get(row, COL_CONFIG, 'season_id'):
+                    season_id = safe_get(row, COL_CONFIG, 'season_id')
+                    season_name = safe_get(row, COL_CONFIG, 'name')
+                    # Usa season_id come fallback se name è vuoto
+                    if not season_name or season_name.strip() == '':
+                        season_name = season_id
                     seasons.append({
-                        'id': safe_get(row, COL_CONFIG, 'season_id'),
+                        'id': season_id,
                         'tcg': safe_get(row, COL_CONFIG, 'tcg'),
-                        'name': safe_get(row, COL_CONFIG, 'name'),
+                        'name': season_name,
                         'status': safe_get(row, COL_CONFIG, 'status', 'UNKNOWN'),
                         'next_tournament': safe_get(row, COL_CONFIG, 'next_tournament')
                     })
