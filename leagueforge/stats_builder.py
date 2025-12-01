@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import gspread
-from google.oauth2.service_account import Credentials
 from collections import defaultdict, Counter
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
-from config import SHEET_ID, CREDENTIALS_FILE
+from config import SHEET_ID
+from utils_credentials import get_google_credentials
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive']
 
@@ -56,8 +56,8 @@ def _stdev(vals):
     return (sum((v-m)**2 for v in vals)/n)**0.5
 
 def _connect_sheet():
-    creds=Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
-    client=gspread.authorize(creds)
+    creds = get_google_credentials(scopes=SCOPES)
+    client = gspread.authorize(creds)
     return client.open_by_key(SHEET_ID)
 
 def _load_results(sheet):
