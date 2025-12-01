@@ -285,7 +285,21 @@ def api_refresh_scope(scope):
 
 # ---------- Helpers (used only inside /stats for the dropdown) ----------
 def _tcg_code(sid: str) -> str:
-    prefix = ''.join(ch for ch in str(sid) if ch.isalpha())
+    """
+    Estrae il TCG code dal season_id.
+
+    Examples:
+        PKM99 → PKM
+        PKM-FS25 → PKM
+        OP12 → OP
+        RFB01 → RFB
+    """
+    prefix = ''
+    for ch in str(sid):
+        if ch.isalpha():
+            prefix += ch
+        else:
+            break  # Stop al primo carattere non-alfabetico (numero, trattino, etc.)
     return prefix.upper()
 
 def _is_valid_season_id(sid: str) -> bool:
