@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeagueForge - Design Preview V4.6 (Blocchi Separati)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* LeagueForge Brand Colors - Emerald & Coral Palette */
+            --brand-emerald: #10b981;
+            --brand-teal: #14b8a6;
+            --brand-coral: #ff6b6b;
+            --brand-coral-light: #ff8787;
+
+            /* Semantic colors */
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b7280;
+            --bg-white: #ffffff;
+            --bg-light: #f9fafb;
+
+            /* Border radius system */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text-primary);
+            background-color: var(--bg-white);
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Smooth subtle background pattern - NO visible lines */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            background:
+                radial-gradient(circle at 15% 25%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 85% 75%, rgba(255, 107, 107, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(20, 184, 166, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* ============================================
+           EMERALD ZONE - Top Section
+           ============================================ */
+
+        /* Navbar - Emerald themed */
+        .navbar-emerald {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(20, 184, 166, 0.95));
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.15);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: white !important;
+            letter-spacing: -0.5px;
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            margin: 0 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: white !important;
+            transform: translateY(-1px);
+        }
+
+        /* Hero Section - Emerald themed */
+        .hero-section-emerald {
+            padding: 100px 0 80px 0;
+            position: relative;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.03), rgba(20, 184, 166, 0.05));
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--brand-emerald), var(--brand-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -2px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        /* Stats Section - Emerald themed */
+        .stats-section-emerald {
+            padding: 60px 0;
+            background: rgba(16, 185, 129, 0.02);
+        }
+
+        .stat-card-emerald {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-align: center;
+            border: 2px solid rgba(16, 185, 129, 0.2);
+            box-shadow:
+                0 4px 12px rgba(16, 185, 129, 0.08),
+                0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .stat-card-emerald:hover {
+            transform: translateY(-4px);
+            box-shadow:
+                0 12px 24px rgba(16, 185, 129, 0.15),
+                0 4px 8px rgba(0, 0, 0, 0.08);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--brand-emerald), var(--brand-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ============================================
+           CORAL ZONE - Middle Section
+           ============================================ */
+
+        /* TCG Cards Section - Coral themed */
+        .tcg-section-coral {
+            padding: 80px 0;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.03), rgba(255, 135, 135, 0.05));
+            position: relative;
+        }
+
+        .section-title-coral {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--brand-coral), var(--brand-coral-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        /* Divider - Coral themed */
+        .section-divider-coral {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 4rem 0;
+            position: relative;
+        }
+
+        .section-divider-line {
+            flex: 1;
+            height: 2px;
+            background: linear-gradient(to right, transparent, rgba(255, 107, 107, 0.3), transparent);
+        }
+
+        .section-divider-icon-coral {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand-coral), var(--brand-coral-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin: 0 1rem;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        /* TCG Game Cards - Coral themed */
+        .tcg-card-coral {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow:
+                0 4px 12px rgba(255, 107, 107, 0.1),
+                0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 107, 107, 0.15);
+            height: 100%;
+        }
+
+        .tcg-card-coral:hover {
+            transform: translateY(-6px);
+            box-shadow:
+                0 12px 28px rgba(255, 107, 107, 0.2),
+                0 4px 8px rgba(0, 0, 0, 0.08);
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .tcg-card-header-coral {
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.08), white);
+            border-bottom: 3px solid var(--brand-coral);
+        }
+
+        .tcg-card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .tcg-card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--brand-coral);
+        }
+
+        .tcg-card-body {
+            padding: 2rem;
+        }
+
+        .tcg-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .tcg-stat:last-child {
+            border-bottom: none;
+        }
+
+        .tcg-stat-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .tcg-stat-value {
+            font-weight: 700;
+            color: var(--brand-coral);
+        }
+
+        /* Feature Cards Section - Coral themed */
+        .features-section-coral {
+            padding: 80px 0;
+            background: rgba(255, 107, 107, 0.02);
+        }
+
+        .feature-card-coral {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            border-top: 5px solid var(--brand-coral);
+            box-shadow:
+                0 4px 12px rgba(255, 107, 107, 0.08),
+                0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.08), white);
+        }
+
+        .feature-card-coral:hover {
+            transform: translateY(-4px);
+            box-shadow:
+                0 12px 24px rgba(255, 107, 107, 0.15),
+                0 4px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .feature-icon-coral {
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--brand-coral), var(--brand-coral-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.25);
+        }
+
+        .feature-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ============================================
+           EMERALD ZONE - Bottom Section
+           ============================================ */
+
+        /* Rankings Table Section - Emerald themed */
+        .rankings-section-emerald {
+            padding: 80px 0;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.02), rgba(20, 184, 166, 0.03));
+        }
+
+        .section-title-emerald {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--brand-emerald), var(--brand-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow:
+                0 4px 12px rgba(16, 185, 129, 0.08),
+                0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 2px solid rgba(16, 185, 129, 0.15);
+        }
+
+        .table-custom {
+            margin: 0;
+        }
+
+        .table-custom thead th {
+            background: linear-gradient(135deg, var(--brand-emerald), var(--brand-teal));
+            color: white;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            padding: 1.25rem 1rem;
+            border: none;
+        }
+
+        .table-custom tbody tr {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .table-custom tbody tr:hover {
+            background-color: rgba(16, 185, 129, 0.03);
+            transform: scale(1.01);
+        }
+
+        .table-custom tbody td {
+            padding: 1.25rem 1rem;
+            vertical-align: middle;
+            font-weight: 500;
+        }
+
+        /* Podio highlighting - Different colors for each rank */
+        .rank-1 {
+            border-left: 5px solid var(--brand-emerald);
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.08), transparent);
+            font-weight: 700;
+        }
+
+        .rank-2 {
+            border-left: 5px solid var(--brand-coral);
+            background: linear-gradient(90deg, rgba(255, 107, 107, 0.08), transparent);
+            font-weight: 700;
+        }
+
+        .rank-3 {
+            border-left: 5px solid var(--brand-teal);
+            background: linear-gradient(90deg, rgba(20, 184, 166, 0.08), transparent);
+            font-weight: 700;
+        }
+
+        .rank-number {
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        /* Badges */
+        .badge-legendary {
+            background: linear-gradient(135deg, var(--brand-emerald), var(--brand-teal));
+            color: white;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-epic {
+            background: linear-gradient(135deg, var(--brand-coral), var(--brand-coral-light));
+            color: white;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+        }
+
+        /* CTA Section - Emerald themed */
+        .cta-section-emerald {
+            padding: 80px 0;
+            text-align: center;
+            background: rgba(16, 185, 129, 0.02);
+        }
+
+        .cta-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--brand-emerald), var(--brand-teal));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cta-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+        }
+
+        /* Buttons - Emerald and Coral alternating */
+        .btn-emerald-balanced {
+            background: linear-gradient(135deg, var(--brand-emerald), var(--brand-teal));
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            margin: 0.5rem;
+        }
+
+        .btn-emerald-balanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+            color: white;
+        }
+
+        .btn-coral-balanced {
+            background: linear-gradient(135deg, var(--brand-coral), var(--brand-coral-light));
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+            margin: 0.5rem;
+        }
+
+        .btn-coral-balanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.4);
+            color: white;
+        }
+
+        /* Footer - Emerald themed */
+        .footer-emerald {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(20, 184, 166, 0.95));
+            color: white;
+            padding: 3rem 0 2rem 0;
+            margin-top: 4rem;
+        }
+
+        .footer-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+            font-weight: 500;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+            }
+
+            .section-title-emerald,
+            .section-title-coral {
+                font-size: 2rem;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-on-scroll {
+            animation: fadeSlideUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+         EMERALD ZONE - Top Section
+         ============================================ -->
+
+    <!-- Navbar - Emerald -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-emerald sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">⚔️ LeagueForge</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#leagues">Leghe</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#rankings">Classifiche</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#profile">Profilo</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section - Emerald -->
+    <section class="hero-section-emerald">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h1 class="hero-title">Gestisci le tue Leghe TCG in modo Professionale</h1>
+                    <p class="hero-subtitle">
+                        Il sistema completo per organizzare tornei, tracciare classifiche e coinvolgere la tua community di giocatori.
+                    </p>
+                    <div class="mt-4">
+                        <a href="#leagues" class="btn-emerald-balanced">Esplora le Leghe</a>
+                        <a href="#rankings" class="btn-coral-balanced">Vedi Classifiche</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section - All Emerald -->
+    <section class="stats-section-emerald">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="stat-card-emerald">
+                        <div class="stat-number">12</div>
+                        <div class="stat-label">Leghe Attive</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card-emerald">
+                        <div class="stat-number">248</div>
+                        <div class="stat-label">Giocatori</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card-emerald">
+                        <div class="stat-number">86</div>
+                        <div class="stat-label">Tornei Completati</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         CORAL ZONE - Middle Section
+         ============================================ -->
+
+    <!-- Divider - Coral -->
+    <div class="section-divider-coral">
+        <div class="section-divider-line"></div>
+        <div class="section-divider-icon-coral">🎴</div>
+        <div class="section-divider-line"></div>
+    </div>
+
+    <!-- TCG Cards Section - Coral -->
+    <section class="tcg-section-coral">
+        <div class="container">
+            <h2 class="section-title-coral">Giochi Supportati</h2>
+            <p class="section-subtitle">Gestisci leghe per i tuoi giochi di carte preferiti</p>
+
+            <div class="row g-4 mt-4">
+                <!-- One Piece - Coral themed -->
+                <div class="col-md-4">
+                    <div class="tcg-card-coral">
+                        <div class="tcg-card-header-coral">
+                            <div class="tcg-card-icon" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                                🏴‍☠️
+                            </div>
+                            <h3 class="tcg-card-title">One Piece TCG</h3>
+                        </div>
+                        <div class="tcg-card-body">
+                            <div class="tcg-stat">
+                                <span class="tcg-stat-label">Leghe Attive</span>
+                                <span class="tcg-stat-value">4</span>
+                            </div>
+                            <div class="tcg-stat">
+                                <span class="tcg-stat-label">Giocatori</span>
+                                <span class="tcg-stat-value">87</span>
+                            </div>
+                            <div class="tcg-stat">
+                                <span class="tcg-stat-label">Tornei</span>
+                                <span class="tcg-stat-value">28</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pokemon - Coral themed -->
+                <div class="col-md-4">
+                    <div class="tcg-card-coral">
+                        <div class="tcg-card-header-coral">
+                            <div class="tcg-card-icon" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+                                ⚡
+                            </div>
+                            <h3 class="tcg-card-title">Pokémon TCG</h3>
+                        </div>
+                        <div class="tcg-card-body">
+                            <div class="tcg-stat">
+                                <span class="tcg-stat-label">Leghe Attive</span>
+                                <span class="tcg-stat-value">5</span>
+                            </div>
+                            <div class="tcg-stat">
+                                <span class="tcg-stat-label">Giocatori</span>
+                                <span class="tcg-stat-value">112</span>
+                            </div>
+                            <div class="tcg-stat">
+                                <span class="tcg-stat-label">Tornei</span>
+                                <span class="tcg-stat-value">35</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Riftbound - Coral themed -->
+                <div class="col-md-4">
+                    <div class="tcg-card-coral">
+                        <div class="tcg-card-header-coral">
+                            <div class="tcg-card-icon" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                                🌌
+                            </div>
+                            <h3 class="tcg-card-title">Riftbound TCG</h3>
+                        </div>
+                        <div class="tcg-card-body">
+                            <div class="tcg-stat">
+                                <span class="tcg-stat-label">Leghe Attive</span>
+                                <span class="tcg-stat-value">3</span>
+                            </div>
+                            <div class="tcg-stat">
+                                <span class="tcg-stat-label">Giocatori</span>
+                                <span class="tcg-stat-value">49</span>
+                            </div>
+                            <div class="tcg-stat">
+                                <span class="tcg-stat-label">Tornei</span>
+                                <span class="tcg-stat-value">23</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section - All Coral -->
+    <section class="features-section-coral">
+        <div class="container">
+            <h2 class="section-title-coral">Funzionalità Principali</h2>
+            <p class="section-subtitle">Tutto ciò di cui hai bisogno per gestire le tue leghe</p>
+
+            <div class="row g-4 mt-4">
+                <div class="col-md-4">
+                    <div class="feature-card-coral">
+                        <div class="feature-icon-coral">🏆</div>
+                        <h3 class="feature-title">Gestione Tornei</h3>
+                        <p class="feature-description">
+                            Crea e gestisci tornei facilmente. Sistema automatico di bracket, pairings e risultati.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card-coral">
+                        <div class="feature-icon-coral">📊</div>
+                        <h3 class="feature-title">Classifiche Live</h3>
+                        <p class="feature-description">
+                            Classifiche in tempo reale con sistema punti personalizzabile e statistiche dettagliate.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card-coral">
+                        <div class="feature-icon-coral">👥</div>
+                        <h3 class="feature-title">Community</h3>
+                        <p class="feature-description">
+                            Coinvolgi i tuoi giocatori con profili, achievement e un sistema di ranking trasparente.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         EMERALD ZONE - Bottom Section
+         ============================================ -->
+
+    <!-- Rankings Section - Emerald -->
+    <section class="rankings-section-emerald">
+        <div class="container">
+            <h2 class="section-title-emerald">Classifica Generale</h2>
+            <p class="section-subtitle">I migliori giocatori della stagione</p>
+
+            <div class="table-container mt-4">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Giocatore</th>
+                            <th>Punti</th>
+                            <th>Vittorie</th>
+                            <th>Tornei</th>
+                            <th>Livello</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="rank-1">
+                            <td class="rank-number">1</td>
+                            <td>Marco Rossi</td>
+                            <td><strong>2,450</strong></td>
+                            <td>34</td>
+                            <td>12</td>
+                            <td><span class="badge-legendary">Legendary</span></td>
+                        </tr>
+                        <tr class="rank-2">
+                            <td class="rank-number">2</td>
+                            <td>Giulia Bianchi</td>
+                            <td><strong>2,280</strong></td>
+                            <td>31</td>
+                            <td>11</td>
+                            <td><span class="badge-epic">Epic</span></td>
+                        </tr>
+                        <tr class="rank-3">
+                            <td class="rank-number">3</td>
+                            <td>Luca Verdi</td>
+                            <td><strong>2,150</strong></td>
+                            <td>28</td>
+                            <td>10</td>
+                            <td><span class="badge-epic">Epic</span></td>
+                        </tr>
+                        <tr>
+                            <td class="rank-number">4</td>
+                            <td>Sofia Neri</td>
+                            <td><strong>1,920</strong></td>
+                            <td>25</td>
+                            <td>9</td>
+                            <td><span class="badge-epic">Epic</span></td>
+                        </tr>
+                        <tr>
+                            <td class="rank-number">5</td>
+                            <td>Alessandro Russo</td>
+                            <td><strong>1,780</strong></td>
+                            <td>23</td>
+                            <td>9</td>
+                            <td><span class="badge-epic">Epic</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section - Emerald -->
+    <section class="cta-section-emerald">
+        <div class="container">
+            <h2 class="cta-title">Pronto a iniziare?</h2>
+            <p class="cta-subtitle">Unisciti a migliaia di giocatori e organizzatori che usano LeagueForge</p>
+            <div>
+                <a href="#signup" class="btn-emerald-balanced">Registrati Ora</a>
+                <a href="#demo" class="btn-coral-balanced">Richiedi Demo</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer - Emerald -->
+    <footer class="footer-emerald">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <h4 class="footer-title">⚔️ LeagueForge</h4>
+                    <p style="color: rgba(255, 255, 255, 0.8);">
+                        La piattaforma definitiva per la gestione di leghe TCG professionali.
+                    </p>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="footer-title">Link Utili</h5>
+                    <ul class="footer-links">
+                        <li><a href="#features">Funzionalità</a></li>
+                        <li><a href="#pricing">Prezzi</a></li>
+                        <li><a href="#docs">Documentazione</a></li>
+                        <li><a href="#support">Supporto</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="footer-title">Community</h5>
+                    <ul class="footer-links">
+                        <li><a href="#discord">Discord</a></li>
+                        <li><a href="#twitter">Twitter</a></li>
+                        <li><a href="#blog">Blog</a></li>
+                        <li><a href="#events">Eventi</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                © 2024 LeagueForge - V4.6 Design Preview (Blocchi Separati)
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
