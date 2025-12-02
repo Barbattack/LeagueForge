@@ -6,23 +6,21 @@
 <div class="row mb-4">
   <div class="col-md-8">
     <h1><i class="fas fa-chart-line"></i> Stats – {{ scope }}</h1>
-    <p class="text-muted">Statistiche complete della stagione</p>
+    <p style="background: linear-gradient(135deg, #ff6b6b, #ff8787); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600;">Statistiche complete della stagione</p>
   </div>
   <div class="col-md-4 text-end">
-    <div class="btn-group">
-      <a class="btn btn-secondary" href="{{ url_for('classifica', season_id=default_season) }}">
-        <i class="fas fa-list-ol"></i> Classifica
-      </a>
-      <div class="dropdown">
-        <button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
-          Cambia Stagione
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          {% for s in available_scopes %}
-            <li><a class="dropdown-item {% if s==scope %}active{% endif %}" href="{{ url_for('stats', scope=s) }}">{{ s }}</a></li>
-          {% endfor %}
-        </ul>
-      </div>
+    <a class="btn btn-secondary me-2" href="{{ url_for('classifica', season_id=default_season) }}">
+      <i class="fas fa-list-ol"></i> Classifica
+    </a>
+    <div class="dropdown d-inline-block">
+      <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="fas fa-calendar-alt"></i> Cambia Stagione
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        {% for s in available_scopes %}
+          <li><a class="dropdown-item {% if s==scope %}active{% endif %}" href="{{ url_for('stats', scope=s) }}">{{ s }}</a></li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
 </div>

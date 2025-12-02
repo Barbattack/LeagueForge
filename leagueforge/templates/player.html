@@ -13,7 +13,7 @@
                         👤
                     </div>
                     <div>
-                        <h2 class="mb-1 text-dark">{{ player.name|format_player_name(player.tcg, player.membership) }}</h2>
+                        <h2 class="mb-1" style="background: linear-gradient(135deg, #ff6b6b, #ff8787); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">{{ player.name|format_player_name(player.tcg, player.membership) }}</h2>
                         <p class="mb-0 text-muted">Member since {{ player.first_seen }}</p>
                         <p class="mb-0"><small class="text-muted">ID: {{ player.membership }}</small></p>
                     </div>
@@ -79,7 +79,7 @@
 
 <!-- Performance Metrics -->
 <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header bg-danger text-white">
         <h5 class="mb-0">
             <i class="fas fa-chart-line"></i> Performance
             <small class="float-end" style="cursor: help;" data-bs-toggle="tooltip" title="Metriche tecniche calcolate sui tuoi tornei">ℹ️</small>
@@ -131,7 +131,7 @@
 
 <!-- Analisi Performance - Grafici Statistiche -->
 <div class="card mb-4">
-    <div class="card-header bg-info text-white">
+    <div class="card-header bg-primary text-white">
         <h5 class="mb-0">
             <i class="fas fa-chart-pie"></i> Analisi Performance
             <small class="float-end" style="cursor: help;" data-bs-toggle="tooltip"
@@ -272,7 +272,7 @@
 
 <!-- Grafico -->
 <div class="card mb-4">
-    <div class="card-header bg-secondary text-white">
+    <div class="card-header bg-danger text-white">
         <h5 class="mb-0"><i class="fas fa-chart-area"></i> Evoluzione Punti</h5>
     </div>
     <div class="card-body">
@@ -284,7 +284,7 @@
 
 <!-- Storico Tornei -->
 <div class="card">
-    <div class="card-header bg-dark text-white">
+    <div class="card-header bg-primary text-white">
         <h5 class="mb-0"><i class="fas fa-history"></i> Ultimi Tornei</h5>
     </div>
     <div class="card-body p-0">
