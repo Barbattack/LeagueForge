@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeagueForge - Design Preview V4 (Brand Identity)</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============================================
+           LEAGUEFORGE V4 - BRAND IDENTITY
+           Premium + Community-Driven
+           GitHub Clean + Duolingo Colorful
+           ============================================ */
+
+        :root {
+            /* LeagueForge Brand Colors */
+            --brand-primary: #6366f1;      /* Indigo - main brand */
+            --brand-secondary: #8b5cf6;    /* Violet - secondary */
+            --brand-accent-warm: #f59e0b;  /* Amber - highlights/success */
+            --brand-accent-cool: #06b6d4;  /* Cyan - info/stats */
+
+            /* Contextual colors */
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+
+            /* Neutral palette */
+            --gray-50: #fafafa;
+            --gray-100: #f4f4f5;
+            --gray-200: #e4e4e7;
+            --gray-300: #d4d4d8;
+            --gray-400: #a1a1aa;
+            --gray-500: #71717a;
+            --gray-600: #52525b;
+            --gray-700: #3f3f46;
+            --gray-800: #27272a;
+            --gray-900: #18181b;
+
+            /* Shadows */
+            --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+            /* Brand shadows with color */
+            --shadow-brand: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
+            --shadow-amber: 0 10px 25px -5px rgba(245, 158, 11, 0.2);
+
+            /* Border radius */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        /* ============================================
+           BASE STYLES
+           ============================================ */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--gray-50);
+            color: var(--gray-900);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Pattern di sfondo - TCG Cards + Esagoni */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                /* Carte TCG stilizzate */
+                linear-gradient(135deg, transparent 40%, rgba(99, 102, 241, 0.03) 40%, rgba(99, 102, 241, 0.03) 60%, transparent 60%),
+                /* Esagoni pattern */
+                radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.03) 0%, transparent 50%);
+            background-size: 300px 300px, 600px 600px, 800px 800px, 500px 500px;
+            background-position: 0 0, 0 0, 100% 100%, 50% 50%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        main {
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            color: var(--gray-900);
+        }
+
+        h1 { font-size: 3rem; }
+        h2 { font-size: 2.25rem; }
+        h3 { font-size: 1.875rem; }
+
+        .text-muted-custom {
+            color: var(--gray-500);
+        }
+
+        /* ============================================
+           NAVBAR - Brand Identity
+           ============================================ */
+
+        .navbar-brand-identity {
+            background: white !important;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 0;
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .navbar-brand {
+            font-weight: 900;
+            font-size: 1.6rem;
+            letter-spacing: -0.03em;
+            color: var(--gray-900) !important;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-brand .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow-brand);
+        }
+
+        .navbar-brand .logo-text {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .navbar-brand:hover .logo-icon {
+            transform: rotate(-5deg) scale(1.05);
+        }
+
+        .nav-link {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: var(--gray-600) !important;
+            transition: all 0.2s ease;
+            margin: 0 0.25rem;
+            padding: 0.6rem 1rem !important;
+            border-radius: var(--radius-sm);
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--brand-primary);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover {
+            color: var(--brand-primary) !important;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .nav-link:hover::after {
+            width: 80%;
+        }
+
+        /* ============================================
+           HERO SECTION - With pattern
+           ============================================ */
+
+        .hero-section {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border-radius: var(--radius-xl);
+            padding: 4rem 2rem;
+            margin-bottom: 3rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -5%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* ============================================
+           CARDS - Colorful accents
+           ============================================ */
+
+        .card-brand {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-brand::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-brand:hover {
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .card-brand:hover::before {
+            opacity: 1;
+        }
+
+        .card-brand-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--gray-900);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), transparent);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-brand-body {
+            padding: 1.5rem;
+        }
+
+        /* Color variants */
+        .card-primary .card-brand-header {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), transparent);
+            color: var(--brand-primary);
+        }
+
+        .card-amber .card-brand-header {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), transparent);
+            color: var(--brand-accent-warm);
+        }
+
+        .card-cyan .card-brand-header {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), transparent);
+            color: var(--brand-accent-cool);
+        }
+
+        .card-violet .card-brand-header {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), transparent);
+            color: var(--brand-secondary);
+        }
+
+        /* ============================================
+           STAT CARDS - Colorful icons
+           ============================================ */
+
+        .stat-card-brand {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card-brand:hover {
+            border-color: var(--brand-primary);
+            box-shadow: var(--shadow-brand);
+            transform: translateY(-4px);
+        }
+
+        .stat-icon-brand {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.25rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .stat-icon-brand::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, currentColor, transparent);
+            border-radius: var(--radius-md);
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        .stat-card-brand:hover .stat-icon-brand {
+            transform: scale(1.1) rotate(-5deg);
+        }
+
+        /* Icon color variants */
+        .stat-icon-primary {
+            color: var(--brand-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .stat-icon-amber {
+            color: var(--brand-accent-warm);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .stat-icon-cyan {
+            color: var(--brand-accent-cool);
+            background: rgba(6, 182, 212, 0.1);
+        }
+
+        .stat-value-brand {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--gray-900);
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.03em;
+        }
+
+        .stat-label-brand {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-500);
+        }
+
+        /* ============================================
+           TCG CARDS - Illustrative style
+           ============================================ */
+
+        .tcg-card-brand {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tcg-card-brand::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, currentColor, transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tcg-card-brand:hover {
+            border-color: currentColor;
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .tcg-card-brand:hover::before {
+            opacity: 0.05;
+        }
+
+        .tcg-card-brand .emoji-wrapper {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .tcg-card-brand:hover .emoji-wrapper {
+            transform: scale(1.15) rotate(-5deg);
+            border-color: currentColor;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .tcg-card-brand .title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .tcg-card-brand .subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            font-weight: 500;
+        }
+
+        .tcg-card-brand .badge-count {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: currentColor;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            opacity: 0.9;
+        }
+
+        .tcg-onepiece { color: #ef4444; }
+        .tcg-pokemon { color: #f59e0b; }
+        .tcg-riftbound { color: #06b6d4; }
+
+        /* ============================================
+           TABLE - Brand colors
+           ============================================ */
+
+        .table-brand {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table-brand thead th {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1.25rem 1.5rem;
+            border: none;
+            text-align: left;
+        }
+
+        .table-brand thead th:first-child {
+            border-radius: var(--radius-md) 0 0 0;
+        }
+
+        .table-brand thead th:last-child {
+            border-radius: 0 var(--radius-md) 0 0;
+        }
+
+        .table-brand tbody tr {
+            background: white;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .table-brand tbody tr:hover {
+            background: rgba(99, 102, 241, 0.03);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-brand tbody td {
+            padding: 1.25rem 1.5rem;
+            color: var(--gray-700);
+            font-size: 0.95rem;
+        }
+
+        /* Podio with brand colors */
+        .table-brand .rank-1 {
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, white 100%);
+            border-left: 4px solid var(--brand-accent-warm);
+        }
+
+        .table-brand .rank-2 {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, white 100%);
+            border-left: 4px solid var(--brand-primary);
+        }
+
+        .table-brand .rank-3 {
+            background: linear-gradient(90deg, rgba(6, 182, 212, 0.08) 0%, white 100%);
+            border-left: 4px solid var(--brand-accent-cool);
+        }
+
+        /* ============================================
+           BADGES - Colorful
+           ============================================ */
+
+        .badge-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: 2px solid currentColor;
+            transition: all 0.2s ease;
+        }
+
+        .badge-brand:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px currentColor;
+        }
+
+        .badge-legendary {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(251, 191, 36, 0.15));
+            color: #d97706;
+            border-color: #f59e0b;
+        }
+
+        .badge-epic {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(168, 85, 247, 0.15));
+            color: #7c3aed;
+            border-color: var(--brand-secondary);
+        }
+
+        .badge-rare {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(59, 130, 246, 0.15));
+            color: #4f46e5;
+            border-color: var(--brand-primary);
+        }
+
+        .badge-common {
+            background: rgba(107, 114, 128, 0.1);
+            color: var(--gray-600);
+            border-color: var(--gray-400);
+        }
+
+        /* ============================================
+           BUTTONS - Brand colors
+           ============================================ */
+
+        .btn-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-brand::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-brand:hover::before {
+            left: 100%;
+        }
+
+        .btn-brand-primary {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+            box-shadow: var(--shadow-brand);
+        }
+
+        .btn-brand-primary:hover {
+            box-shadow: var(--shadow-xl), var(--shadow-brand);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-brand-amber {
+            background: linear-gradient(135deg, var(--brand-accent-warm), #fbbf24);
+            color: white;
+            box-shadow: var(--shadow-amber);
+        }
+
+        .btn-brand-amber:hover {
+            box-shadow: var(--shadow-xl), var(--shadow-amber);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        .btn-brand-outline {
+            background: white;
+            color: var(--brand-primary);
+            border: 2px solid var(--brand-primary);
+        }
+
+        .btn-brand-outline:hover {
+            background: var(--brand-primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* ============================================
+           SECTION DIVIDER - Decorative
+           ============================================ */
+
+        .section-divider {
+            margin: 4rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gray-200), transparent);
+        }
+
+        .section-divider-icon {
+            display: inline-flex;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: 50%;
+            color: var(--brand-primary);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============================================
+           FOOTER - Brand identity
+           ============================================ */
+
+        .footer-brand {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), rgba(139, 92, 246, 0.03));
+            border-top: 1px solid var(--gray-200);
+            color: var(--gray-600);
+            padding: 3rem 0 2rem;
+            margin-top: auto;
+        }
+
+        .footer-brand h5 {
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--brand-primary);
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand a {
+            color: var(--gray-600);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-size: 0.95rem;
+        }
+
+        .footer-brand a:hover {
+            color: var(--brand-primary);
+        }
+
+        .footer-brand .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            background: white;
+            color: var(--gray-600);
+            margin-right: 0.5rem;
+            transition: all 0.3s ease;
+            border: 2px solid var(--gray-200);
+        }
+
+        .footer-brand .social-link:hover {
+            background: var(--brand-primary);
+            color: white;
+            border-color: var(--brand-primary);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-brand);
+        }
+
+        .footer-brand .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+
+        @keyframes fade-slide-up {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-slide-up {
+            animation: fade-slide-up 0.6s ease-out both;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+
+            .hero-section {
+                padding: 3rem 1.5rem;
+            }
+
+            .stat-value-brand {
+                font-size: 2rem;
+            }
+
+            .card-brand,
+            .stat-card-brand,
+            .tcg-card-brand {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar Brand -->
+    <nav class="navbar navbar-expand-lg navbar-brand-identity">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <div class="logo-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <span class="logo-text">LeagueForge</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-home"></i> Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-ranking-star"></i> Classifiche</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-users"></i> Giocatori</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-trophy"></i> Achievement</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fas fa-chart-line"></i> Stats</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="container my-5">
+        <!-- Hero Section -->
+        <div class="hero-section animate-fade-slide-up">
+            <div class="text-center position-relative">
+                <h1 class="mb-3">LeagueForge V4</h1>
+                <p style="font-size: 1.25rem; color: var(--gray-600); max-width: 600px; margin: 0 auto;">
+                    <strong>Premium + Community</strong> — La piattaforma che unisce design professionale e atmosfera accogliente
+                </p>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row mb-5">
+            <div class="col-md-4 mb-3 animate-fade-slide-up delay-1">
+                <div class="stat-card-brand">
+                    <div class="stat-icon-brand stat-icon-primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-value-brand">1,247</div>
+                    <div class="stat-label-brand">Giocatori nella community</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 animate-fade-slide-up delay-2">
+                <div class="stat-card-brand">
+                    <div class="stat-icon-brand stat-icon-amber">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-value-brand">342</div>
+                    <div class="stat-label-brand">Tornei completati</div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 animate-fade-slide-up delay-3">
+                <div class="stat-card-brand">
+                    <div class="stat-icon-brand stat-icon-cyan">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="stat-value-brand">15</div>
+                    <div class="stat-label-brand">Striscia vincente record</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Divider -->
+        <div class="section-divider">
+            <div class="section-divider-icon">
+                <i class="fas fa-star"></i>
+            </div>
+        </div>
+
+        <!-- TCG Cards -->
+        <div class="text-center mb-4">
+            <h2 class="mb-2">Scegli il tuo gioco</h2>
+            <p class="text-muted-custom">Ogni TCG ha la sua community attiva</p>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-md-4 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="tcg-card-brand tcg-onepiece">
+                        <span class="badge-count">12 stagioni</span>
+                        <div class="emoji-wrapper">🏴‍☠️</div>
+                        <div class="title">One Piece TCG</div>
+                        <div class="subtitle">156 giocatori attivi</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="tcg-card-brand tcg-pokemon">
+                        <span class="badge-count">8 stagioni</span>
+                        <div class="emoji-wrapper">⚡</div>
+                        <div class="title">Pokémon TCG</div>
+                        <div class="subtitle">203 giocatori attivi</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4 mb-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="tcg-card-brand tcg-riftbound">
+                        <span class="badge-count">3 stagioni</span>
+                        <div class="emoji-wrapper">🌌</div>
+                        <div class="title">Riftbound TCG</div>
+                        <div class="subtitle">87 giocatori attivi</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="text-center mb-4">
+            <h2 class="mb-2">Funzionalità complete</h2>
+            <p class="text-muted-custom">Tutto quello che serve per gestire la tua community</p>
+        </div>
+
+        <div class="row mb-5">
+            <div class="col-md-6 mb-4">
+                <div class="card-brand card-primary">
+                    <div class="card-brand-header">
+                        <i class="fas fa-ranking-star"></i>
+                        Classifiche in tempo reale
+                    </div>
+                    <div class="card-brand-body">
+                        <p class="text-muted-custom mb-4">
+                            Sistema di punteggio trasparente con aggiornamenti automatici. Segui la tua posizione e quella dei tuoi avversari in tempo reale.
+                        </p>
+                        <a href="#" class="btn-brand btn-brand-primary">
+                            <i class="fas fa-arrow-right"></i>
+                            Vedi classifiche
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card-brand card-amber">
+                    <div class="card-brand-header">
+                        <i class="fas fa-chart-line"></i>
+                        Statistiche dettagliate
+                    </div>
+                    <div class="card-brand-body">
+                        <p class="text-muted-custom mb-4">
+                            Analizza performance, win rate, match history e progressi nel tempo. Dati completi per migliorare il tuo gioco.
+                        </p>
+                        <a href="#" class="btn-brand btn-brand-amber">
+                            <i class="fas fa-chart-bar"></i>
+                            Esplora stats
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievement System -->
+        <div class="text-center mb-4">
+            <h2 class="mb-2">Sistema Achievement</h2>
+            <p class="text-muted-custom">Sblocca riconoscimenti e mostra le tue conquiste</p>
+        </div>
+
+        <div class="card-brand card-violet mb-5">
+            <div class="card-brand-body">
+                <div class="d-flex flex-wrap gap-3 justify-content-center">
+                    <span class="badge-brand badge-legendary">
+                        <i class="fas fa-crown"></i>
+                        Legendary
+                    </span>
+                    <span class="badge-brand badge-epic">
+                        <i class="fas fa-star"></i>
+                        Epic
+                    </span>
+                    <span class="badge-brand badge-rare">
+                        <i class="fas fa-gem"></i>
+                        Rare
+                    </span>
+                    <span class="badge-brand badge-common">
+                        <i class="fas fa-circle"></i>
+                        Common
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="text-center mb-4">
+            <h2 class="mb-2">Leaderboard</h2>
+            <p class="text-muted-custom">I migliori giocatori della stagione corrente</p>
+        </div>
+
+        <div class="card-brand card-cyan mb-5">
+            <div style="overflow-x: auto;">
+                <table class="table-brand">
+                    <thead>
+                        <tr>
+                            <th>Posizione</th>
+                            <th>Giocatore</th>
+                            <th>Punti</th>
+                            <th>Tornei</th>
+                            <th>Vittorie</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="rank-1">
+                            <td>
+                                <span class="badge-brand badge-legendary">
+                                    <i class="fas fa-crown"></i> 1
+                                </span>
+                            </td>
+                            <td style="font-weight: 700; color: var(--gray-900);">Mario Rossi</td>
+                            <td style="font-weight: 700;">245</td>
+                            <td>12</td>
+                            <td>28</td>
+                        </tr>
+                        <tr class="rank-2">
+                            <td>
+                                <span class="badge-brand badge-rare">
+                                    <i class="fas fa-medal"></i> 2
+                                </span>
+                            </td>
+                            <td style="font-weight: 700; color: var(--gray-900);">Luigi Verdi</td>
+                            <td style="font-weight: 700;">220</td>
+                            <td>11</td>
+                            <td>24</td>
+                        </tr>
+                        <tr class="rank-3">
+                            <td>
+                                <span class="badge-brand badge-epic">
+                                    <i class="fas fa-medal"></i> 3
+                                </span>
+                            </td>
+                            <td style="font-weight: 700; color: var(--gray-900);">Giovanni Bianchi</td>
+                            <td style="font-weight: 700;">198</td>
+                            <td>10</td>
+                            <td>22</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>Anna Neri</td>
+                            <td>187</td>
+                            <td>9</td>
+                            <td>19</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>Paolo Gialli</td>
+                            <td>175</td>
+                            <td>10</td>
+                            <td>18</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="hero-section text-center">
+            <h3 class="mb-3">Pronto per la sfida?</h3>
+            <p class="text-muted-custom mb-4" style="font-size: 1.1rem;">
+                Unisciti alla community e inizia a competere nei tornei
+            </p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a href="#" class="btn-brand btn-brand-primary">
+                    <i class="fas fa-play"></i>
+                    Prossimi tornei
+                </a>
+                <a href="#" class="btn-brand btn-brand-outline">
+                    <i class="fas fa-search"></i>
+                    Cerca giocatore
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-brand">
+        <div class="container">
+            <div class="row mb-4">
+                <div class="col-md-4 mb-4">
+                    <h5>LeagueForge</h5>
+                    <p class="text-muted-custom mb-3">
+                        La piattaforma professionale per gestire leghe e tornei TCG con stile.
+                    </p>
+                    <span class="brand-badge">
+                        <i class="fas fa-trophy"></i>
+                        Powered by LeagueForge
+                    </span>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Navigazione</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#">Classifiche</a></li>
+                        <li class="mb-2"><a href="#">Giocatori</a></li>
+                        <li class="mb-2"><a href="#">Achievement</a></li>
+                        <li class="mb-2"><a href="#">Statistiche</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Community</h5>
+                    <div class="d-flex mb-3">
+                        <a href="#" class="social-link">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <hr style="border-color: var(--gray-200); margin: 2rem 0 1.5rem;">
+            <div class="text-center text-muted-custom">
+                <p class="mb-0" style="font-size: 0.875rem;">
+                    © 2024 Your Store Name — Gestito con <span style="color: var(--brand-primary);">♥</span> tramite <strong style="color: var(--brand-primary);">LeagueForge</strong>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
