@@ -45,7 +45,7 @@ body {
     flex-direction: column;
 }
 
-/* Smooth subtle background pattern - NO visible lines */
+/* Smooth subtle background pattern with hexagons */
 body::before {
     content: '';
     position: fixed;
@@ -54,11 +54,17 @@ body::before {
     right: 0;
     bottom: 0;
     z-index: -1;
-    background:
-        radial-gradient(circle at 15% 25%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
-        radial-gradient(circle at 85% 75%, rgba(255, 107, 107, 0.06) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(20, 184, 166, 0.03) 0%, transparent 50%);
+    background-color: #ffffff;
+    background-image:
+        radial-gradient(circle at 15% 25%, rgba(16, 185, 129, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(255, 107, 107, 0.04) 0%, transparent 40%),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(229, 231, 235, 0.3) 2px, rgba(229, 231, 235, 0.3) 4px),
+        repeating-linear-gradient(60deg, transparent, transparent 2px, rgba(229, 231, 235, 0.3) 2px, rgba(229, 231, 235, 0.3) 4px),
+        repeating-linear-gradient(120deg, transparent, transparent 2px, rgba(229, 231, 235, 0.3) 2px, rgba(229, 231, 235, 0.3) 4px);
+    background-size: 100% 100%, 100% 100%, 40px 69px, 40px 69px, 40px 69px;
+    background-position: 0 0, 0 0, 0 0, 0 0, 20px 35px;
     pointer-events: none;
+    opacity: 0.6;
 }
 
 main {
@@ -274,6 +280,22 @@ main {
     border: none;
 }
 
+/* Card header Coral text only (no background) */
+.card-header.coral-text {
+    background: white !important;
+    color: var(--brand-coral) !important;
+    border-bottom: 2px solid var(--brand-coral) !important;
+    font-weight: 700;
+}
+
+.card-header.coral-text h5 {
+    background: linear-gradient(135deg, var(--brand-coral), var(--brand-coral-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0;
+}
+
 /* Card header variants - Keep original for compatibility */
 .card-header.bg-warning {
     background: #ffc107 !important;
@@ -338,9 +360,9 @@ main {
     color: white;
     font-weight: 700;
     text-transform: uppercase;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     letter-spacing: 0.5px;
-    padding: 1.25rem 1rem;
+    padding: 0.85rem 0.75rem;
     border: none;
 }
 

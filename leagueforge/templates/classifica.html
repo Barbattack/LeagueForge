@@ -8,7 +8,7 @@
 {% set status_str = (season.get('status') or season.get('Status') or '') | string | trim | upper %}
 {% set is_final = (status_str == 'CLOSED') %}
 <div id="stats-shortcut" class="d-flex justify-content-end mb-2">
-  <a class="btn btn-secondary btn-sm" href="{{ url_for('stats', scope=season.id) }}">📊 Stats {{ season.id }}</a>
+  <a class="btn btn-secondary" href="{{ url_for('stats', scope=season.id) }}">📊 Stats {{ season.id }}</a>
 </div>
 <!-- Header con Dropdown Stagioni -->
 <div class="row mb-4">
@@ -102,7 +102,7 @@
 
 <!-- Tabella Classifica -->
 <div class="card">
-    <div class="card-header bg-primary text-white">
+    <div class="card-header coral-text">
         <h5 class="mb-0">
       <i class="fas fa-list-ol"></i>
       {% if is_final %}
