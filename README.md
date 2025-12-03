@@ -172,8 +172,8 @@ Web app Flask completa per tracciare tornei, classifiche, statistiche avanzate, 
 ### 🏗️ v2.2 - Blueprint Refactor + Infrastructure
 
 - **Flask Blueprints**: App.py ridotto da 1527 → 1037 righe
-  - `routes/admin.py` - Route admin (login, dashboard, import)
   - `routes/achievements.py` - Route achievement (catalogo, dettaglio)
+  - (Admin panel in re-development)
 - **CI/CD Pipeline**: GitHub Actions per test automatici
 - **Sistema Logging**: Structured logging con RotatingFileHandler
 - **Backup Script**: `backup_sheets.py` per backup Google Sheets → CSV
@@ -556,13 +556,12 @@ LeagueForge/
 │   │
 │   ├── routes/                     # Flask Blueprints (modular routes)
 │   │   ├── __init__.py             # Blueprint registration
-│   │   ├── admin.py                # Route admin (/admin/*)
 │   │   └── achievements.py         # Route achievement (/achievements)
 │   │
 │   ├── cache.py                    # Cache manager Google Sheets
 │   ├── config.py                   # Configurazione (NON in git!)
 │   ├── config.example.py           # Template configurazione
-│   ├── auth.py                     # Autenticazione admin
+│   ├── auth.py                     # Autenticazione (per futuro admin panel)
 │   │
 │   ├── achievements.py             # Logica unlock achievement
 │   ├── setup_achievements.py       # Script setup sheets achievement
@@ -602,10 +601,6 @@ LeagueForge/
 │   │   ├── achievements.html       # Catalogo achievement (card cliccabili)
 │   │   ├── achievement_detail.html # Dettaglio singolo achievement
 │   │   ├── stats.html              # Stats avanzate
-│   │   ├── admin/                  # Template admin panel
-│   │   │   ├── login.html
-│   │   │   ├── dashboard.html
-│   │   │   └── import_result.html
 │   │   └── error.html              # Error page
 │   │
 │   └── static/                     # Assets statici

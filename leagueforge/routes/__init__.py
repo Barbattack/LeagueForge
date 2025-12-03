@@ -6,9 +6,9 @@ LeagueForge - Routes Package
 Flask Blueprints per organizzazione modulare delle routes.
 
 Struttura:
-- admin.py: Route admin (login, dashboard, import)
 - achievements.py: Route achievement (catalogo, dettaglio)
 - (public routes rimangono in app.py per ora)
+- (admin routes: to be implemented)
 
 Usage:
     from routes import register_blueprints
@@ -25,8 +25,10 @@ def register_blueprints(app):
     Args:
         app: Flask application instance
     """
-    from routes.admin import admin_bp
     from routes.achievements import achievements_bp
 
-    app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(achievements_bp)
+
+    # TODO: Admin panel to be re-implemented
+    # from routes.admin import admin_bp
+    # app.register_blueprint(admin_bp, url_prefix='/admin')

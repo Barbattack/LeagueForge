@@ -6,9 +6,8 @@ Guida completa per le operazioni di amministrazione della webapp.
 
 ## Indice
 
-- [Accesso Admin](#-accesso-admin)
-- [Dashboard Admin](#-dashboard-admin)
-- [Import Tornei via Web](#-import-tornei-via-web)
+- [Admin Panel Web](#-admin-panel-web)
+- [Import Tornei](#-import-tornei)
 - [Gestione Stagioni](#-gestione-stagioni)
 - [Gestione Achievement](#-gestione-achievement)
 - [Manutenzione](#-manutenzione)
@@ -16,157 +15,63 @@ Guida completa per le operazioni di amministrazione della webapp.
 
 ---
 
-## Accesso Admin
+## 🚧 Admin Panel Web
 
-### URL Login
+**Status:** In fase di re-development
 
-```
-https://your-store.pythonanywhere.com/admin/login
-```
+Il precedente admin panel web (`/admin/login`, `/admin/dashboard`) è stato rimosso ed è in fase di completa ricostruzione con nuovo design e funzionalità migliorate.
 
-Oppure in locale:
-```
-http://localhost:5000/admin/login
-```
+### Funzionalità in Arrivo
 
-### Credenziali
+- Login admin con sessione sicura
+- Dashboard con overview statistiche
+- Import tornei via web UI (CSV, TDF, PDF)
+- Gestione stagioni
+- Configurazione negozio (logo, info contatto, branding)
+- Sistema di notifiche e logs
 
-Le credenziali sono configurate in `config.py`:
+### Nel Frattempo
 
-| Campo | Variabile config.py |
-|-------|---------------------|
-| Username | `ADMIN_USERNAME` |
-| Password | Hash in `ADMIN_PASSWORD_HASH` |
+Per operazioni admin, usa:
+- **Import tornei**: Script Python CLI (vedi sezione Import Tornei)
+- **Gestione stagioni**: Google Sheets (vedi sezione Gestione Stagioni)
+- **Gestione achievement**: Google Sheets (vedi sezione Gestione Achievement)
 
-### Sessione
+---
 
-- **Durata**: 30 minuti (configurabile in `SESSION_TIMEOUT`)
-- **Scadenza**: Logout automatico dopo inattività
-- **Logout manuale**: Click su "Esci" o vai a `/admin/logout`
+## 📥 Import Tornei
 
-### Cambiare Password Admin
+### Metodo CLI (Script Python)
 
-1. Genera nuovo hash:
+Gli script Python per import tornei sono ancora completamente funzionanti:
+
+**One Piece TCG:**
 ```bash
-python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('NUOVA_PASSWORD'))"
+cd leagueforge2
+python import_onepiece.py --csv path/to/YYYY_MM_DD_OP12.csv --season OP12
 ```
 
-2. Copia l'output (inizia con `pbkdf2:`)
-
-3. Modifica `config.py`:
-```python
-ADMIN_PASSWORD_HASH = "pbkdf2:sha256:600000$..."  # Incolla qui
+**Pokemon TCG:**
+```bash
+python import_pokemon.py --tdf path/to/tournament.tdf --season PKM-FS25
 ```
 
-4. Reload webapp (su PythonAnywhere: tab Web → Reload)
-
----
-
-## Dashboard Admin
-
-### URL Dashboard
-
-```
-/admin/
+**Riftbound TCG:**
+```bash
+python import_riftbound.py --csv path/to/tournament.csv --season RFB01
 ```
 
-### Funzionalita Disponibili
+### Opzioni Comuni
 
-| Pulsante | Azione | Note |
-|----------|--------|------|
-| **Import One Piece** | Importa torneo OP da CSV | Richiede file CSV |
-| **Import Pokemon** | Importa torneo PKM da TDF | Richiede file TDF |
-| **Import Riftbound** | Importa torneo RFB da CSV | Supporta multi-round |
-| **Esci** | Logout admin | Termina sessione |
+| Flag | Descrizione |
+|------|-------------|
+| `--test` | Test mode (dry run, non scrive) |
+| `--verbose` | Output dettagliato |
+| `--help` | Mostra aiuto completo |
 
-### Navigazione
+### Documentazione Dettagliata
 
-- **Navbar**: Accesso rapido a tutte le sezioni webapp
-- **Breadcrumb**: Mostra posizione corrente
-- **Footer**: Link utili e info versione
-
----
-
-## Import Tornei via Web
-
-### Procedura Generale
-
-1. Login come admin (`/admin/login`)
-2. Vai alla dashboard (`/admin/`)
-3. Click sul pulsante import del TCG desiderato
-4. Compila il form:
-   - **File**: Seleziona CSV/TDF dal tuo PC
-   - **Stagione**: Seleziona dal dropdown (es. OP12, PKM-FS25)
-5. Click "Importa"
-6. Attendi completamento
-7. Verifica risultato
-
-### Import One Piece (CSV)
-
-**Form Fields:**
-- File CSV: Export da Limitlesstcg
-- Stagione: Dropdown stagioni OP attive
-
-**Requisiti File:**
-- Formato: CSV con header
-- Colonne: Ranking, User Name, Membership Number, Win Points, OMW %, Record
-- Nome file: Deve contenere data (es. `2025_11_23_OP12.csv`)
-
-**Risultato:**
-- Torneo aggiunto a Tournaments
-- Risultati in Results
-- Stats giocatori aggiornate in Players
-- Classifica stagionale aggiornata
-- Achievement sbloccati automaticamente
-
-### Import Pokemon (TDF)
-
-**Form Fields:**
-- File TDF: Export da Play! Pokemon
-- Stagione: Dropdown stagioni PKM attive
-
-**Requisiti File:**
-- Formato: TDF (XML interno)
-- Contenuto: Standings, player info, match results
-
-**Risultato:**
-- Torneo aggiunto a Tournaments
-- Risultati in Results
-- Match H2H in Pokemon_Matches (se disponibili)
-- Stats giocatori aggiornate
-- Achievement sbloccati
-
-### Import Riftbound (CSV)
-
-**Form Fields:**
-- File CSV: Uno o piu file (separati da virgola per multi-round)
-- Stagione: Dropdown stagioni RFB attive
-
-**Requisiti File:**
-- Formato: CSV multi-round
-- Colonne: User ID, First Name, Last Name, Event Record
-- Multi-round: R1.csv, R2.csv, R3.csv
-
-**Risultato:**
-- Torneo aggregato da tutti i round
-- Stats W-L-D dettagliate
-- Achievement sbloccati
-
-### Gestione Errori Import
-
-| Errore | Causa | Soluzione |
-|--------|-------|-----------|
-| "File non valido" | Formato errato | Verifica formato CSV/TDF |
-| "Stagione non trovata" | Season ID non esiste | Crea stagione in Config sheet |
-| "Torneo gia importato" | Stesso Tournament ID | Usa --reimport da CLI |
-| "Errore Google Sheets" | API limit o connessione | Attendi e riprova |
-
-### Note Import
-
-- **Test Mode**: Non disponibile via web, usa CLI per dry-run
-- **Reimport**: Non disponibile via web, usa CLI con `--reimport`
-- **Progress**: La pagina mostra risultato al completamento
-- **Timeout**: Import grandi potrebbero richiedere tempo
+Vedi `docs/IMPORT_GUIDE.md` per istruzioni complete su formati file, troubleshooting e procedure dettagliate.
 
 ---
 
@@ -297,7 +202,6 @@ Testa queste URL:
 | `/` | Homepage (200 OK) |
 | `/classifiche` | Lista stagioni |
 | `/achievements` | Catalogo achievement |
-| `/admin/login` | Form login |
 
 ### Aggiornare Codice
 
@@ -321,12 +225,11 @@ python leagueforge2/app.py
 
 ### Best Practices
 
-1. **Password forte**: Usa password complessa per admin
+1. **Password forte**: Usa password complessa per admin (quando sarà disponibile)
 2. **HTTPS**: Sempre usa HTTPS in produzione
 3. **Config.py**: MAI committare su Git (e in .gitignore)
 4. **Credentials.json**: MAI committare su Git
-5. **Sessione**: Fai logout dopo uso admin
-6. **Backup**: Backup regolari del Google Sheet
+5. **Backup**: Backup regolari del Google Sheet
 
 ### File Sensibili
 
@@ -336,23 +239,13 @@ python leagueforge2/app.py
 | `service_account_credentials.json` | Credenziali Google | .gitignore |
 | `cache_data.json` | Dati cached | .gitignore |
 
-### Recupero Accesso
-
-Se perdi accesso admin:
-
-1. Accedi a PythonAnywhere (o server)
-2. Modifica `config.py` con nuovo hash password
-3. Reload webapp
-
 ### Rotazione Credenziali
 
 Consigliato ogni 6 mesi:
 
 1. Genera nuova SECRET_KEY
-2. Genera nuovo ADMIN_PASSWORD_HASH
-3. Aggiorna config.py
-4. Reload webapp
-5. Ri-effettua login
+2. Aggiorna config.py
+3. Reload webapp
 
 ---
 
@@ -360,13 +253,11 @@ Consigliato ogni 6 mesi:
 
 ### Import Torneo Settimanale
 
-- [ ] Login admin
 - [ ] Scarica file risultati (CSV/TDF)
 - [ ] Verifica nome file contiene data
-- [ ] Import via dashboard o CLI
+- [ ] Import via script CLI
 - [ ] Verifica classifica aggiornata
 - [ ] Verifica achievement sbloccati
-- [ ] Logout
 
 ### Inizio Nuova Stagione
 
@@ -385,4 +276,4 @@ Consigliato ogni 6 mesi:
 
 ---
 
-**Ultimo aggiornamento:** Novembre 2025
+**Ultimo aggiornamento:** Dicembre 2024
