@@ -20,6 +20,7 @@ from werkzeug.utils import secure_filename
 
 from auth import admin_required, login_user, logout_user, is_admin_logged_in, get_session_info
 from cache import cache
+from import_controller import import_tournament as controller_import_tournament
 
 
 # =============================================================================
@@ -121,6 +122,9 @@ def import_onepiece():
     """
     Gestisce import One Piece da CSV.
 
+    NOTE: Usa subprocess temporaneamente. Sarà migrato a import_controller
+    in FASE 3 con nuova UI multi-file (round_files + classifica).
+
     Form data:
     - file: CSV file
     - season: Season ID (es. OP12)
@@ -206,33 +210,36 @@ def import_pokemon():
             flash('File deve essere TDF o XML', 'danger')
             return redirect(url_for('admin.dashboard'))
 
+        # Salva file temporaneo
         suffix = '.tdf' if file.filename.endswith('.tdf') else '.xml'
         with tempfile.NamedTemporaryFile(mode='wb', suffix=suffix, delete=False) as tmp:
             file.save(tmp.name)
             tmp_path = tmp.name
 
-        cmd = ['python3', 'import_pokemon.py', '--tdf', tmp_path, '--season', season_id]
-        if test_mode:
-            cmd.append('--test')
+        # Import tramite controller (no subprocess)
+        result = controller_import_tournament(
+            tcg='pokemon',
+            season_id=season_id,
+            files={'tdf': tmp_path},
+            test_mode=test_mode,
+            allow_reimport=False
+        )
 
-        result = subprocess.run(cmd, cwd='/home/user/LeagueForge/leagueforge',
-                               capture_output=True, text=True, timeout=120)
-
+        # Cleanup file temp
         os.unlink(tmp_path)
 
-        output = result.stdout + result.stderr
-
-        if result.returncode == 0:
-            flash(f'Import Pokemon completato{"(TEST MODE)" if test_mode else ""}!', 'success')
+        # Gestione risultato
+        if result['success']:
+            flash(f'Import Pokemon completato{" (TEST MODE)" if test_mode else ""}!', 'success')
         else:
-            flash('Errore durante import', 'danger')
+            flash(f'Errore durante import: {result.get("error", "Errore sconosciuto")}', 'danger')
 
         return render_template('admin/import_result.html',
                              tcg='Pokemon',
                              season=season_id,
                              test_mode=test_mode,
-                             success=(result.returncode == 0),
-                             output=output)
+                             success=result['success'],
+                             output=result.get('output', result.get('error', '')))
 
     except Exception as e:
         flash(f'Errore: {str(e)}', 'danger')
@@ -242,7 +249,12 @@ def import_pokemon():
 @admin_bp.route('/import/riftbound', methods=['POST'])
 @admin_required
 def import_riftbound():
-    """Gestisce import Riftbound da CSV Multi-Round."""
+    """
+    Gestisce import Riftbound da CSV Multi-Round.
+
+    NOTE: Usa subprocess temporaneamente. Sarà migrato a import_controller
+    in FASE 3 con nuova UI multi-file (round_files).
+    """
     try:
         if 'file' not in request.files:
             flash('Nessun file caricato', 'danger')
