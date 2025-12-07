@@ -44,7 +44,7 @@
     <p>{{ duplicate_warning }}</p>
     <p class="mb-0">
         <strong>Opzioni:</strong>
-        <button class="btn btn-sm btn-danger" onclick="document.getElementById('overwrite-mode').value='true'; confirmImport();">
+        <button class="btn btn-sm btn-danger" onclick="document.getElementById('overwrite-mode').value='true'; startImport();">
             <i class="fas fa-exclamation-circle"></i> Sovrascrivi
         </button>
         <a href="{{ url_for('admin.import_wizard_cancel') }}" class="btn btn-sm btn-secondary">
@@ -162,25 +162,60 @@
 <!-- Actions -->
 <div class="card mb-4">
     <div class="card-body text-center">
-        <form method="POST" action="{{ url_for('admin.import_wizard_confirm') }}" id="form-confirm">
-            <input type="hidden" name="overwrite" id="overwrite-mode" value="false">
+        <input type="hidden" id="overwrite-mode" value="false">
 
-            {% if not duplicate_warning %}
-            <button type="submit" class="btn btn-success btn-lg">
-                <i class="fas fa-check-circle"></i> Conferma Import
-            </button>
-            {% endif %}
+        {% if not duplicate_warning %}
+        <button type="button" class="btn btn-success btn-lg" id="btn-confirm" onclick="startImport()">
+            <i class="fas fa-check-circle"></i> Conferma Import
+        </button>
+        {% endif %}
 
-            <a href="{{ url_for('admin.import_wizard_cancel') }}" class="btn btn-secondary btn-lg">
-                <i class="fas fa-times"></i> Annulla
-            </a>
+        <a href="{{ url_for('admin.import_wizard_cancel') }}" class="btn btn-secondary btn-lg">
+            <i class="fas fa-times"></i> Annulla
+        </a>
 
-            <button type="button" class="btn btn-info btn-lg" onclick="window.print()">
-                <i class="fas fa-print"></i> Stampa Preview
-            </button>
-        </form>
+        <button type="button" class="btn btn-info btn-lg" onclick="window.print()">
+            <i class="fas fa-print"></i> Stampa Preview
+        </button>
     </div>
 </div>
+
+<script>
+function startImport() {
+    const btnConfirm = document.getElementById('btn-confirm');
+    const overwriteMode = document.getElementById('overwrite-mode').value;
+
+    // Disable button
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Avvio import...';
+
+    // Start import via AJAX
+    fetch("{{ url_for('admin.import_wizard_start') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `overwrite=${overwriteMode}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Redirect to progress page
+            window.location.href = "{{ url_for('admin.import_progress_page') }}?tracker_id=" + data.tracker_id;
+        } else {
+            alert('Errore avvio import: ' + (data.error || 'Errore sconosciuto'));
+            btnConfirm.disabled = false;
+            btnConfirm.innerHTML = '<i class="fas fa-check-circle"></i> Conferma Import';
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Errore connessione server');
+        btnConfirm.disabled = false;
+        btnConfirm.innerHTML = '<i class="fas fa-check-circle"></i> Conferma Import';
+    });
+}
+</script>
 
 <style>
 /* Progress Steps Styling */

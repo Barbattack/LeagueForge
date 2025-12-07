@@ -37,6 +37,26 @@
             Si è verificato un errore. Controlla l'output console qui sotto per i dettagli.
         {% endif %}
     </p>
+
+    {%if not success and not is_recovery and season %}
+    <!-- Recovery Option (FASE 5) -->
+    <div class="mt-3 pt-3 border-top">
+        <p class="mb-2"><strong>💡 Import parziale?</strong></p>
+        <p class="small mb-2">
+            Se i dati del torneo sono stati scritti nel Google Sheet ma l'aggiornamento delle
+            classifiche è fallito, puoi completare l'import usando il pulsante qui sotto.
+        </p>
+        <form method="POST" action="{{ url_for('admin.import_recovery', season_id=season) }}"
+              onsubmit="return confirm('Questo ricalcolerà tutte le classifiche. Continuare?');">
+            <button type="submit" class="btn btn-warning btn-sm">
+                <i class="fas fa-redo"></i> Completa Import
+            </button>
+            <small class="text-muted d-block mt-1">
+                Riesegue: update_players(), update_seasonal_standings(), batch_update_player_stats()
+            </small>
+        </form>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Console Output -->

@@ -522,3 +522,169 @@ def validate_round_order(round_data: List[Dict]) -> Dict:
             )
 
     return result
+
+
+# =============================================================================
+# IMPORT CON PROGRESS TRACKING (FASE 5)
+# =============================================================================
+
+def import_with_progress(
+    tracker_id: str,
+    tcg: str,
+    season_id: str,
+    files: Dict[str, Union[str, List[str]]],
+    test_mode: bool = False,
+    allow_overwrite: bool = False
+):
+    """
+    Esegue import con progress tracking real-time.
+    Questa funzione viene eseguita in background e aggiorna un ProgressTracker.
+
+    Args:
+        tracker_id: ID del ProgressTracker da aggiornare
+        tcg: TCG type ('onepiece', 'pokemon', 'riftbound')
+        season_id: ID stagione
+        files: Dict con path ai file
+        test_mode: Se True, simula import
+        allow_overwrite: Se True, sovrascrive dati esistenti
+
+    Returns:
+        None (aggiorna il tracker)
+    """
+    from progress_tracker import get_tracker
+    from import_base import delete_existing_tournament
+
+    tracker = get_tracker(tracker_id)
+    if not tracker:
+        return
+
+    try:
+        tracker.log("🔍 Validazione file...")
+        tracker.update_progress(5, "Validazione file")
+
+        # 1. Validazione
+        validation = validate(tcg, files)
+        if not validation['valid']:
+            error_msg = '; '.join(validation['errors'])
+            tracker.log(f"❌ Errore validazione: {error_msg}", 'error')
+            tracker.complete(success=False, message=error_msg)
+            return
+
+        tracker.log("✓ Validazione completata", 'success')
+        tracker.update_progress(10, "File validati")
+
+        # 2. Connessione a Google Sheets
+        tracker.log("🔗 Connessione a Google Sheets...")
+        tracker.update_progress(15, "Connessione Google Sheets")
+
+        sheet = connect_sheet()
+        tracker.log("✓ Connesso a Google Sheets", 'success')
+        tracker.update_progress(20, "Connesso")
+
+        # 3. Parsing
+        tracker.log(f"📋 Parsing file {tcg.upper()}...")
+        tracker.update_progress(25, "Parsing dati")
+
+        parsed_result = parse(tcg, season_id, files)
+        if not parsed_result['success']:
+            error_msg = parsed_result.get('error', 'Errore parsing')
+            tracker.log(f"❌ {error_msg}", 'error')
+            tracker.complete(success=False, message=error_msg)
+            return
+
+        tracker.log("✓ Parsing completato", 'success')
+        tracker.update_progress(40, "Dati parsati")
+
+        # 4. Se overwrite, cancella dati esistenti
+        if allow_overwrite:
+            tournament_id = parsed_result['data']['tournament'][0]
+            tracker.log(f"🗑️ Eliminazione dati esistenti per {tournament_id}...")
+            tracker.update_progress(45, "Eliminazione vecchi dati")
+
+            delete_existing_tournament(sheet, tournament_id)
+            tracker.log("✓ Dati vecchi eliminati", 'success')
+
+        tracker.update_progress(50, "Inizio scrittura")
+
+        # 5. Scrittura su Sheets
+        tracker.log("💾 Scrittura su Google Sheets...")
+        tracker.log("   → Scrittura Tournaments...", 'info')
+        tracker.update_progress(55, "Scrittura Tournaments")
+
+        # Call appropriata funzione import con output capture
+        with contextlib.redirect_stdout(StringIO()) as output:
+            if tcg == 'pokemon':
+                # Per Pokemon usiamo import_pokemon_to_sheet
+                tracker.log("   → Scrittura Results...", 'info')
+                tracker.update_progress(60, "Scrittura Results")
+
+                import_pokemon_to_sheet(parsed_result['data'], test_mode=test_mode)
+
+                tracker.log("   → Scrittura Matches...", 'info')
+                tracker.update_progress(70, "Scrittura Matches")
+
+            elif tcg == 'onepiece':
+                import_onepiece_tournament(
+                    sheet=sheet,
+                    season_id=season_id,
+                    round_files=files['rounds'],
+                    classifica_file=files['classifica'],
+                    test_mode=test_mode
+                )
+
+            elif tcg == 'riftbound':
+                import_riftbound_tournament(
+                    sheet=sheet,
+                    season_id=season_id,
+                    round_files=files['rounds'],
+                    test_mode=test_mode
+                )
+
+        tracker.log("✓ Scrittura completata", 'success')
+        tracker.update_progress(80, "Dati scritti")
+
+        # 6. Aggiornamento derivati
+        tracker.log("🔄 Aggiornamento Players e Standings...")
+        tracker.update_progress(85, "Aggiornamento Players")
+
+        from import_base import update_players, update_seasonal_standings, batch_update_player_stats
+        from datetime import datetime
+
+        today = datetime.now().strftime('%Y-%m-%d')
+
+        tracker.log("   → update_players()...", 'info')
+        update_players(sheet, today)
+
+        tracker.log("   → update_seasonal_standings()...", 'info')
+        tracker.update_progress(90, "Aggiornamento Standings")
+        update_seasonal_standings(sheet, season_id, today)
+
+        tracker.log("   → batch_update_player_stats()...", 'info')
+        tracker.update_progress(95, "Aggiornamento statistiche")
+        batch_update_player_stats(sheet)
+
+        tracker.log("✓ Aggiornamenti completati", 'success')
+
+        # 7. Achievement check (solo se NON ARCHIVED)
+        tracker.log("🏆 Verifica Achievement...")
+        tracker.update_progress(98, "Verifica Achievement")
+
+        from import_base import check_and_unlock_achievements
+        check_and_unlock_achievements(sheet)
+
+        tracker.log("✓ Achievement verificati", 'success')
+
+        # Completato!
+        tracker.update_progress(100, "Import completato!")
+        success_msg = f"Import {tcg.upper()} completato con successo{' (TEST MODE)' if test_mode else ''}!"
+        tracker.log(f"✅ {success_msg}", 'success')
+        tracker.complete(success=True, message=success_msg)
+
+    except Exception as e:
+        import traceback
+        error_msg = f"Errore durante import: {str(e)}"
+        error_trace = traceback.format_exc()
+
+        tracker.log(f"❌ {error_msg}", 'error')
+        tracker.log(f"Traceback: {error_trace}", 'error')
+        tracker.complete(success=False, message=error_msg)

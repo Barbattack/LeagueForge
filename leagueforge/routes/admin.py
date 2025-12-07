@@ -15,13 +15,16 @@ import os
 import subprocess
 import tempfile
 
+import flask
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from werkzeug.utils import secure_filename
 
 from auth import admin_required, login_user, logout_user, is_admin_logged_in, get_session_info
 from cache import cache
 from import_controller import import_tournament as controller_import_tournament
+from import_controller import import_with_progress
 from season_manager import create_season, close_season, get_seasons, suggest_next_season_id
+from progress_tracker import create_tracker, get_tracker, remove_tracker
 
 
 # =============================================================================
@@ -615,6 +618,240 @@ def import_wizard_cancel():
 
     flash('Import annullato', 'info')
     return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/import/wizard/start', methods=['POST'])
+@admin_required
+def import_wizard_start():
+    """
+    FASE 5: Avvia import con progress tracking in background.
+    Ritorna tracker_id per subscribing a progress updates.
+    """
+    from flask import session as flask_session, jsonify
+    import json
+    import threading
+    import uuid
+
+    try:
+        # Recupera dati da session
+        tcg = flask_session.get('wizard_tcg')
+        season_id = flask_session.get('wizard_season_id')
+        test_mode = flask_session.get('wizard_test_mode', False)
+        temp_files_json = flask_session.get('wizard_temp_files')
+
+        overwrite = request.form.get('overwrite') == 'true'
+
+        if not all([tcg, season_id, temp_files_json]):
+            return jsonify({'success': False, 'error': 'Session scaduta'})
+
+        temp_files = json.loads(temp_files_json)
+
+        # Crea tracker
+        tracker_id = str(uuid.uuid4())
+        create_tracker(tracker_id)
+
+        # Avvia import in background thread
+        import_thread = threading.Thread(
+            target=import_with_progress,
+            args=(tracker_id, tcg, season_id, temp_files, test_mode, overwrite),
+            daemon=True
+        )
+        import_thread.start()
+
+        # Salva tracker_id in session per cleanup
+        flask_session['import_tracker_id'] = tracker_id
+
+        return jsonify({'success': True, 'tracker_id': tracker_id})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@admin_bp.route('/import/progress/<tracker_id>')
+@admin_required
+def import_progress_stream(tracker_id):
+    """
+    FASE 5: Stream SSE (Server-Sent Events) per progress updates.
+    Il browser si connette a questo endpoint per ricevere updates real-time.
+    """
+    import json
+    import time
+
+    def generate():
+        """Generator che yield eventi SSE."""
+        tracker = get_tracker(tracker_id)
+        if not tracker:
+            yield f"data: {json.dumps({'error': 'Tracker non trovato'})}\n\n"
+            return
+
+        last_message_index = 0
+
+        while not tracker.is_completed():
+            # Ottieni nuovi messaggi
+            new_messages = tracker.get_messages(since_index=last_message_index)
+
+            if new_messages:
+                for msg in new_messages:
+                    yield f"data: {json.dumps(msg)}\n\n"
+                last_message_index += len(new_messages)
+
+            time.sleep(0.5)  # Poll ogni 500ms
+
+        # Invia ultimo batch di messaggi
+        final_messages = tracker.get_messages(since_index=last_message_index)
+        for msg in final_messages:
+            yield f"data: {json.dumps(msg)}\n\n"
+
+        # Invia evento di completamento
+        yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+    return flask.Response(
+        generate(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no'
+        }
+    )
+
+
+@admin_bp.route('/import/progress')
+@admin_required
+def import_progress_page():
+    """
+    FASE 5: Pagina che mostra progress bar e log real-time.
+    """
+    tracker_id = request.args.get('tracker_id')
+    if not tracker_id:
+        flash('Tracker ID mancante', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+    return render_template('admin/import_progress.html', tracker_id=tracker_id)
+
+
+@admin_bp.route('/import/wizard/complete', methods=['POST'])
+@admin_required
+def import_wizard_complete():
+    """
+    FASE 5: Chiamato dopo che l'import è completato.
+    Pulisce session e temp files.
+    """
+    from flask import session as flask_session, jsonify
+    import json
+
+    try:
+        # Cleanup temp files
+        temp_files_json = flask_session.get('wizard_temp_files')
+        if temp_files_json:
+            temp_files = json.loads(temp_files_json)
+            for key, value in temp_files.items():
+                if isinstance(value, list):
+                    for f in value:
+                        try:
+                            os.unlink(f)
+                        except:
+                            pass
+                elif isinstance(value, str):
+                    try:
+                        os.unlink(value)
+                    except:
+                        pass
+
+        # Cleanup tracker
+        tracker_id = flask_session.get('import_tracker_id')
+        if tracker_id:
+            remove_tracker(tracker_id)
+
+        # Clear session wizard data
+        for key in ['wizard_tcg', 'wizard_season_id', 'wizard_test_mode',
+                    'wizard_temp_files', 'wizard_parsed_data', 'wizard_upload_time',
+                    'import_tracker_id']:
+            flask_session.pop(key, None)
+
+        return jsonify({'success': True})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# =============================================================================
+# ROUTES - RECOVERY (FASE 5)
+# =============================================================================
+
+@admin_bp.route('/import/recovery/<season_id>', methods=['POST'])
+@admin_required
+def import_recovery(season_id):
+    """
+    FASE 5: Recovery per import falliti parzialmente.
+    Riesegue solo update_players(), update_seasonal_standings(), batch_update_player_stats().
+
+    Utile quando:
+    - Results sono stati scritti ma update Players/Standings è fallito
+    - Import subprocess è stato interrotto ma dati sono nel sheet
+    """
+    try:
+        from import_base import connect_sheet, update_players, update_seasonal_standings, batch_update_player_stats
+        from datetime import datetime
+
+        # Connetti sheet
+        sheet = connect_sheet()
+        today = datetime.now().strftime('%Y-%m-%d')
+
+        # Capture output
+        output_lines = []
+
+        output_lines.append("🔄 Avvio recovery import...\n")
+        output_lines.append(f"   Season ID: {season_id}\n")
+        output_lines.append(f"   Data: {today}\n\n")
+
+        # Step 1: Update Players
+        output_lines.append("📊 Aggiornamento Players...\n")
+        try:
+            update_players(sheet, today)
+            output_lines.append("   ✓ Players aggiornati con successo\n\n")
+        except Exception as e:
+            output_lines.append(f"   ❌ Errore update_players: {str(e)}\n\n")
+            raise
+
+        # Step 2: Update Seasonal Standings
+        output_lines.append(f"🏆 Aggiornamento Seasonal Standings ({season_id})...\n")
+        try:
+            update_seasonal_standings(sheet, season_id, today)
+            output_lines.append("   ✓ Standings aggiornati con successo\n\n")
+        except Exception as e:
+            output_lines.append(f"   ❌ Errore update_seasonal_standings: {str(e)}\n\n")
+            raise
+
+        # Step 3: Batch Update Player Stats
+        output_lines.append("📈 Aggiornamento statistiche giocatori...\n")
+        try:
+            batch_update_player_stats(sheet)
+            output_lines.append("   ✓ Statistiche aggiornate con successo\n\n")
+        except Exception as e:
+            output_lines.append(f"   ❌ Errore batch_update_player_stats: {str(e)}\n\n")
+            raise
+
+        output_lines.append("✅ Recovery completato con successo!")
+
+        flash('Recovery completato! Tutte le classifiche sono state aggiornate.', 'success')
+
+        return render_template('admin/import_result.html',
+                              tcg='Recovery',
+                              season=season_id,
+                              test_mode=False,
+                              success=True,
+                              output=''.join(output_lines),
+                              is_recovery=True)
+
+    except Exception as e:
+        flash(f'Errore durante recovery: {str(e)}', 'danger')
+        return render_template('admin/import_result.html',
+                              tcg='Recovery',
+                              season=season_id,
+                              test_mode=False,
+                              success=False,
+                              output=f"❌ Errore recovery:\n{str(e)}",
+                              is_recovery=True)
 
 
 # =============================================================================
