@@ -314,12 +314,12 @@ def update_seasonal_standings(sheet, season_id: str, tournament_date: str):
     if season_status == "ARCHIVED":
         max_to_count = total_tournaments
         print(f"      Scarto: NESSUNO (stagione ARCHIVED - archivio dati)")
-    elif total_tournaments < 8:
-        max_to_count = total_tournaments
-        print(f"      Scarto: NESSUNO (stagione < 8 tornei)")
-    else:
+    elif season_status == "CLOSED" and total_tournaments >= 8:
         max_to_count = total_tournaments - 2
         print(f"      Scarto: Le peggiori 2 giornate (conta max {max_to_count})")
+    else:
+        max_to_count = total_tournaments
+        print(f"      Scarto: NESSUNO (stagione ACTIVE o < 8 tornei)")
 
     # Leggi tutti i risultati della stagione
     all_results = ws_results.get_all_values()

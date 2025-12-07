@@ -157,7 +157,7 @@ def import_onepiece():
         if test_mode:
             cmd.append('--test')
 
-        result = subprocess.run(cmd, cwd='/home/user/LeagueForge/leagueforge2',
+        result = subprocess.run(cmd, cwd='/home/user/LeagueForge/leagueforge',
                                capture_output=True, text=True, timeout=120)
 
         os.unlink(tmp_path)
@@ -215,7 +215,7 @@ def import_pokemon():
         if test_mode:
             cmd.append('--test')
 
-        result = subprocess.run(cmd, cwd='/home/user/LeagueForge/leagueforge2',
+        result = subprocess.run(cmd, cwd='/home/user/LeagueForge/leagueforge',
                                capture_output=True, text=True, timeout=120)
 
         os.unlink(tmp_path)
@@ -272,7 +272,7 @@ def import_riftbound():
         if test_mode:
             cmd.append('--test')
 
-        result = subprocess.run(cmd, cwd='/home/user/LeagueForge/leagueforge2',
+        result = subprocess.run(cmd, cwd='/home/user/LeagueForge/leagueforge',
                                capture_output=True, text=True, timeout=120)
 
         os.unlink(tmp_path)
