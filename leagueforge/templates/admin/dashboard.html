@@ -36,6 +36,21 @@
     {% endif %}
 {% endwith %}
 
+<!-- New Import Wizard -->
+<div class="alert alert-success mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-9">
+            <h5><i class="fas fa-magic"></i> Nuovo: Import Wizard</h5>
+            <p class="mb-0">Guidata passo-passo con preview, validazione e check duplicati automatici. Supporta multi-file per One Piece e Riftbound!</p>
+        </div>
+        <div class="col-md-3 text-end">
+            <a href="{{ url_for('admin.import_wizard') }}" class="btn btn-success btn-lg">
+                <i class="fas fa-file-import"></i> Usa Wizard
+            </a>
+        </div>
+    </div>
+</div>
+
 <!-- Info Panel -->
 <div class="alert alert-warning mb-4">
     <h6><i class="fas fa-info-circle"></i> Istruzioni</h6>

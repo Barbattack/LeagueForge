@@ -380,3 +380,145 @@ def get_tcg_from_season(season_id: str) -> str:
         return 'riftbound'
     else:
         raise ValueError(f"Season ID non riconosciuto: {season_id}")
+
+
+# =============================================================================
+# DUPLICATE CHECK (80% same players)
+# =============================================================================
+
+def check_duplicate_participants(sheet, tournament_id: str, participants: List[Dict]) -> Dict:
+    """
+    Check se esiste già un torneo con stessi giocatori (>80%).
+
+    Args:
+        sheet: Google Sheet connesso
+        tournament_id: ID torneo proposto
+        participants: Lista giocatori [{membership, name, ...}]
+
+    Returns:
+        Dict con:
+        - is_duplicate: bool
+        - duplicate_type: str ('tournament_id' o 'participants')
+        - message: str
+        - existing_tournament_id: str (se duplicato)
+    """
+    from import_base import safe_api_call, api_delay
+
+    try:
+        ws_tournaments = sheet.worksheet("Tournaments")
+        ws_results = sheet.worksheet("Results")
+
+        # Check 1: Tournament ID già esistente
+        api_delay()
+        existing_ids = safe_api_call(ws_tournaments.col_values, 1)[3:]  # Skip header
+
+        if tournament_id in existing_ids:
+            return {
+                'is_duplicate': True,
+                'duplicate_type': 'tournament_id',
+                'message': f'Torneo {tournament_id} già esistente!',
+                'existing_tournament_id': tournament_id
+            }
+
+        # Check 2: Stessa data + >80% stessi giocatori
+        # Estrai data da tournament_id (formato: SEASON_YYYYMMDD)
+        if '_' in tournament_id:
+            date_part = tournament_id.split('_')[1]
+
+            # Leggi tutti i tornei della stessa data
+            api_delay()
+            all_tournaments = safe_api_call(ws_tournaments.get_all_values)[3:]
+
+            for t_row in all_tournaments:
+                if not t_row or len(t_row) < 3:
+                    continue
+
+                existing_tid = t_row[0]
+                existing_date_raw = t_row[2]  # YYYY-MM-DD
+
+                # Converti existing_date to YYYYMMDD
+                existing_date = existing_date_raw.replace('-', '')
+
+                if existing_date == date_part:
+                    # Stesso giorno! Check partecipanti
+                    api_delay()
+                    all_results = safe_api_call(ws_results.get_all_values)[3:]
+
+                    existing_participants = set()
+                    for r_row in all_results:
+                        if r_row and len(r_row) > 2 and r_row[1] == existing_tid:
+                            existing_participants.add(r_row[2])  # membership
+
+                    new_participants = set(p.get('membership', p.get('Membership Number', '')) for p in participants)
+
+                    if existing_participants and new_participants:
+                        overlap = len(existing_participants & new_participants)
+                        total = len(new_participants)
+                        overlap_pct = (overlap / total * 100) if total > 0 else 0
+
+                        if overlap_pct >= 80:
+                            return {
+                                'is_duplicate': True,
+                                'duplicate_type': 'participants',
+                                'message': f'Rilevato torneo con {overlap_pct:.0f}% stessi giocatori (data: {existing_date_raw})',
+                                'existing_tournament_id': existing_tid,
+                                'overlap_percent': overlap_pct
+                            }
+
+        # Nessun duplicato rilevato
+        return {
+            'is_duplicate': False,
+            'duplicate_type': None,
+            'message': 'Nessun duplicato rilevato'
+        }
+
+    except Exception as e:
+        return {
+            'is_duplicate': False,
+            'duplicate_type': None,
+            'message': f'Errore check duplicati: {str(e)}'
+        }
+
+
+# =============================================================================
+# VALIDATE ROUND ORDER (points crescenti)
+# =============================================================================
+
+def validate_round_order(round_data: List[Dict]) -> Dict:
+    """
+    Valida che i punti siano crescenti tra round (One Piece/Riftbound).
+
+    Args:
+        round_data: Lista di dict con dati round
+                    [{'round': 1, 'max_points': 3}, {'round': 2, 'max_points': 6}, ...]
+
+    Returns:
+        Dict con:
+        - valid: bool
+        - errors: List[str]
+    """
+    result = {
+        'valid': True,
+        'errors': []
+    }
+
+    if len(round_data) < 2:
+        # Un solo round, niente da validare
+        return result
+
+    for i in range(1, len(round_data)):
+        prev_round = round_data[i-1]
+        curr_round = round_data[i]
+
+        prev_max = prev_round.get('max_points', 0)
+        curr_max = curr_round.get('max_points', 0)
+
+        if curr_max <= prev_max:
+            result['valid'] = False
+            result['errors'].append(
+                f"Ordine round errato: Round {curr_round['round']} "
+                f"ha max_points={curr_max} ma Round {prev_round['round']} "
+                f"ha max_points={prev_max}. I punti devono crescere!"
+            )
+
+    return result

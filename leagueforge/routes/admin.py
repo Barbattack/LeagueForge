@@ -306,3 +306,311 @@ def import_riftbound():
     except Exception as e:
         flash(f'Errore: {str(e)}', 'danger')
         return redirect(url_for('admin.dashboard'))
+
+
+# =============================================================================
+# ROUTES - IMPORT WIZARD (FASE 3)
+# =============================================================================
+
+@admin_bp.route('/import/wizard')
+@admin_required
+def import_wizard():
+    """
+    STEP 1: Selezione TCG + Season.
+    Mostra wizard multi-step per import guidato.
+    """
+    # Get seasons from cache
+    data, err, meta = cache.get_data()
+
+    if not data or not data.get('seasons'):
+        flash('Errore caricamento stagioni dal cache', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+    seasons = data.get('seasons', [])
+
+    # Prepara JSON per JavaScript
+    import json
+    seasons_json = json.dumps([
+        {
+            'id': s.get('id'),
+            'name': s.get('name'),
+            'status': s.get('status', 'ACTIVE')
+        }
+        for s in seasons
+    ])
+
+    session_info = get_session_info()
+
+    return render_template('admin/import_wizard.html',
+                          seasons_json=seasons_json,
+                          session_info=session_info)
+
+
+@admin_bp.route('/import/wizard/upload', methods=['POST'])
+@admin_required
+def import_wizard_upload():
+    """
+    STEP 2: Upload file + validazione.
+    Salva file temporanei, valida, genera preview.
+    """
+    from flask import session as flask_session, jsonify
+    import json
+    from datetime import datetime
+
+    try:
+        tcg = request.form.get('tcg', '').strip()
+        season_id = request.form.get('season_id', '').strip()
+        test_mode = request.form.get('test_mode') == 'on'
+
+        if not tcg or not season_id:
+            return jsonify({'success': False, 'error': 'TCG o Season mancanti'})
+
+        # Salva file temporanei basato su TCG
+        temp_files = {}
+
+        if tcg == 'pokemon':
+            # Single file TDF
+            if 'file_pokemon' not in request.files:
+                return jsonify({'success': False, 'error': 'File TDF mancante'})
+
+            file = request.files['file_pokemon']
+            if file.filename == '':
+                return jsonify({'success': False, 'error': 'Nessun file selezionato'})
+
+            suffix = '.tdf' if file.filename.endswith('.tdf') else '.xml'
+            with tempfile.NamedTemporaryFile(mode='wb', suffix=suffix, delete=False) as tmp:
+                file.save(tmp.name)
+                temp_files['tdf'] = tmp.name
+
+        elif tcg == 'onepiece':
+            # Multi-round + ClassificaFinale
+            round_files = []
+
+            # Cerca tutti i file round (file_op_r1, file_op_r2, ...)
+            for key in request.files:
+                if key.startswith('file_op_r'):
+                    file = request.files[key]
+                    if file and file.filename:
+                        with tempfile.NamedTemporaryFile(mode='wb', suffix='.csv', delete=False) as tmp:
+                            file.save(tmp.name)
+                            round_files.append(tmp.name)
+
+            # ClassificaFinale
+            if 'file_classifica' not in request.files:
+                return jsonify({'success': False, 'error': 'File ClassificaFinale mancante'})
+
+            classifica_file = request.files['file_classifica']
+            if classifica_file.filename == '':
+                return jsonify({'success': False, 'error': 'File ClassificaFinale non selezionato'})
+
+            with tempfile.NamedTemporaryFile(mode='wb', suffix='.csv', delete=False) as tmp:
+                classifica_file.save(tmp.name)
+                temp_files['classifica'] = tmp.name
+
+            temp_files['rounds'] = round_files
+
+        elif tcg == 'riftbound':
+            # Multi-round
+            round_files = []
+
+            # Cerca tutti i file round (file_rfb_r1, file_rfb_r2, ...)
+            for key in request.files:
+                if key.startswith('file_rfb_r'):
+                    file = request.files[key]
+                    if file and file.filename:
+                        with tempfile.NamedTemporaryFile(mode='wb', suffix='.csv', delete=False) as tmp:
+                            file.save(tmp.name)
+                            round_files.append(tmp.name)
+
+            temp_files['rounds'] = round_files
+
+        # Salva in session Flask
+        flask_session['wizard_tcg'] = tcg
+        flask_session['wizard_season_id'] = season_id
+        flask_session['wizard_test_mode'] = test_mode
+        flask_session['wizard_temp_files'] = json.dumps(temp_files)
+        flask_session['wizard_upload_time'] = datetime.now().isoformat()
+
+        return jsonify({'success': True, 'message': 'File caricati con successo'})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@admin_bp.route('/import/wizard/preview')
+@admin_required
+def import_wizard_preview():
+    """
+    STEP 3: Preview dati.
+    Parse file, valida, mostra preview per conferma utente.
+    """
+    from flask import session as flask_session
+    import json
+    from import_controller import parse, preview as controller_preview, check_duplicate_participants
+    from import_base import connect_sheet
+
+    try:
+        # Recupera dati da session
+        tcg = flask_session.get('wizard_tcg')
+        season_id = flask_session.get('wizard_season_id')
+        test_mode = flask_session.get('wizard_test_mode', False)
+        temp_files_json = flask_session.get('wizard_temp_files')
+
+        if not all([tcg, season_id, temp_files_json]):
+            flash('Session scaduta. Riprova import.', 'warning')
+            return redirect(url_for('admin.import_wizard'))
+
+        temp_files = json.loads(temp_files_json)
+
+        # Parse file
+        parsed_result = parse(tcg, season_id, temp_files)
+
+        if not parsed_result['success']:
+            flash(f'Errore parsing: {parsed_result.get("error")}', 'danger')
+            return redirect(url_for('admin.import_wizard'))
+
+        # Genera preview
+        preview_data = controller_preview(parsed_result)
+
+        # Salva parsed_data in session per step conferma
+        flask_session['wizard_parsed_data'] = json.dumps(parsed_result)
+
+        # Check duplicati
+        sheet = connect_sheet()
+        tournament_id = preview_data['stats'].get('tournament_id', '')
+        participants = preview_data.get('participants', [])
+
+        duplicate_check = check_duplicate_participants(sheet, tournament_id, participants)
+
+        duplicate_warning = None
+        if duplicate_check['is_duplicate']:
+            duplicate_warning = duplicate_check['message']
+
+        return render_template('admin/import_preview.html',
+                              tcg=tcg,
+                              season_id=season_id,
+                              test_mode=test_mode,
+                              stats=preview_data['stats'],
+                              participants=preview_data['participants'],
+                              duplicate_warning=duplicate_warning)
+
+    except Exception as e:
+        flash(f'Errore generazione preview: {str(e)}', 'danger')
+        return redirect(url_for('admin.import_wizard'))
+
+
+@admin_bp.route('/import/wizard/confirm', methods=['POST'])
+@admin_required
+def import_wizard_confirm():
+    """
+    STEP 4: Conferma e scrittura.
+    Esegue import effettivo su Google Sheets.
+    """
+    from flask import session as flask_session
+    import json
+    from import_controller import write
+    from import_base import connect_sheet
+
+    try:
+        # Recupera dati da session
+        tcg = flask_session.get('wizard_tcg')
+        season_id = flask_session.get('wizard_season_id')
+        test_mode = flask_session.get('wizard_test_mode', False)
+        parsed_data_json = flask_session.get('wizard_parsed_data')
+        temp_files_json = flask_session.get('wizard_temp_files')
+
+        overwrite = request.form.get('overwrite') == 'true'
+
+        if not all([tcg, season_id, parsed_data_json]):
+            flash('Session scaduta. Riprova import.', 'warning')
+            return redirect(url_for('admin.import_wizard'))
+
+        parsed_data = json.loads(parsed_data_json)
+
+        # Connetti sheet
+        sheet = connect_sheet()
+
+        # Se overwrite, cancella dati esistenti prima
+        if overwrite:
+            from import_base import delete_existing_tournament
+            tournament_id = parsed_data['data']['tournament'][0]
+            flash('Eliminazione dati esistenti...', 'info')
+            delete_existing_tournament(sheet, tournament_id)
+
+        # Scrittura
+        write_result = write(sheet, parsed_data, test_mode=test_mode)
+
+        # Cleanup temp files
+        if temp_files_json:
+            temp_files = json.loads(temp_files_json)
+            for key, value in temp_files.items():
+                if isinstance(value, list):
+                    for f in value:
+                        try:
+                            os.unlink(f)
+                        except:
+                            pass
+                elif isinstance(value, str):
+                    try:
+                        os.unlink(value)
+                    except:
+                        pass
+
+        # Clear session wizard data
+        for key in ['wizard_tcg', 'wizard_season_id', 'wizard_test_mode',
+                    'wizard_temp_files', 'wizard_parsed_data', 'wizard_upload_time']:
+            flask_session.pop(key, None)
+
+        if write_result['success']:
+            flash(write_result['message'], 'success')
+            return render_template('admin/import_result.html',
+                                  tcg=tcg.upper(),
+                                  season=season_id,
+                                  test_mode=test_mode,
+                                  success=True,
+                                  output=write_result.get('message', ''))
+        else:
+            flash(f'Errore import: {write_result.get("error")}', 'danger')
+            return redirect(url_for('admin.import_wizard'))
+
+    except Exception as e:
+        flash(f'Errore: {str(e)}', 'danger')
+        return redirect(url_for('admin.import_wizard'))
+
+
+@admin_bp.route('/import/wizard/cancel')
+@admin_required
+def import_wizard_cancel():
+    """
+    Annulla wizard e pulisce session.
+    """
+    from flask import session as flask_session
+    import json
+
+    # Cleanup temp files
+    temp_files_json = flask_session.get('wizard_temp_files')
+    if temp_files_json:
+        try:
+            temp_files = json.loads(temp_files_json)
+            for key, value in temp_files.items():
+                if isinstance(value, list):
+                    for f in value:
+                        try:
+                            os.unlink(f)
+                        except:
+                            pass
+                elif isinstance(value, str):
+                    try:
+                        os.unlink(value)
+                    except:
+                        pass
+        except:
+            pass
+
+    # Clear session
+    for key in ['wizard_tcg', 'wizard_season_id', 'wizard_test_mode',
+                'wizard_temp_files', 'wizard_parsed_data', 'wizard_upload_time']:
+        flask_session.pop(key, None)
+
+    flash('Import annullato', 'info')
+    return redirect(url_for('admin.dashboard'))

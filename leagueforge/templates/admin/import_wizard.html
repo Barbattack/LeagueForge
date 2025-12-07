@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+
+{% block title %}Import Wizard - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1><i class="fas fa-file-import"></i> Import Torneo - Wizard</h1>
+        <p class="text-muted">Guidata passo-passo per importare tornei</p>
+    </div>
+</div>
+
+<!-- Progress Steps -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="step-indicator active" id="step-indicator-1">
+                <div class="step-number">1</div>
+                <div class="step-label">Selezione</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-indicator" id="step-indicator-2">
+                <div class="step-number">2</div>
+                <div class="step-label">Upload File</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-indicator" id="step-indicator-3">
+                <div class="step-number">3</div>
+                <div class="step-label">Preview</div>
+            </div>
+            <div class="step-line"></div>
+            <div class="step-indicator" id="step-indicator-4">
+                <div class="step-number">4</div>
+                <div class="step-label">Conferma</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- STEP 1: Selezione TCG + Season -->
+<div class="card mb-4" id="step-1">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-gamepad"></i> Step 1: Selezione TCG e Stagione</h5>
+    </div>
+    <div class="card-body">
+        <form id="form-step-1">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="tcg-select" class="form-label">TCG <span class="text-danger">*</span></label>
+                    <select class="form-select" id="tcg-select" name="tcg" required>
+                        <option value="">Seleziona TCG...</option>
+                        <option value="onepiece">🏴‍☠️ One Piece TCG</option>
+                        <option value="pokemon">⚡ Pokémon TCG</option>
+                        <option value="riftbound">🌌 Riftbound TCG</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="season-select" class="form-label">Stagione <span class="text-danger">*</span></label>
+                    <select class="form-select" id="season-select" name="season_id" required disabled>
+                        <option value="">Prima seleziona un TCG...</option>
+                    </select>
+                    <div class="form-text" id="season-info"></div>
+                </div>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="show-archived" name="show_archived">
+                <label class="form-check-label" for="show-archived">
+                    Mostra stagioni ARCHIVED
+                </label>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="test-mode" name="test_mode">
+                <label class="form-check-label" for="test-mode">
+                    <strong>Test Mode</strong> (simula import, non scrive dati)
+                </label>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="nextStep(2)" id="btn-next-step1" disabled>
+                Avanti <i class="fas fa-arrow-right"></i>
+            </button>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annulla
+            </a>
+        </form>
+    </div>
+</div>
+
+<!-- STEP 2: Upload File -->
+<div class="card mb-4 d-none" id="step-2">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-upload"></i> Step 2: Upload File</h5>
+    </div>
+    <div class="card-body">
+        <form id="form-step-2" enctype="multipart/form-data">
+            <!-- Pokemon: Single File -->
+            <div id="upload-pokemon" class="d-none">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Carica il file TDF/XML esportato da Play! Pokémon Tournament software
+                </div>
+                <div class="mb-3">
+                    <label for="file-pokemon" class="form-label">File TDF/XML <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control" id="file-pokemon" name="file_pokemon" accept=".tdf,.xml">
+                </div>
+            </div>
+
+            <!-- One Piece: Multi Round + Classifica -->
+            <div id="upload-onepiece" class="d-none">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Carica i file CSV dal portale Bandai in ordine (R1, R2, R3...) + ClassificaFinale (obbligatoria)
+                </div>
+
+                <div id="rounds-container-op">
+                    <!-- Round slots will be added dynamically -->
+                </div>
+
+                <button type="button" class="btn btn-sm btn-outline-primary mb-3" onclick="addRoundSlot('op')">
+                    <i class="fas fa-plus"></i> Aggiungi Round
+                </button>
+
+                <div class="mb-3">
+                    <label for="file-classifica" class="form-label">Classifica Finale <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control" id="file-classifica" name="file_classifica" accept=".csv">
+                    <div class="form-text">File obbligatorio con ranking finale e OMW%</div>
+                </div>
+            </div>
+
+            <!-- Riftbound: Multi Round -->
+            <div id="upload-riftbound" class="d-none">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Carica i file CSV in ordine (R1, R2, R3...)
+                </div>
+
+                <div id="rounds-container-rfb">
+                    <!-- Round slots will be added dynamically -->
+                </div>
+
+                <button type="button" class="btn btn-sm btn-outline-primary mb-3" onclick="addRoundSlot('rfb')">
+                    <i class="fas fa-plus"></i> Aggiungi Round
+                </button>
+            </div>
+
+            <hr>
+
+            <button type="button" class="btn btn-secondary" onclick="previousStep(1)">
+                <i class="fas fa-arrow-left"></i> Indietro
+            </button>
+            <button type="submit" class="btn btn-primary" id="btn-upload">
+                Carica e Valida <i class="fas fa-check"></i>
+            </button>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annulla
+            </a>
+        </form>
+    </div>
+</div>
+
+<!-- Hidden inputs for session data -->
+<input type="hidden" id="selected-tcg" value="">
+<input type="hidden" id="selected-season" value="">
+
+<style>
+/* Progress Steps Styling */
+.step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 8px;
+    transition: all 0.3s;
+}
+
+.step-indicator.active .step-number {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.step-indicator.completed .step-number {
+    background-color: #198754;
+    color: white;
+}
+
+.step-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.step-indicator.active .step-label {
+    color: #0d6efd;
+    font-weight: bold;
+}
+
+.step-line {
+    flex: 1;
+    height: 2px;
+    background-color: #e9ecef;
+    margin: 0 10px;
+    align-self: center;
+    margin-bottom: 30px;
+}
+
+.round-slot {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border-left: 4px solid #0d6efd;
+}
+
+.round-slot .file-info {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+</style>
+
+<script>
+// Seasons data (will be populated from backend)
+const seasonsData = {{ seasons_json | safe }};
+let currentStep = 1;
+let roundCount = {op: 1, rfb: 1};
+
+// TCG Selection Handler
+document.getElementById('tcg-select').addEventListener('change', function() {
+    const tcg = this.value;
+    const seasonSelect = document.getElementById('season-select');
+    const showArchived = document.getElementById('show-archived').checked;
+
+    if (!tcg) {
+        seasonSelect.disabled = true;
+        seasonSelect.innerHTML = '<option value="">Prima seleziona un TCG...</option>';
+        document.getElementById('btn-next-step1').disabled = true;
+        return;
+    }
+
+    // Filter seasons by TCG
+    let prefix = '';
+    if (tcg === 'onepiece') prefix = 'OP';
+    else if (tcg === 'pokemon') prefix = 'PKM';
+    else if (tcg === 'riftbound') prefix = 'RFB';
+
+    const filteredSeasons = seasonsData.filter(s => {
+        const matchesTCG = s.id.startsWith(prefix);
+        const matchesArchived = showArchived || s.status !== 'ARCHIVED';
+        return matchesTCG && matchesArchived;
+    });
+
+    // Populate season select
+    seasonSelect.innerHTML = '<option value="">Seleziona stagione...</option>';
+    filteredSeasons.forEach(season => {
+        const option = document.createElement('option');
+        option.value = season.id;
+        option.textContent = `${season.name} (${season.status})`;
+        option.dataset.status = season.status;
+        seasonSelect.appendChild(option);
+    });
+
+    seasonSelect.disabled = false;
+    document.getElementById('selected-tcg').value = tcg;
+});
+
+// Season Selection Handler
+document.getElementById('season-select').addEventListener('change', function() {
+    const seasonId = this.value;
+    document.getElementById('btn-next-step1').disabled = !seasonId;
+
+    if (seasonId) {
+        const selectedOption = this.options[this.selectedIndex];
+        const status = selectedOption.dataset.status;
+        const info = document.getElementById('season-info');
+
+        if (status === 'CLOSED') {
+            info.innerHTML = '<i class="fas fa-lock"></i> Stagione chiusa (scarto 2 peggiori attivo)';
+        } else if (status === 'ARCHIVED') {
+            info.innerHTML = '<i class="fas fa-archive"></i> Stagione archiviata (achievement non si sbloccano)';
+            info.classList.add('text-warning');
+        } else {
+            info.innerHTML = '<i class="fas fa-play-circle"></i> Stagione attiva';
+        }
+
+        document.getElementById('selected-season').value = seasonId;
+    }
+});
+
+// Show Archived Checkbox
+document.getElementById('show-archived').addEventListener('change', function() {
+    // Trigger TCG change to refresh seasons
+    document.getElementById('tcg-select').dispatchEvent(new Event('change'));
+});
+
+// Navigation Functions
+function nextStep(step) {
+    document.getElementById(`step-${currentStep}`).classList.add('d-none');
+    document.getElementById(`step-${step}`).classList.remove('d-none');
+
+    // Update progress indicators
+    document.getElementById(`step-indicator-${currentStep}`).classList.remove('active');
+    document.getElementById(`step-indicator-${currentStep}`).classList.add('completed');
+    document.getElementById(`step-indicator-${step}`).classList.add('active');
+
+    currentStep = step;
+
+    // Prepare upload section based on TCG
+    if (step === 2) {
+        prepareUploadSection();
+    }
+}
+
+function previousStep(step) {
+    document.getElementById(`step-${currentStep}`).classList.add('d-none');
+    document.getElementById(`step-${step}`).classList.remove('d-none');
+
+    // Update progress indicators
+    document.getElementById(`step-indicator-${currentStep}`).classList.remove('active');
+    document.getElementById(`step-indicator-${step}`).classList.remove('completed');
+    document.getElementById(`step-indicator-${step}`).classList.add('active');
+
+    currentStep = step;
+}
+
+function prepareUploadSection() {
+    const tcg = document.getElementById('selected-tcg').value;
+
+    // Hide all upload sections
+    document.getElementById('upload-pokemon').classList.add('d-none');
+    document.getElementById('upload-onepiece').classList.add('d-none');
+    document.getElementById('upload-riftbound').classList.add('d-none');
+
+    // Show relevant section
+    if (tcg === 'pokemon') {
+        document.getElementById('upload-pokemon').classList.remove('d-none');
+    } else if (tcg === 'onepiece') {
+        document.getElementById('upload-onepiece').classList.remove('d-none');
+        // Initialize with 3 rounds
+        if (roundCount.op === 1) {
+            addRoundSlot('op');
+            addRoundSlot('op');
+            addRoundSlot('op');
+        }
+    } else if (tcg === 'riftbound') {
+        document.getElementById('upload-riftbound').classList.remove('d-none');
+        // Initialize with 3 rounds
+        if (roundCount.rfb === 1) {
+            addRoundSlot('rfb');
+            addRoundSlot('rfb');
+            addRoundSlot('rfb');
+        }
+    }
+}
+
+function addRoundSlot(tcg) {
+    const container = document.getElementById(`rounds-container-${tcg}`);
+    const roundNum = roundCount[tcg];
+
+    const slotHtml = `
+        <div class="round-slot" id="round-${tcg}-${roundNum}">
+            <label for="file-${tcg}-r${roundNum}" class="form-label">
+                Round ${roundNum} <span class="text-danger">*</span>
+            </label>
+            <input type="file" class="form-control" id="file-${tcg}-r${roundNum}"
+                   name="file_${tcg}_r${roundNum}" accept=".csv" required
+                   onchange="showFileInfo('${tcg}', ${roundNum})">
+            <div class="file-info" id="info-${tcg}-r${roundNum}"></div>
+            ${roundNum > 1 ? `<button type="button" class="btn btn-sm btn-danger mt-2" onclick="removeRoundSlot('${tcg}', ${roundNum})">
+                <i class="fas fa-trash"></i> Rimuovi
+            </button>` : ''}
+        </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', slotHtml);
+    roundCount[tcg]++;
+}
+
+function removeRoundSlot(tcg, roundNum) {
+    document.getElementById(`round-${tcg}-${roundNum}`).remove();
+}
+
+function showFileInfo(tcg, roundNum) {
+    const fileInput = document.getElementById(`file-${tcg}-r${roundNum}`);
+    const infoDiv = document.getElementById(`info-${tcg}-r${roundNum}`);
+
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        infoDiv.innerHTML = `<i class="fas fa-file-csv"></i> ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    }
+}
+
+// Form Submit Handler
+document.getElementById('form-step-2').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    formData.append('tcg', document.getElementById('selected-tcg').value);
+    formData.append('season_id', document.getElementById('selected-season').value);
+    formData.append('test_mode', document.getElementById('test-mode').checked ? 'on' : 'off');
+
+    // Show loading
+    const btn = document.getElementById('btn-upload');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Caricamento...';
+
+    // Submit to backend
+    fetch('{{ url_for("admin.import_wizard_upload") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Redirect to preview
+            window.location.href = '{{ url_for("admin.import_wizard_preview") }}';
+        } else {
+            alert('Errore: ' + data.error);
+            btn.disabled = false;
+            btn.innerHTML = 'Carica e Valida <i class="fas fa-check"></i>';
+        }
+    })
+    .catch(error => {
+        alert('Errore di rete: ' + error);
+        btn.disabled = false;
+        btn.innerHTML = 'Carica e Valida <i class="fas fa-check"></i>';
+    });
+});
+</script>
+
+{% endblock %}
