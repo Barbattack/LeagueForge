@@ -21,6 +21,7 @@ from werkzeug.utils import secure_filename
 from auth import admin_required, login_user, logout_user, is_admin_logged_in, get_session_info
 from cache import cache
 from import_controller import import_tournament as controller_import_tournament
+from season_manager import create_season, close_season, get_seasons, suggest_next_season_id
 
 
 # =============================================================================
@@ -614,3 +615,137 @@ def import_wizard_cancel():
 
     flash('Import annullato', 'info')
     return redirect(url_for('admin.dashboard'))
+
+
+# =============================================================================
+# ROUTES - SEASON MANAGEMENT (FASE 4)
+# =============================================================================
+
+@admin_bp.route('/seasons')
+@admin_required
+def seasons():
+    """
+    Gestione stagioni: lista, creazione, chiusura.
+
+    Mostra:
+    - Form creazione nuova stagione (TCG, ID, nome custom, fees)
+    - Lista stagioni per TCG (One Piece, Pokemon, Riftbound)
+    - Bottoni chiusura per stagioni ACTIVE
+    """
+    from import_base import connect_sheet
+
+    try:
+        sheet = connect_sheet()
+
+        # Recupera tutte le stagioni (escluse ARCHIVED)
+        all_seasons = get_seasons(sheet, tcg=None, include_archived=False)
+
+        # Raggruppa per TCG
+        seasons_by_tcg = {
+            'OP': [s for s in all_seasons if s['id'].startswith('OP')],
+            'PKM': [s for s in all_seasons if s['id'].startswith('PKM')],
+            'RFB': [s for s in all_seasons if s['id'].startswith('RFB')]
+        }
+
+        # Suggerimenti next season ID per ogni TCG
+        suggestions = {
+            'onepiece': suggest_next_season_id(sheet, 'onepiece'),
+            'pokemon': '',  # Pokemon non ha suggestion automatico
+            'riftbound': suggest_next_season_id(sheet, 'riftbound')
+        }
+
+        # Converti in JSON per JavaScript
+        import json
+        suggestions_json = json.dumps(suggestions)
+
+        session_info = get_session_info()
+
+        return render_template('admin/seasons.html',
+                              seasons_by_tcg=seasons_by_tcg,
+                              suggestions=suggestions_json,
+                              session_info=session_info)
+
+    except Exception as e:
+        flash(f'Errore caricamento stagioni: {str(e)}', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/season/create', methods=['POST'])
+@admin_required
+def season_create():
+    """
+    Crea nuova stagione.
+
+    Form data:
+    - tcg: TCG type ('onepiece', 'pokemon', 'riftbound')
+    - season_id: Season ID (es. OP13, PKM-FS25, RFB02)
+    - custom_name: Nome custom (opzionale)
+    - entry_fee: Quota iscrizione (default 5.0)
+    - pack_cost: Costo busta premio (default 6.0)
+    """
+    from import_base import connect_sheet
+
+    try:
+        tcg = request.form.get('tcg', '').strip()
+        season_id = request.form.get('season_id', '').strip().upper()
+        custom_name = request.form.get('custom_name', '').strip()
+        entry_fee = float(request.form.get('entry_fee', 5.0))
+        pack_cost = float(request.form.get('pack_cost', 6.0))
+
+        if not tcg or not season_id:
+            flash('TCG e Season ID sono obbligatori', 'danger')
+            return redirect(url_for('admin.seasons'))
+
+        # Connetti sheet
+        sheet = connect_sheet()
+
+        # Crea stagione
+        result = create_season(
+            sheet=sheet,
+            tcg=tcg,
+            season_id=season_id,
+            custom_name=custom_name if custom_name else None,
+            entry_fee=entry_fee,
+            pack_cost=pack_cost
+        )
+
+        if result['success']:
+            flash(result['message'], 'success')
+        else:
+            flash(result.get('error', 'Errore creazione stagione'), 'danger')
+
+        return redirect(url_for('admin.seasons'))
+
+    except Exception as e:
+        flash(f'Errore: {str(e)}', 'danger')
+        return redirect(url_for('admin.seasons'))
+
+
+@admin_bp.route('/season/<season_id>/close', methods=['POST'])
+@admin_required
+def season_close(season_id):
+    """
+    Chiude stagione ACTIVE → CLOSED.
+    Ricalcola classifica con scarto 2 peggiori se ≥8 tornei.
+
+    Args:
+        season_id: ID stagione da chiudere (es. OP12, PKM-FS25)
+    """
+    from import_base import connect_sheet
+
+    try:
+        sheet = connect_sheet()
+
+        # Chiudi stagione
+        result = close_season(sheet, season_id)
+
+        if result['success']:
+            flash(result['message'], 'success')
+        else:
+            flash(result.get('error', 'Errore chiusura stagione'), 'danger')
+
+        return redirect(url_for('admin.seasons'))
+
+    except Exception as e:
+        flash(f'Errore: {str(e)}', 'danger')
+        return redirect(url_for('admin.seasons'))

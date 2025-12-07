@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Gestione Stagioni - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1><i class="fas fa-calendar-alt"></i> Gestione Stagioni</h1>
+        <p class="text-muted">Crea nuove stagioni e chiudi quelle terminate</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Torna al Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Create New Season -->
+<div class="card mb-4 border-success">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Crea Nuova Stagione</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.season_create') }}" id="form-create-season">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="tcg" class="form-label">TCG <span class="text-danger">*</span></label>
+                    <select class="form-select" id="tcg" name="tcg" required onchange="updateSeasonIDFormat()">
+                        <option value="">Seleziona TCG...</option>
+                        <option value="onepiece">🏴‍☠️ One Piece</option>
+                        <option value="pokemon">⚡ Pokémon</option>
+                        <option value="riftbound">🌌 Riftbound</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label for="season_id" class="form-label">Season ID <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="season_id" name="season_id" required placeholder="Es. OP13, PKM-FS25, RFB02">
+                    <div class="form-text" id="season-id-hint"></div>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label for="custom_name" class="form-label">Nome Custom <small class="text-muted">(opzionale)</small></label>
+                    <input type="text" class="form-control" id="custom_name" name="custom_name" placeholder="Es. Pokémon - Fiamme Spettrali 2025">
+                    <div class="form-text">Lascia vuoto per nome automatico</div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="entry_fee" class="form-label">Quota Iscrizione (€)</label>
+                    <input type="number" step="0.50" class="form-control" id="entry_fee" name="entry_fee" value="5.00">
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="pack_cost" class="form-label">Costo Busta Premio (€)</label>
+                    <input type="number" step="0.50" class="form-control" id="pack_cost" name="pack_cost" value="6.00">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-plus"></i> Crea Stagione
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Seasons Lists -->
+<div class="row">
+    <!-- One Piece -->
+    <div class="col-md-4">
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">🏴‍☠️ One Piece</h5>
+            </div>
+            <div class="card-body">
+                {% set op_seasons = seasons_by_tcg.get('OP', []) %}
+                {% if op_seasons %}
+                    <ul class="list-group list-group-flush">
+                        {% for season in op_seasons %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ season.id }}</strong><br>
+                                    <small class="text-muted">{{ season.name }}</small><br>
+                                    <span class="badge bg-{{ 'success' if season.status == 'ACTIVE' else 'secondary' }}">
+                                        {{ season.status }}
+                                    </span>
+                                    <small class="text-muted">• {{ season.tournaments_count }} tornei</small>
+                                </div>
+                                {% if season.status == 'ACTIVE' %}
+                                <form method="POST" action="{{ url_for('admin.season_close', season_id=season.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Chiudere stagione {{ season.id }}?')">
+                                        <i class="fas fa-lock"></i> Chiudi
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Nessuna stagione trovata</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Pokemon -->
+    <div class="col-md-4">
+        <div class="card border-warning mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">⚡ Pokémon</h5>
+            </div>
+            <div class="card-body">
+                {% set pkm_seasons = seasons_by_tcg.get('PKM', []) %}
+                {% if pkm_seasons %}
+                    <ul class="list-group list-group-flush">
+                        {% for season in pkm_seasons %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ season.id }}</strong><br>
+                                    <small class="text-muted">{{ season.name }}</small><br>
+                                    <span class="badge bg-{{ 'success' if season.status == 'ACTIVE' else 'secondary' }}">
+                                        {{ season.status }}
+                                    </span>
+                                    <small class="text-muted">• {{ season.tournaments_count }} tornei</small>
+                                </div>
+                                {% if season.status == 'ACTIVE' %}
+                                <form method="POST" action="{{ url_for('admin.season_close', season_id=season.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Chiudere stagione {{ season.id }}?')">
+                                        <i class="fas fa-lock"></i> Chiudi
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Nessuna stagione trovata</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Riftbound -->
+    <div class="col-md-4">
+        <div class="card border-info mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">🌌 Riftbound</h5>
+            </div>
+            <div class="card-body">
+                {% set rfb_seasons = seasons_by_tcg.get('RFB', []) %}
+                {% if rfb_seasons %}
+                    <ul class="list-group list-group-flush">
+                        {% for season in rfb_seasons %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ season.id }}</strong><br>
+                                    <small class="text-muted">{{ season.name }}</small><br>
+                                    <span class="badge bg-{{ 'success' if season.status == 'ACTIVE' else 'secondary' }}">
+                                        {{ season.status }}
+                                    </span>
+                                    <small class="text-muted">• {{ season.tournaments_count }} tornei</small>
+                                </div>
+                                {% if season.status == 'ACTIVE' %}
+                                <form method="POST" action="{{ url_for('admin.season_close', season_id=season.id) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-warning" onclick="return confirm('Chiudere stagione {{ season.id }}?')">
+                                        <i class="fas fa-lock"></i> Chiudi
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">Nessuna stagione trovata</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Box -->
+<div class="alert alert-info">
+    <h6><i class="fas fa-info-circle"></i> Informazioni</h6>
+    <ul class="mb-0 small">
+        <li><strong>ACTIVE</strong>: Stagione in corso (no scarto 2 peggiori, achievement attivi)</li>
+        <li><strong>CLOSED</strong>: Stagione terminata (scarto 2 peggiori se ≥8 tornei, achievement attivi)</li>
+        <li><strong>ARCHIVED</strong>: Dati storici (no scarto, no achievement) - nascosto di default</li>
+        <li><strong>Formato ID</strong>: One Piece = OP{numero}, Pokémon = PKM-{INIZIALI}{ANNO}, Riftbound = RFB{numero}</li>
+    </ul>
+</div>
+
+<script>
+// Season ID suggestions
+const suggestions = {{ suggestions | safe }};
+
+function updateSeasonIDFormat() {
+    const tcg = document.getElementById('tcg').value;
+    const seasonIdInput = document.getElementById('season_id');
+    const hint = document.getElementById('season-id-hint');
+
+    if (tcg === 'onepiece') {
+        hint.innerHTML = `Formato: OP{numero}. Suggerito: <strong>${suggestions.onepiece || 'OP01'}</strong>`;
+        seasonIdInput.placeholder = suggestions.onepiece || 'OP01';
+    } else if (tcg === 'pokemon') {
+        hint.innerHTML = 'Formato: PKM-{INIZIALI}{ANNO} (es. PKM-FS25 per Fiamme Spettrali 2025)';
+        seasonIdInput.placeholder = 'PKM-FS25';
+    } else if (tcg === 'riftbound') {
+        hint.innerHTML = `Formato: RFB{numero}. Suggerito: <strong>${suggestions.riftbound || 'RFB01'}</strong>`;
+        seasonIdInput.placeholder = suggestions.riftbound || 'RFB01';
+    } else {
+        hint.innerHTML = '';
+        seasonIdInput.placeholder = '';
+    }
+}
+</script>
+
+{% endblock %}
