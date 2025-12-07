@@ -38,9 +38,29 @@ Permettere a utenti non tecnici (gestori di negozi) di:
 - Ricevere feedback chiaro su errori
 
 ### Modello di Business
-- SaaS multi-tenant (hosting su Render)
-- 1 admin per negozio
+- **Multi-istanza** (NON multi-tenant): ogni negozio ha la propria istanza Render
+- 1 admin per negozio (configurato in config.py)
 - Utenti non tecnici
+
+### Architettura Deployment
+```
+NEGOZIO A                      NEGOZIO B
+    │                              │
+    ▼                              ▼
+Istanza Render A               Istanza Render B
+    │                              │
+    ▼                              ▼
+Google Sheet A                 Google Sheet B
+    │                              │
+    ▼                              ▼
+config.py (Admin A)            config.py (Admin B)
+```
+
+**Vantaggi:**
+- Nessuna logica multi-tenant nel codice
+- Isolamento totale tra negozi
+- Ogni negozio gestisce i propri dati
+- Autenticazione semplice (1 admin in config.py)
 
 ---
 
