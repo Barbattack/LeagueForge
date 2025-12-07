@@ -307,21 +307,45 @@ Queste funzioni sono idempotenti, quindi sicure da rieseguire.
 ## 9. DECISIONI TECNICHE
 
 ### Subprocess vs Chiamata Diretta
-**DECISIONE:** Da definire (discussione in corso)
+**DECISIONE:** ✅ Chiamata diretta + re-parse al confirm
 
-**Subprocess (attuale):**
-- PRO: Isolamento, timeout facile
-- CONTRO: No preview, no step-by-step, output solo testo
+**Motivazioni:**
+- Preview possibile prima di scrivere
+- Validazione separata dalla scrittura
+- Controllo granulare step-by-step
+- Progress bar reale
+- Nessun overhead processo
 
-**Chiamata diretta (proposta):**
-- PRO: Preview, validazione separata, progress reale
-- CONTRO: Gestione stato tra richieste
+**Gestione stato tra richieste:**
+- File temp salvati all'upload
+- Al confirm, ri-parsiamo (veloce, pochi secondi)
+- Se file temp scaduti → messaggio "Ricarica i file"
 
-### Gestione Stato tra Richieste (se chiamata diretta)
-**Opzione consigliata:** Re-parse al confirm
-- File temp già salvati all'upload
-- Al confirm, ri-parsiamo (veloce)
-- Nessuna complessità di gestione stato
+### Analisi Timeout e Performance
+
+**Scoperta importante:** Il codice usa batch write (`append_rows`).
+70 giocatori = 70 righe scritte in 1 sola chiamata API, non 70 chiamate!
+
+**Calcolo tempo import (70 giocatori):**
+
+| Operazione | Chiamate API |
+|------------|--------------|
+| Letture iniziali | 4 |
+| Scrittura Tournaments | 1 |
+| Scrittura Results (batch) | 1 |
+| Scrittura Matches | 1 |
+| Update Players (batch) | 2 |
+| Update Standings | 3 |
+| Update Player_Stats (batch) | 2 |
+| Check achievements | 3 |
+| **TOTALE** | **~17 chiamate** |
+
+Con delay 1.2s: **17 × 1.2s = ~20 secondi** ✅
+
+**Timeout Render:**
+- Default: 30 secondi
+- Raccomandazione: Aumentare a 120 secondi per sicurezza
+- Location: Render Dashboard → Service → Settings → Request Timeout
 
 ### Rinomina Seasonal_Standings_PROV
 **DECISIONE:** Lasciamo stare per ora
