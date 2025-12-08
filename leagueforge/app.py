@@ -999,11 +999,24 @@ def player(membership):
     if not data:
         return render_template('error.html', error='Cache non disponibile'), 500
 
-    # Carica sheet per player data
+    # FIX RATE LIMIT: Usa dati dal cache invece di chiamate API dirette
     try:
-        sheet = cache.connect_sheet()
-        ws_results = sheet.worksheet("Results")
-        all_results = ws_results.get_all_values()[3:]
+        # I dati Results e Players sono già nel cache, evitiamo chiamate API
+        # Il cache viene aggiornato ogni CACHE_REFRESH_MINUTES (default 5 min)
+
+        # Results dal cache (già caricati da cache.get_data())
+        # Il cache.fetch_data() chiama sheet.get_all_values() per noi
+        all_results_raw = data.get('_raw_results', [])
+
+        # Se non abbiamo _raw_results nel cache (cache vecchio), usa fallback API
+        if not all_results_raw:
+            from import_base import api_delay
+            sheet = cache.connect_sheet()
+            ws_results = sheet.worksheet("Results")
+            api_delay()  # Delay per rispettare rate limit
+            all_results_raw = ws_results.get_all_values()[3:]
+
+        all_results = all_results_raw
 
         # Filtra per membership
         player_results = [r for r in all_results if r and len(r) >= 10 and r[2] == membership]
@@ -1011,9 +1024,17 @@ def player(membership):
         if not player_results:
             return render_template('error.html', error='Giocatore non trovato'), 404
 
-        # Leggi TCG dal foglio Players
-        ws_players = sheet.worksheet("Players")
-        players_data = ws_players.get_all_values()[3:]
+        # Players dal cache
+        all_players_raw = data.get('_raw_players', [])
+
+        if not all_players_raw:
+            from import_base import api_delay
+            sheet = cache.connect_sheet()
+            ws_players = sheet.worksheet("Players")
+            api_delay()  # Delay per rispettare rate limit
+            all_players_raw = ws_players.get_all_values()[3:]
+
+        players_data = all_players_raw
         player_row = next((p for p in players_data if safe_get(p, COL_PLAYERS, 'membership') == membership), None)
         player_tcg = safe_get(player_row, COL_PLAYERS, 'tcg', 'OP') if player_row else 'OP'
 
@@ -1152,10 +1173,16 @@ def player(membership):
             'consistency': round(consistency, 1)
         }
 
-        # Achievement data
+        # Achievement data (non nel cache principale, richiede API call)
         achievements_unlocked = []
         achievement_points = 0
         try:
+            from import_base import api_delay
+
+            # Connetti sheet solo per achievement (non cachati)
+            sheet = cache.connect_sheet()
+
+            api_delay()  # Delay prima della prima chiamata
             ws_achievements = sheet.worksheet("Achievement_Definitions")
             achievement_defs = {}
             for row in ws_achievements.get_all_values()[4:]:
@@ -1170,6 +1197,7 @@ def player(membership):
                         'points': safe_int(row, COL_ACHIEVEMENT_DEF, 'points', 0)
                     }
 
+            api_delay()  # Delay prima della seconda chiamata
             ws_player_ach = sheet.worksheet("Player_Achievements")
             for row in ws_player_ach.get_all_values()[4:]:
                 if safe_get(row, COL_PLAYER_ACH, 'membership') == membership:
