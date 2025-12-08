@@ -214,8 +214,7 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
             )
 
             data = {
-                'tournament': tournament_data,
-                'results': results,
+                'tournament_data': tournament_data,  # Dict completo con participants dentro
                 'matches': matches_list
             }
 
@@ -270,25 +269,11 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
                 winner_name=participants_list[0]['name'] if participants_list else None
             )
 
-            # Converti participants in formato Results (lista di liste)
-            results = []
-            for p in participants_list:
-                results.append([
-                    tournament_id,
-                    p['membership'],
-                    p['rank'],
-                    p['win_points'],
-                    p['name'],
-                    p['wins'],
-                    p['ties'],
-                    p['losses'],
-                    p['omw']
-                ])
+            # tournament_data già contiene i participants dentro
+            # (create_tournament_data li ha aggiunti)
 
             data = {
-                'tournament': tournament_data,
-                'results': results,
-                'participants_dict': participants_list  # For vouchers calculation later
+                'tournament_data': tournament_data  # Dict completo con participants dentro
             }
 
             return {
@@ -361,27 +346,28 @@ def preview(parsed_data: Dict) -> Dict:
 
     # Riftbound
     elif tcg == 'riftbound':
+        tournament_data = data.get('tournament_data', {})
+        participants_raw = tournament_data.get('participants', [])
+
         participants = []
-        for result in data.get('results', []):
-            # result è già una lista in formato create_participant
+        for p in participants_raw:
             participants.append({
-                'rank': result[2],           # Rank
-                'name': result[4],           # Name
-                'membership': result[1],     # Membership
-                'win_points': result[3],     # Win Points
-                'wins': result[5],           # Wins
-                'ties': result[6],           # Ties
-                'losses': result[7],         # Losses
-                'omw': result[8] if len(result) > 8 else 0  # OMW%
+                'rank': p.get('rank', 0),
+                'name': p.get('name', ''),
+                'membership': p.get('membership', ''),
+                'win_points': p.get('win_points', 0),
+                'wins': p.get('wins', 0),
+                'ties': p.get('ties', 0),
+                'losses': p.get('losses', 0),
+                'omw': p.get('omw', 0)
             })
 
-        tournament = data.get('tournament', [])
         stats = {
-            'n_participants': tournament[3] if len(tournament) > 3 else 0,
-            'winner': tournament[7] if len(tournament) > 7 else '',
-            'date': tournament[2] if len(tournament) > 2 else '',
-            'tournament_id': tournament[0] if len(tournament) > 0 else '',
-            'n_rounds': tournament[4] if len(tournament) > 4 else 0
+            'n_participants': tournament_data.get('n_participants', 0),
+            'winner': tournament_data.get('winner_name', ''),
+            'date': tournament_data.get('date', ''),
+            'tournament_id': tournament_data.get('tournament_id', ''),
+            'n_rounds': tournament_data.get('n_rounds', 0)
         }
 
         return {
@@ -391,27 +377,28 @@ def preview(parsed_data: Dict) -> Dict:
 
     # One Piece
     elif tcg == 'onepiece':
+        tournament_data = data.get('tournament_data', {})
+        participants_raw = tournament_data.get('participants', [])
+
         participants = []
-        for result in data.get('results', []):
-            # result è una lista [tournament_id, membership, rank, win_points, name, wins, ties, losses, omw]
+        for p in participants_raw:
             participants.append({
-                'rank': result[2],           # Rank
-                'name': result[4],           # Name
-                'membership': result[1],     # Membership
-                'win_points': result[3],     # Win Points
-                'wins': result[5],           # Wins
-                'ties': result[6],           # Ties
-                'losses': result[7],         # Losses
-                'omw': result[8] if len(result) > 8 else 0  # OMW%
+                'rank': p.get('rank', 0),
+                'name': p.get('name', ''),
+                'membership': p.get('membership', ''),
+                'win_points': p.get('win_points', 0),
+                'wins': p.get('wins', 0),
+                'ties': p.get('ties', 0),
+                'losses': p.get('losses', 0),
+                'omw': p.get('omw', 0)
             })
 
-        tournament = data.get('tournament', [])
         stats = {
-            'n_participants': tournament[3] if len(tournament) > 3 else 0,
-            'winner': tournament[7] if len(tournament) > 7 else '',
-            'date': tournament[2] if len(tournament) > 2 else '',
-            'tournament_id': tournament[0] if len(tournament) > 0 else '',
-            'n_rounds': tournament[4] if len(tournament) > 4 else 0
+            'n_participants': tournament_data.get('n_participants', 0),
+            'winner': tournament_data.get('winner_name', ''),
+            'date': tournament_data.get('date', ''),
+            'tournament_id': tournament_data.get('tournament_id', ''),
+            'n_rounds': tournament_data.get('n_rounds', 0)
         }
 
         return {
@@ -458,17 +445,16 @@ def write(sheet, parsed_data: Dict, test_mode: bool = False) -> Dict:
             from import_base import write_tournament_to_sheet, write_results_to_sheet
             from import_riftbound import write_matches_to_sheet
 
-            tournament_data = data.get('tournament', [])
-            results = data.get('results', [])
+            tournament_data = data.get('tournament_data')
             matches = data.get('matches', [])
-            tournament_id = tournament_data[0] if tournament_data else ''
+            tournament_id = tournament_data.get('tournament_id') if tournament_data else ''
 
             if not test_mode:
-                # Scrivi Tournament
-                write_tournament_to_sheet(sheet, [tournament_data])
+                # Scrivi Tournament (passa Dict completo)
+                write_tournament_to_sheet(sheet, tournament_data, test_mode=False)
 
-                # Scrivi Results
-                write_results_to_sheet(sheet, results)
+                # Scrivi Results (usa participants dentro tournament_data)
+                write_results_to_sheet(sheet, tournament_data, test_mode=False)
 
                 # Scrivi Matches (specifico Riftbound)
                 write_matches_to_sheet(sheet, tournament_id, matches, test_mode=False)
@@ -482,15 +468,14 @@ def write(sheet, parsed_data: Dict, test_mode: bool = False) -> Dict:
         elif tcg == 'onepiece':
             from import_base import write_tournament_to_sheet, write_results_to_sheet
 
-            tournament_data = data.get('tournament', [])
-            results = data.get('results', [])
+            tournament_data = data.get('tournament_data')
 
             if not test_mode:
-                # Scrivi Tournament
-                write_tournament_to_sheet(sheet, [tournament_data])
+                # Scrivi Tournament (passa Dict completo)
+                write_tournament_to_sheet(sheet, tournament_data, test_mode=False)
 
-                # Scrivi Results
-                write_results_to_sheet(sheet, results)
+                # Scrivi Results (usa participants dentro tournament_data)
+                write_results_to_sheet(sheet, tournament_data, test_mode=False)
 
                 # Note: One Piece non ha tabella Matches separata in questa versione
 
