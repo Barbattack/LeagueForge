@@ -53,7 +53,7 @@ def api_delay():
     time.sleep(API_DELAY_MS / 1000.0)
 
 try:
-    from config import SHEET_ID, CREDENTIALS_FILE
+    from config import SHEET_ID, CREDENTIALS_FILE, CREDENTIALS_JSON
 except ImportError:
     print("❌ config.py non trovato. Copia config_example.py e configura.")
     sys.exit(1)
@@ -164,10 +164,32 @@ def connect_sheet():
     """
     Connette a Google Sheets.
 
+    Supporta due modalità:
+    1. CREDENTIALS_JSON (env var su Render): JSON inline come stringa
+    2. CREDENTIALS_FILE (locale): File service account JSON
+
     Returns:
         gspread.Spreadsheet: Oggetto spreadsheet connesso
     """
-    creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+    import json
+    import os
+
+    # Priorità a CREDENTIALS_JSON (env var per Render)
+    if CREDENTIALS_JSON:
+        try:
+            creds_dict = json.loads(CREDENTIALS_JSON)
+            creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"CREDENTIALS_JSON non è un JSON valido: {e}")
+    else:
+        # Fallback: usa file locale
+        if not os.path.exists(CREDENTIALS_FILE):
+            raise FileNotFoundError(
+                f"Credentials non trovate! Configura GOOGLE_CREDENTIALS_JSON env var "
+                f"oppure crea file {CREDENTIALS_FILE}"
+            )
+        creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+
     client = gspread.authorize(creds)
     return client.open_by_key(SHEET_ID)
 

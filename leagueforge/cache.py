@@ -10,7 +10,7 @@ from google.oauth2.service_account import Credentials
 import json
 import os
 from datetime import datetime, timedelta
-from config import SHEET_ID, CREDENTIALS_FILE, CACHE_REFRESH_MINUTES, CACHE_FILE
+from config import SHEET_ID, CREDENTIALS_FILE, CREDENTIALS_JSON, CACHE_REFRESH_MINUTES, CACHE_FILE
 from sheet_utils import (
     COL_CONFIG, COL_STANDINGS, COL_TOURNAMENTS,
     safe_get, safe_int, safe_float
@@ -55,8 +55,29 @@ class SheetCache:
         return age > timedelta(minutes=CACHE_REFRESH_MINUTES)
     
     def connect_sheet(self):
-        """Connette a Google Sheet"""
-        creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+        """
+        Connette a Google Sheet.
+
+        Supporta due modalità:
+        1. CREDENTIALS_JSON (env var su Render): JSON inline come stringa
+        2. CREDENTIALS_FILE (locale): File service account JSON
+        """
+        # Priorità a CREDENTIALS_JSON (env var per Render)
+        if CREDENTIALS_JSON:
+            try:
+                creds_dict = json.loads(CREDENTIALS_JSON)
+                creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"CREDENTIALS_JSON non è un JSON valido: {e}")
+        else:
+            # Fallback: usa file locale
+            if not os.path.exists(CREDENTIALS_FILE):
+                raise FileNotFoundError(
+                    f"Credentials non trovate! Configura GOOGLE_CREDENTIALS_JSON env var "
+                    f"oppure crea file {CREDENTIALS_FILE}"
+                )
+            creds = Credentials.from_service_account_file(CREDENTIALS_FILE, scopes=SCOPES)
+
         client = gspread.authorize(creds)
         return client.open_by_key(SHEET_ID)
     
