@@ -243,6 +243,7 @@
 <script>
 // Seasons data (will be populated from backend)
 const seasonsData = {{ seasons_json | safe }};
+const preselectedTCG = "{{ preselected_tcg }}";
 let currentStep = 1;
 let roundCount = {op: 1, rfb: 1};
 
@@ -446,6 +447,16 @@ document.getElementById('form-step-2').addEventListener('submit', function(e) {
         btn.disabled = false;
         btn.innerHTML = 'Carica e Valida <i class="fas fa-check"></i>';
     });
+});
+
+// Auto-select TCG if preselected (from dashboard button)
+window.addEventListener('DOMContentLoaded', function() {
+    if (preselectedTCG && preselectedTCG !== '') {
+        const tcgSelect = document.getElementById('tcg-select');
+        tcgSelect.value = preselectedTCG;
+        // Trigger change event to populate seasons
+        tcgSelect.dispatchEvent(new Event('change'));
+    }
 });
 </script>
 

@@ -322,7 +322,13 @@ def import_wizard():
     """
     STEP 1: Selezione TCG + Season.
     Mostra wizard multi-step per import guidato.
+
+    Query params:
+    - tcg: TCG da pre-selezionare (onepiece, pokemon, riftbound)
     """
+    # Get TCG from query params (from dashboard button)
+    preselected_tcg = request.args.get('tcg', '').strip().lower()
+
     # Get seasons from cache
     data, err, meta = cache.get_data()
 
@@ -347,7 +353,8 @@ def import_wizard():
 
     return render_template('admin/import_wizard.html',
                           seasons_json=seasons_json,
-                          session_info=session_info)
+                          session_info=session_info,
+                          preselected_tcg=preselected_tcg)
 
 
 @admin_bp.route('/import/wizard/upload', methods=['POST'])
