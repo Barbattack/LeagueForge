@@ -170,10 +170,34 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
     if not players_data:
         raise ValueError("❌ Nessun giocatore trovato nei CSV!")
 
+    # Calcola W-L-D contando i match vinti/persi (Event Record è incomprensibile)
+    match_record = {}  # user_id -> {wins, losses, ties}
+    for user_id in players_data.keys():
+        match_record[user_id] = {'wins': 0, 'losses': 0, 'ties': 0}
+
+    for match in matches_data:
+        p1_id = match['p1_id']
+        p2_id = match['p2_id']
+        winner_id = match['winner_id']
+
+        if winner_id == p1_id:
+            match_record[p1_id]['wins'] += 1
+            match_record[p2_id]['losses'] += 1
+        elif winner_id == p2_id:
+            match_record[p2_id]['wins'] += 1
+            match_record[p1_id]['losses'] += 1
+        elif not winner_id:
+            # Nessun vincitore = pareggio (raro in best of 3)
+            match_record[p1_id]['ties'] += 1
+            match_record[p2_id]['ties'] += 1
+
     # Converti in lista e calcola ranking
     players_list = []
     for user_id, data in players_data.items():
-        w, l, d = parse_wld_record(data['event_record'])
+        record = match_record.get(user_id, {'wins': 0, 'losses': 0, 'ties': 0})
+        w = record['wins']
+        l = record['losses']
+        d = record['ties']
         win_points = w * 3 + d * 1
 
         players_list.append({
