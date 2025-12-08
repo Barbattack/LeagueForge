@@ -9,8 +9,9 @@ secrets/
 service_account*.json
 *credentials*.json
 
-# File di configurazione con password
-config.py
+# File di configurazione
+# NOTA: config.py ora è safe (legge da ENV vars), può essere committato
+# config.py
 
 # Variabili d'ambiente
 .env
