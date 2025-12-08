@@ -153,17 +153,151 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
                 'tcg': 'pokemon'
             }
 
-        # OnePlace e Riftbound: per ora non hanno funzione parse separata
-        # Useremo import_tournament con test_mode per preview in FASE 3
+        elif tcg == 'riftbound':
+            # Riftbound: parse CSV rounds
+            from import_riftbound import parse_csv_rounds, extract_date_from_filename, generate_tournament_id
+            from import_base import create_participant, create_tournament_data
+            import re
+
+            round_files = files.get('rounds', [])
+            if not round_files:
+                return {
+                    'success': False,
+                    'error': 'Nessun file round fornito per Riftbound'
+                }
+
+            # Parse CSV files
+            players_list, matches_list = parse_csv_rounds(round_files)
+
+            # Metadata
+            tournament_date = extract_date_from_filename(round_files[0])
+            tournament_id = generate_tournament_id(season_id, tournament_date)
+
+            # Converti in formato standardizzato
+            participants = []
+            for p in players_list:
+                participant = create_participant(
+                    membership=p['user_id'],
+                    name=p['name'],
+                    rank=p['rank'],
+                    wins=p['wins'],
+                    ties=p['ties'],
+                    losses=p['losses'],
+                    win_points=p['win_points'],
+                    omw=0  # Non disponibile per Riftbound
+                )
+                participants.append(participant)
+
+            # Create tournament data
+            source_files = [f.split('/')[-1] for f in round_files]
+            tcg_code = ''.join(c for c in season_id if c.isalpha()).upper()
+
+            tournament_data = create_tournament_data(
+                tournament_id=tournament_id,
+                date=tournament_date,
+                season_id=season_id,
+                n_participants=len(players_list),
+                n_rounds=len(round_files),
+                tcg=tcg_code,
+                winner=players_list[0]['name'] if players_list else '',
+                source_files=source_files
+            )
+
+            data = {
+                'tournament': tournament_data,
+                'results': participants,
+                'matches': matches_list
+            }
+
+            return {
+                'success': True,
+                'data': data,
+                'tcg': 'riftbound'
+            }
+
+        elif tcg == 'onepiece':
+            # One Piece: parse CSV rounds + classifica
+            from import_onepiece import (
+                parse_round_files,
+                parse_classifica_finale,
+                merge_tournament_data,
+                extract_date_from_filename,
+                generate_tournament_id
+            )
+            from import_base import create_tournament_data
+
+            round_files = files.get('rounds', [])
+            classifica_file = files.get('classifica')
+
+            if not round_files or not classifica_file:
+                return {
+                    'success': False,
+                    'error': 'File mancanti per One Piece (rounds o classifica)'
+                }
+
+            # Parse files
+            progression = parse_round_files(round_files)
+            final_data = parse_classifica_finale(classifica_file)
+
+            # Merge data
+            participants_list = merge_tournament_data(progression, final_data)
+
+            # Metadata
+            tournament_date = extract_date_from_filename(round_files[0])
+            tournament_id = generate_tournament_id(season_id, tournament_date)
+
+            # Create tournament data
+            source_files = [f.split('/')[-1] for f in round_files] + [classifica_file.split('/')[-1]]
+            tcg_code = 'OP'
+
+            tournament_data = create_tournament_data(
+                tournament_id=tournament_id,
+                date=tournament_date,
+                season_id=season_id,
+                n_participants=len(participants_list),
+                n_rounds=len(round_files),
+                tcg=tcg_code,
+                winner=participants_list[0]['name'] if participants_list else '',
+                source_files=source_files
+            )
+
+            # Converti participants in formato Results (lista di liste)
+            results = []
+            for p in participants_list:
+                results.append([
+                    tournament_id,
+                    p['membership'],
+                    p['rank'],
+                    p['win_points'],
+                    p['name'],
+                    p['wins'],
+                    p['ties'],
+                    p['losses'],
+                    p['omw']
+                ])
+
+            data = {
+                'tournament': tournament_data,
+                'results': results,
+                'participants_dict': participants_list  # For vouchers calculation later
+            }
+
+            return {
+                'success': True,
+                'data': data,
+                'tcg': 'onepiece'
+            }
+
         return {
             'success': False,
-            'error': f"Parse separato non implementato per {tcg} (verrà fatto in FASE 3)"
+            'error': f"TCG non supportato: {tcg}"
         }
 
     except Exception as e:
+        import traceback
         return {
             'success': False,
-            'error': f"Errore parsing: {str(e)}"
+            'error': f"Errore parsing: {str(e)}\n{traceback.format_exc()}"
         }
 
 
@@ -183,16 +317,14 @@ def preview(parsed_data: Dict) -> Dict:
         - participants: List[Dict] con dati giocatori
         - stats: Dict con statistiche (n_players, winner, date, etc.)
     """
-    # TODO: Implementare in FASE 3
-    # Per ora restituisce struttura base
-
     if 'data' not in parsed_data:
         return {'participants': [], 'stats': {}}
 
     data = parsed_data['data']
+    tcg = parsed_data.get('tcg')
 
     # Pokemon
-    if parsed_data.get('tcg') == 'pokemon':
+    if tcg == 'pokemon':
         participants = []
         for result in data.get('results', []):
             participants.append({
@@ -211,6 +343,66 @@ def preview(parsed_data: Dict) -> Dict:
             'winner': tournament[7] if len(tournament) > 7 else '',
             'date': tournament[2] if len(tournament) > 2 else '',
             'tournament_id': tournament[0] if len(tournament) > 0 else ''
+        }
+
+        return {
+            'participants': participants,
+            'stats': stats
+        }
+
+    # Riftbound
+    elif tcg == 'riftbound':
+        participants = []
+        for result in data.get('results', []):
+            # result è già una lista in formato create_participant
+            participants.append({
+                'rank': result[2],           # Rank
+                'name': result[4],           # Name
+                'membership': result[1],     # Membership
+                'win_points': result[3],     # Win Points
+                'wins': result[5],           # Wins
+                'ties': result[6],           # Ties
+                'losses': result[7],         # Losses
+                'omw': result[8] if len(result) > 8 else 0  # OMW%
+            })
+
+        tournament = data.get('tournament', [])
+        stats = {
+            'n_participants': tournament[3] if len(tournament) > 3 else 0,
+            'winner': tournament[7] if len(tournament) > 7 else '',
+            'date': tournament[2] if len(tournament) > 2 else '',
+            'tournament_id': tournament[0] if len(tournament) > 0 else '',
+            'n_rounds': tournament[4] if len(tournament) > 4 else 0
+        }
+
+        return {
+            'participants': participants,
+            'stats': stats
+        }
+
+    # One Piece
+    elif tcg == 'onepiece':
+        participants = []
+        for result in data.get('results', []):
+            # result è una lista [tournament_id, membership, rank, win_points, name, wins, ties, losses, omw]
+            participants.append({
+                'rank': result[2],           # Rank
+                'name': result[4],           # Name
+                'membership': result[1],     # Membership
+                'win_points': result[3],     # Win Points
+                'wins': result[5],           # Wins
+                'ties': result[6],           # Ties
+                'losses': result[7],         # Losses
+                'omw': result[8] if len(result) > 8 else 0  # OMW%
+            })
+
+        tournament = data.get('tournament', [])
+        stats = {
+            'n_participants': tournament[3] if len(tournament) > 3 else 0,
+            'winner': tournament[7] if len(tournament) > 7 else '',
+            'date': tournament[2] if len(tournament) > 2 else '',
+            'tournament_id': tournament[0] if len(tournament) > 0 else '',
+            'n_rounds': tournament[4] if len(tournament) > 4 else 0
         }
 
         return {
@@ -241,23 +433,73 @@ def write(sheet, parsed_data: Dict, test_mode: bool = False) -> Dict:
         - error: str (se success=False)
     """
     try:
+        tcg = parsed_data.get('tcg')
+        data = parsed_data.get('data', {})
+
         # Pokemon
-        if parsed_data.get('tcg') == 'pokemon':
-            import_pokemon_to_sheet(parsed_data['data'], test_mode=test_mode)
+        if tcg == 'pokemon':
+            import_pokemon_to_sheet(data, test_mode=test_mode)
             return {
                 'success': True,
-                'message': f"Import completato{' (TEST MODE)' if test_mode else ''}"
+                'message': f"Import Pokemon completato{' (TEST MODE)' if test_mode else ''}"
+            }
+
+        # Riftbound
+        elif tcg == 'riftbound':
+            from import_base import write_tournament_to_sheet, write_results_to_sheet
+            from import_riftbound import write_matches_to_sheet
+
+            tournament_data = data.get('tournament', [])
+            results = data.get('results', [])
+            matches = data.get('matches', [])
+            tournament_id = tournament_data[0] if tournament_data else ''
+
+            if not test_mode:
+                # Scrivi Tournament
+                write_tournament_to_sheet(sheet, [tournament_data])
+
+                # Scrivi Results
+                write_results_to_sheet(sheet, results)
+
+                # Scrivi Matches (specifico Riftbound)
+                write_matches_to_sheet(sheet, tournament_id, matches, test_mode=False)
+
+            return {
+                'success': True,
+                'message': f"Import Riftbound completato{' (TEST MODE)' if test_mode else ''}"
+            }
+
+        # One Piece
+        elif tcg == 'onepiece':
+            from import_base import write_tournament_to_sheet, write_results_to_sheet
+
+            tournament_data = data.get('tournament', [])
+            results = data.get('results', [])
+
+            if not test_mode:
+                # Scrivi Tournament
+                write_tournament_to_sheet(sheet, [tournament_data])
+
+                # Scrivi Results
+                write_results_to_sheet(sheet, results)
+
+                # Note: One Piece non ha tabella Matches separata in questa versione
+
+            return {
+                'success': True,
+                'message': f"Import One Piece completato{' (TEST MODE)' if test_mode else ''}"
             }
 
         return {
             'success': False,
-            'error': f"Write non implementato per {parsed_data.get('tcg')}"
+            'error': f"Write non implementato per {tcg}"
         }
 
     except Exception as e:
+        import traceback
         return {
             'success': False,
-            'error': f"Errore scrittura: {str(e)}"
+            'error': f"Errore scrittura: {str(e)}\n{traceback.format_exc()}"
         }
 
 
