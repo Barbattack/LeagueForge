@@ -173,8 +173,8 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
             tournament_date = extract_date_from_filename(round_files[0])
             tournament_id = generate_tournament_id(season_id, tournament_date)
 
-            # Converti in formato standardizzato per Results
-            results = []
+            # Converti in formato standardizzato (Dict completi)
+            participants = []
             for p in players_list:
                 participant = create_participant(
                     membership=p['user_id'],
@@ -186,20 +186,9 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
                     win_points=p['win_points'],
                     omw=0  # Non disponibile per Riftbound
                 )
-                results.append(participant)
+                participants.append(participant)
 
-            # Converti in formato Dict per create_tournament_data
-            participants_dict = [
-                {
-                    'rank': p['rank'],
-                    'name': p['name'],
-                    'membership': p['user_id'],
-                    'win_points': p['win_points']
-                }
-                for p in players_list
-            ]
-
-            # Create tournament data
+            # Create tournament data (participants già hanno TUTTE le chiavi)
             source_files = [f.split('/')[-1] for f in round_files]
             tcg_code = ''.join(c for c in season_id if c.isalpha()).upper()
 
@@ -207,7 +196,7 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
                 tournament_id=tournament_id,
                 season_id=season_id,
                 date=tournament_date,
-                participants=participants_dict,
+                participants=participants,  # Usa participants completi!
                 tcg=tcg_code,
                 source_files=source_files,
                 winner_name=players_list[0]['name'] if players_list else None
