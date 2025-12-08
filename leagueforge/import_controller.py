@@ -173,8 +173,8 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
             tournament_date = extract_date_from_filename(round_files[0])
             tournament_id = generate_tournament_id(season_id, tournament_date)
 
-            # Converti in formato standardizzato
-            participants = []
+            # Converti in formato standardizzato per Results
+            results = []
             for p in players_list:
                 participant = create_participant(
                     membership=p['user_id'],
@@ -186,7 +186,18 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
                     win_points=p['win_points'],
                     omw=0  # Non disponibile per Riftbound
                 )
-                participants.append(participant)
+                results.append(participant)
+
+            # Converti in formato Dict per create_tournament_data
+            participants_dict = [
+                {
+                    'rank': p['rank'],
+                    'name': p['name'],
+                    'membership': p['user_id'],
+                    'win_points': p['win_points']
+                }
+                for p in players_list
+            ]
 
             # Create tournament data
             source_files = [f.split('/')[-1] for f in round_files]
@@ -194,18 +205,17 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
 
             tournament_data = create_tournament_data(
                 tournament_id=tournament_id,
-                date=tournament_date,
                 season_id=season_id,
-                n_participants=len(players_list),
-                n_rounds=len(round_files),
+                date=tournament_date,
+                participants=participants_dict,
                 tcg=tcg_code,
-                winner=players_list[0]['name'] if players_list else '',
-                source_files=source_files
+                source_files=source_files,
+                winner_name=players_list[0]['name'] if players_list else None
             )
 
             data = {
                 'tournament': tournament_data,
-                'results': participants,
+                'results': results,
                 'matches': matches_list
             }
 
@@ -252,13 +262,12 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
 
             tournament_data = create_tournament_data(
                 tournament_id=tournament_id,
-                date=tournament_date,
                 season_id=season_id,
-                n_participants=len(participants_list),
-                n_rounds=len(round_files),
+                date=tournament_date,
+                participants=participants_list,
                 tcg=tcg_code,
-                winner=participants_list[0]['name'] if participants_list else '',
-                source_files=source_files
+                source_files=source_files,
+                winner_name=participants_list[0]['name'] if participants_list else None
             )
 
             # Converti participants in formato Results (lista di liste)
