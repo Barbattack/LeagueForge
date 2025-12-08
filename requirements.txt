@@ -10,6 +10,7 @@
 # -----------------------------------------------------------------------------
 Flask>=2.3.0,<3.0.0              # Web framework principale
 Werkzeug>=2.3.0,<3.0.0           # WSGI utilities (incluso con Flask)
+gunicorn>=21.2.0,<22.0.0         # WSGI HTTP server per produzione (Render)
 
 # -----------------------------------------------------------------------------
 # GOOGLE SHEETS API
