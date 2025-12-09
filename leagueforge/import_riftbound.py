@@ -88,6 +88,7 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
     """
     players_data = {}  # user_id -> {name, event_record, rounds_played}
     matches_data = []  # Lista di match
+    game_record = {}  # user_id -> {game_wins, game_losses, game_draws}
 
     for csv_idx, csv_path in enumerate(csv_files, 1):
         print(f"   📄 Round {csv_idx}: {csv_path.split('/')[-1]}")
@@ -96,11 +97,13 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
             reader = csv.reader(f)
             header = next(reader)  # Read header
 
-            # Trova indice colonna "Match Result" dinamicamente
+            # Trova indici colonne dinamicamente
             try:
                 match_result_idx = header.index("Match Result")
-            except ValueError:
-                raise ValueError(f"❌ Colonna 'Match Result' non trovata in {csv_path}")
+                p1_round_record_idx = header.index("Player 1 Round Record")
+                p2_round_record_idx = header.index("Player 2 Round Record")
+            except ValueError as e:
+                raise ValueError(f"❌ Colonna mancante in {csv_path}: {e}")
 
             match_count = 0
             for row in reader:
@@ -122,6 +125,10 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
                 # Match data
                 table_number = row[0].strip() if row[0] else ""
                 match_result = row[match_result_idx].strip() if len(row) > match_result_idx else ""
+
+                # Round Record (game wins-losses-draws per questo round)
+                p1_round_record = row[p1_round_record_idx].strip() if len(row) > p1_round_record_idx else ""
+                p2_round_record = row[p2_round_record_idx].strip() if len(row) > p2_round_record_idx else ""
 
                 # Gestione BYE: se p2_id è vuoto ma c'è "has a bye", è un bye valido
                 is_bye = "has a bye" in match_result.lower()
@@ -152,6 +159,23 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
                         'event_record': p2_event_record,
                         'rounds_played': csv_idx
                     }
+
+                # Accumula game record (round record per questo match)
+                if p1_id:
+                    if p1_id not in game_record:
+                        game_record[p1_id] = {'game_wins': 0, 'game_losses': 0, 'game_draws': 0}
+                    gw, gl, gd = parse_wld_record(p1_round_record)
+                    game_record[p1_id]['game_wins'] += gw
+                    game_record[p1_id]['game_losses'] += gl
+                    game_record[p1_id]['game_draws'] += gd
+
+                if p2_id and not is_bye:
+                    if p2_id not in game_record:
+                        game_record[p2_id] = {'game_wins': 0, 'game_losses': 0, 'game_draws': 0}
+                    gw, gl, gd = parse_wld_record(p2_round_record)
+                    game_record[p2_id]['game_wins'] += gw
+                    game_record[p2_id]['game_losses'] += gl
+                    game_record[p2_id]['game_draws'] += gd
 
                 # Determina vincitore
                 winner_id = ""
@@ -261,11 +285,27 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
         else:
             omw_data[user_id] = 0.0
 
-    # DEBUG: Log OMW values
-    print("\n=== OMW VALUES ===")
+    # Calcola GW% (Game Win Percentage) per ogni giocatore
+    gw_data = {}
+    for user_id in players_data.keys():
+        grec = game_record.get(user_id, {'game_wins': 0, 'game_losses': 0, 'game_draws': 0})
+        total_games = grec['game_wins'] + grec['game_losses'] + grec['game_draws']
+        if total_games > 0:
+            # GW% = (game_wins × 3 + game_draws × 1) / (games × 3)
+            # Floor al 33.33%
+            game_points = grec['game_wins'] * 3 + grec['game_draws'] * 1
+            gw_percent = game_points / (total_games * 3)
+            gw_percent = max(0.3333, gw_percent)
+            gw_data[user_id] = gw_percent
+        else:
+            gw_data[user_id] = 0.0
+
+    # DEBUG: Log OMW and GW values
+    print("\n=== OMW & GW VALUES ===")
     for user_id, data in players_data.items():
         omw_val = omw_data.get(user_id, 0.0)
-        print(f"{data['name']}: OMW = {omw_val:.4f} ({omw_val*100:.2f}%)")
+        gw_val = gw_data.get(user_id, 0.0)
+        print(f"{data['name']}: OMW = {omw_val:.4f} ({omw_val*100:.2f}%), GW = {gw_val:.4f} ({gw_val*100:.2f}%)")
 
     # Converti in lista e calcola ranking
     players_list = []
@@ -276,6 +316,7 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
         d = record['ties']
         win_points = w * 3 + d * 1
         omw = omw_data.get(user_id, 0.0)
+        gw = gw_data.get(user_id, 0.0)
 
         players_list.append({
             'user_id': user_id,
@@ -285,11 +326,12 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
             'ties': d,
             'win_points': win_points,
             'omw': omw,
+            'gw': gw,
             'rounds_played': data['rounds_played']
         })
 
-    # Ordina per punti, poi per OMW, poi per vittorie
-    players_list.sort(key=lambda x: (x['win_points'], x['omw'], x['wins']), reverse=True)
+    # Ordina per: Match Points > OMW% > GW% (tiebreakers ufficiali Swiss)
+    players_list.sort(key=lambda x: (x['win_points'], x['omw'], x['gw']), reverse=True)
 
     # Assegna rank
     for rank, player in enumerate(players_list, 1):
