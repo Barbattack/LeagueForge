@@ -246,10 +246,13 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
         opponent_winrates = []
         for opp_id in opponents:
             opp_record = match_record.get(opp_id, {'wins': 0, 'losses': 0, 'ties': 0})
-            total = opp_record['wins'] + opp_record['losses'] + opp_record['ties']
-            if total > 0:
-                # Match win% con floor al 33% (regola standard tornei)
-                winrate = max(0.33, opp_record['wins'] / total)
+            total_matches = opp_record['wins'] + opp_record['losses'] + opp_record['ties']
+            if total_matches > 0:
+                # Match win% = (wins × 3 + draws × 1) / (matches × 3)
+                # Floor al 33.33% (regola standard tornei Swiss)
+                match_points = opp_record['wins'] * 3 + opp_record['ties'] * 1
+                winrate = match_points / (total_matches * 3)
+                winrate = max(0.3333, winrate)
                 opponent_winrates.append(winrate)
 
         # OMW = media dei winrate degli avversari
