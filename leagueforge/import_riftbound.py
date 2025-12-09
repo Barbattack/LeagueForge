@@ -118,14 +118,21 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
                 match_status = row[14].strip() if len(row) > 14 else ""  # Colonna 15: Match Status
                 match_result = row[15].strip() if len(row) > 15 else ""  # Colonna 16: Match Result
 
-                if not p1_id or not p2_id:
+                # Gestione BYE: se p2_id è vuoto ma c'è "has a bye", è un bye valido
+                is_bye = "has a bye" in match_result.lower()
+
+                if not p1_id:
+                    continue
+
+                # Se non è un bye e non c'è p2, skip
+                if not is_bye and not p2_id:
                     continue
 
                 match_count += 1
 
                 # Memorizza dati giocatori
                 p1_name = f"{p1_first} {p1_last}".strip()
-                p2_name = f"{p2_first} {p2_last}".strip()
+                p2_name = f"{p2_first} {p2_last}".strip() if p2_id else ""
 
                 if p1_id:
                     players_data[p1_id] = {
@@ -141,18 +148,23 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
                         'rounds_played': csv_idx
                     }
 
-                # Determina vincitore (fuzzy matching)
+                # Determina vincitore
                 winner_id = ""
-                if match_result and ":" in match_result:
+
+                if is_bye:
+                    # BYE = vittoria automatica per p1
+                    winner_id = p1_id
+                elif match_result and ":" in match_result:
+                    # Fuzzy matching normale
                     winner_name = match_result.split(":")[0].strip()
 
                     if fuzzy_match(winner_name, p1_name):
                         winner_id = p1_id
-                    elif fuzzy_match(winner_name, p2_name):
+                    elif p2_name and fuzzy_match(winner_name, p2_name):
                         winner_id = p2_id
                     elif fuzzy_match(winner_name, p1_last, 80):
                         winner_id = p1_id
-                    elif fuzzy_match(winner_name, p2_last, 80):
+                    elif p2_name and fuzzy_match(winner_name, p2_last, 80):
                         winner_id = p2_id
 
                 matches_data.append({
@@ -160,10 +172,11 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
                     'table': table_number,
                     'p1_id': p1_id,
                     'p1_name': p1_name,
-                    'p2_id': p2_id,
-                    'p2_name': p2_name,
+                    'p2_id': p2_id if not is_bye else '',
+                    'p2_name': p2_name if not is_bye else '',
                     'winner_id': winner_id,
-                    'result': match_result
+                    'result': match_result,
+                    'is_bye': is_bye
                 })
 
             print(f"      ✅ {match_count} matches")
