@@ -158,14 +158,25 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
                     # Fuzzy matching normale
                     winner_name = match_result.split(":")[0].strip()
 
+                    # DEBUG: Log matching attempts
+                    print(f"R{csv_idx} T{table_number}: '{winner_name}' vs '{p1_name}' / '{p2_name}'")
+
                     if fuzzy_match(winner_name, p1_name):
                         winner_id = p1_id
+                        print(f"  -> p1 wins (full name match)")
                     elif p2_name and fuzzy_match(winner_name, p2_name):
                         winner_id = p2_id
+                        print(f"  -> p2 wins (full name match)")
                     elif fuzzy_match(winner_name, p1_last, 80):
                         winner_id = p1_id
+                        print(f"  -> p1 wins (last name match)")
                     elif p2_name and fuzzy_match(winner_name, p2_last, 80):
                         winner_id = p2_id
+                        print(f"  -> p2 wins (last name match)")
+                    else:
+                        print(f"  -> NO MATCH! winner_id = ''")
+                elif match_result and not ":" in match_result:
+                    print(f"R{csv_idx} T{table_number}: Match result has no ':' -> '{match_result}'")
 
                 matches_data.append({
                     'round': csv_idx,
@@ -208,6 +219,12 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
             match_record[p1_id]['ties'] += 1
             if p2_id:
                 match_record[p2_id]['ties'] += 1
+
+    # DEBUG: Log final W-L-D for each player
+    print("\n=== FINAL W-L-D ===")
+    for user_id, data in players_data.items():
+        record = match_record.get(user_id, {'wins': 0, 'losses': 0, 'ties': 0})
+        print(f"{data['name']}: {record['wins']}-{record['losses']}-{record['ties']}")
 
     # Converti in lista e calcola ranking
     players_list = []
