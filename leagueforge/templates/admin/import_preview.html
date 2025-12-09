@@ -149,7 +149,7 @@
                         <td><code>{{ p.membership }}</code></td>
                         <td>{{ p.wins }}-{{ p.ties }}-{{ p.losses }}</td>
                         <td>{{ p.win_points }}</td>
-                        <td>{{ "%.1f"|format(p.omw|default(0)) }}%</td>
+                        <td>{{ "%.2f"|format(p.omw * 100) }}%</td>
                         <td><span class="badge bg-success">{{ p.points_total|default(0) }}</span></td>
                     </tr>
                     {% endfor %}
