@@ -115,7 +115,8 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
 
                 # Match data
                 table_number = row[0].strip() if row[0] else ""
-                match_result = row[13].strip() if len(row) > 13 else ""
+                match_status = row[14].strip() if len(row) > 14 else ""  # Colonna 15: Match Status
+                match_result = row[15].strip() if len(row) > 15 else ""  # Colonna 16: Match Result
 
                 if not p1_id or not p2_id:
                     continue
