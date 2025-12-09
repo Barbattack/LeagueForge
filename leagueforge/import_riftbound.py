@@ -261,6 +261,12 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
         else:
             omw_data[user_id] = 0.0
 
+    # DEBUG: Log OMW values
+    print("\n=== OMW VALUES ===")
+    for user_id, data in players_data.items():
+        omw_val = omw_data.get(user_id, 0.0)
+        print(f"{data['name']}: OMW = {omw_val:.4f} ({omw_val*100:.2f}%)")
+
     # Converti in lista e calcola ranking
     players_list = []
     for user_id, data in players_data.items():
