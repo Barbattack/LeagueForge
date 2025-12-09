@@ -94,7 +94,13 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
 
         with open(csv_path, 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
-            header = next(reader)  # Skip header
+            header = next(reader)  # Read header
+
+            # Trova indice colonna "Match Result" dinamicamente
+            try:
+                match_result_idx = header.index("Match Result")
+            except ValueError:
+                raise ValueError(f"❌ Colonna 'Match Result' non trovata in {csv_path}")
 
             match_count = 0
             for row in reader:
@@ -115,8 +121,7 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
 
                 # Match data
                 table_number = row[0].strip() if row[0] else ""
-                match_status = row[14].strip() if len(row) > 14 else ""  # Colonna 15: Match Status
-                match_result = row[15].strip() if len(row) > 15 else ""  # Colonna 16: Match Result
+                match_result = row[match_result_idx].strip() if len(row) > match_result_idx else ""
 
                 # Gestione BYE: se p2_id è vuoto ma c'è "has a bye", è un bye valido
                 is_bye = "has a bye" in match_result.lower()
