@@ -193,17 +193,21 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
         p1_id = match['p1_id']
         p2_id = match['p2_id']
         winner_id = match['winner_id']
+        is_bye = match.get('is_bye', False)
 
         if winner_id == p1_id:
             match_record[p1_id]['wins'] += 1
-            match_record[p2_id]['losses'] += 1
+            # Solo se NON è un bye, aggiorna p2
+            if p2_id and not is_bye:
+                match_record[p2_id]['losses'] += 1
         elif winner_id == p2_id:
             match_record[p2_id]['wins'] += 1
             match_record[p1_id]['losses'] += 1
-        elif not winner_id:
+        elif not winner_id and not is_bye:
             # Nessun vincitore = pareggio (raro in best of 3)
             match_record[p1_id]['ties'] += 1
-            match_record[p2_id]['ties'] += 1
+            if p2_id:
+                match_record[p2_id]['ties'] += 1
 
     # Converti in lista e calcola ranking
     players_list = []
