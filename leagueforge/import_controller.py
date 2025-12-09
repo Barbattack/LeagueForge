@@ -184,7 +184,7 @@ def parse(tcg: str, season_id: str, files: Dict[str, str]) -> Dict:
                     ties=p['ties'],
                     losses=p['losses'],
                     win_points=p['win_points'],
-                    omw=0  # Non disponibile per Riftbound
+                    omw=p.get('omw', 0)
                 )
                 participants.append(participant)
 

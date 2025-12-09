@@ -231,6 +231,33 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
         record = match_record.get(user_id, {'wins': 0, 'losses': 0, 'ties': 0})
         print(f"{data['name']}: {record['wins']}-{record['losses']}-{record['ties']}")
 
+    # Calcola OMW (Opponent Match Win %) per ogni giocatore
+    omw_data = {}
+    for user_id in players_data.keys():
+        # Trova tutti gli avversari
+        opponents = []
+        for match in matches_data:
+            if match['p1_id'] == user_id and match['p2_id']:
+                opponents.append(match['p2_id'])
+            elif match['p2_id'] == user_id and match['p1_id']:
+                opponents.append(match['p1_id'])
+
+        # Calcola match win% di ogni avversario
+        opponent_winrates = []
+        for opp_id in opponents:
+            opp_record = match_record.get(opp_id, {'wins': 0, 'losses': 0, 'ties': 0})
+            total = opp_record['wins'] + opp_record['losses'] + opp_record['ties']
+            if total > 0:
+                # Match win% con floor al 33% (regola standard tornei)
+                winrate = max(0.33, opp_record['wins'] / total)
+                opponent_winrates.append(winrate)
+
+        # OMW = media dei winrate degli avversari
+        if opponent_winrates:
+            omw_data[user_id] = sum(opponent_winrates) / len(opponent_winrates)
+        else:
+            omw_data[user_id] = 0.0
+
     # Converti in lista e calcola ranking
     players_list = []
     for user_id, data in players_data.items():
@@ -239,6 +266,7 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
         l = record['losses']
         d = record['ties']
         win_points = w * 3 + d * 1
+        omw = omw_data.get(user_id, 0.0)
 
         players_list.append({
             'user_id': user_id,
@@ -247,11 +275,12 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
             'losses': l,
             'ties': d,
             'win_points': win_points,
+            'omw': omw,
             'rounds_played': data['rounds_played']
         })
 
-    # Ordina per punti, poi per vittorie
-    players_list.sort(key=lambda x: (x['win_points'], x['wins']), reverse=True)
+    # Ordina per punti, poi per OMW, poi per vittorie
+    players_list.sort(key=lambda x: (x['win_points'], x['omw'], x['wins']), reverse=True)
 
     # Assegna rank
     for rank, player in enumerate(players_list, 1):
