@@ -857,7 +857,7 @@ def import_with_progress(
                 )
 
             elif tcg == 'riftbound':
-                import_riftbound_tournament(
+                result = import_riftbound_tournament(
                     round_files=files['rounds'],
                     season_id=season_id,
                     test_mode=test_mode
@@ -875,12 +875,23 @@ def import_with_progress(
 
         today = datetime.now().strftime('%Y-%m-%d')
 
-        tracker.log("   → update_players()...", 'info')
-        update_players(sheet, today)
+        # Per Riftbound, il result contiene già tournament_data
+        if tcg == 'riftbound':
+            tracker.log("   → update_players()...", 'info')
+            # update_players già chiamato dentro import_riftbound_tournament
+            tracker.log("   ✓ Players aggiornati", 'success')
+        else:
+            tracker.log("   → update_players()...", 'info')
+            update_players(sheet, today)
 
-        tracker.log("   → update_seasonal_standings()...", 'info')
-        tracker.update_progress(90, "Aggiornamento Standings")
-        update_seasonal_standings(sheet, season_id, today)
+        if tcg == 'riftbound':
+            tracker.log("   → update_seasonal_standings()...", 'info')
+            # update_seasonal_standings già chiamato dentro import_riftbound_tournament
+            tracker.log("   ✓ Standings aggiornati", 'success')
+        else:
+            tracker.log("   → update_seasonal_standings()...", 'info')
+            tracker.update_progress(90, "Aggiornamento Standings")
+            update_seasonal_standings(sheet, season_id, today)
 
         tracker.log("   → batch_update_player_stats()...", 'info')
         tracker.update_progress(95, "Aggiornamento statistiche")
