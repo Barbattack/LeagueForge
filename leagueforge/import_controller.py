@@ -902,16 +902,28 @@ def import_with_progress(
         tracker.log("✓ Aggiornamenti completati", 'success')
 
         # 7. Achievement check (solo se NON ARCHIVED)
-        if tcg != 'riftbound':
-            tracker.log("🏆 Verifica Achievement...")
-            tracker.update_progress(98, "Verifica Achievement")
+        tracker.log("🏆 Verifica Achievement...")
+        tracker.update_progress(98, "Verifica Achievement")
 
-            from import_base import check_and_unlock_achievements
-            check_and_unlock_achievements(sheet)
+        from import_base import check_and_unlock_achievements
 
-            tracker.log("✓ Achievement verificati", 'success')
+        if tcg == 'riftbound':
+            # Per Riftbound, costruiamo import_data da result (tournament_data)
+            import_data = {
+                'tournament': [
+                    result['tournament_id'],
+                    result['season_id'],
+                    result['date'],
+                    result['n_participants']
+                ],
+                'players': {p['membership']: p['name'] for p in result['participants']}
+            }
+            check_and_unlock_achievements(sheet, import_data)
         else:
-            tracker.update_progress(98, "Achievement check skipped per Riftbound")
+            # Per altri TCG (da fixare in futuro)
+            pass  # check_and_unlock_achievements(sheet, import_data)
+
+        tracker.log("✓ Achievement verificati", 'success')
 
         # Completato!
         tracker.update_progress(100, "Import completato!")
