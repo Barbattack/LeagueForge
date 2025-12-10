@@ -560,11 +560,10 @@ def import_tournament(
 
             elif tcg == 'riftbound':
                 import_riftbound_tournament(
-                    sheet=sheet,
+                    round_files=files['rounds'],
                     season_id=season_id,
-                    csv_files=files['rounds'],
                     test_mode=test_mode,
-                    allow_reimport=allow_reimport
+                    reimport=allow_reimport
                 )
 
         output = output_buffer.getvalue()
@@ -859,9 +858,8 @@ def import_with_progress(
 
             elif tcg == 'riftbound':
                 import_riftbound_tournament(
-                    sheet=sheet,
-                    season_id=season_id,
                     round_files=files['rounds'],
+                    season_id=season_id,
                     test_mode=test_mode
                 )
 
