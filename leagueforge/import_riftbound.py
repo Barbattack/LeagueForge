@@ -330,8 +330,8 @@ def parse_csv_rounds(csv_files: List[str]) -> Tuple[List[Dict], List[Dict]]:
             'rounds_played': data['rounds_played']
         })
 
-    # Ordina per: Match Points > OMW% > GW% (tiebreakers ufficiali Swiss)
-    players_list.sort(key=lambda x: (x['win_points'], x['omw'], x['gw']), reverse=True)
+    # Ordina per: Match Points > GW% > OMW% (tiebreakers Riftbound)
+    players_list.sort(key=lambda x: (x['win_points'], x['gw'], x['omw']), reverse=True)
 
     # Assegna rank
     for rank, player in enumerate(players_list, 1):
