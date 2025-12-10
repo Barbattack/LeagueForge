@@ -893,10 +893,12 @@ def import_with_progress(
             tracker.update_progress(90, "Aggiornamento Standings")
             update_seasonal_standings(sheet, season_id, today)
 
-        tracker.log("   → batch_update_player_stats()...", 'info')
-        tracker.update_progress(95, "Aggiornamento statistiche")
-        batch_update_player_stats(sheet)
+        # batch_update_player_stats non necessario - già fatto in update_players()
+        # tracker.log("   → batch_update_player_stats()...", 'info')
+        # tracker.update_progress(95, "Aggiornamento statistiche")
+        # batch_update_player_stats(sheet, [])
 
+        tracker.update_progress(95, "Aggiornamento completato")
         tracker.log("✓ Aggiornamenti completati", 'success')
 
         # 7. Achievement check (solo se NON ARCHIVED)
